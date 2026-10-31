@@ -1,0 +1,178 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  background: var(--c-ground);
+  color: var(--c-ink);
+  scrollbar-gutter: stable;
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: var(--nav-h);
+}
+body {
+  margin: 0;
+  background: var(--c-ground);
+  font-family: var(--font-text);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure,
+blockquote {
+  margin: 0;
+}
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+::selection {
+  background: var(--c-copper);
+  color: var(--c-charcoal);
+}
+:focus-visible {
+  outline: 2px solid var(--c-sand);
+  outline-offset: 4px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip-link {
+  position: fixed;
+  left: var(--gutter);
+  top: -80px;
+  z-index: 200;
+  background: var(--c-ivory);
+  color: var(--c-charcoal);
+  padding: 12px 18px;
+  transition: top var(--dur-fast);
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-variation-settings: 'opsz' 144;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+h2 {
+  font-size: var(--fs-h2);
+}
+h3 {
+  font-size: var(--fs-h3);
+  line-height: 1.05;
+}
+p {
+  text-wrap: pretty;
+}
+
+.section {
+  position: relative;
+  padding: var(--section-y) var(--gutter);
+}
+.lead {
+  font-size: var(--fs-lead);
+  line-height: 1.4;
+  max-width: 34ch;
+}
+.muted {
+  color: var(--c-ink-soft);
+}
+
+/* Botones: planos, un solo relleno, esquina cuadrada (decisión única). */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 28px;
+  background: var(--c-ivory);
+  color: var(--c-charcoal);
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: var(--radius);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+.btn:hover {
+  background: var(--c-sand);
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn--quiet {
+  background: var(--c-surface-2);
+  color: var(--c-ivory);
+}
+.btn--quiet:hover {
+  background: var(--c-espresso);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  background: var(--c-surface-2);
+  border-radius: 999px;
+  font-size: var(--fs-small);
+}
+.chip--provisional {
+  background: var(--c-espresso);
+  color: var(--c-sand);
+}
+
+/* Entradas: el estado oculto lo pone GSAP (si el script falla, el contenido se ve). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

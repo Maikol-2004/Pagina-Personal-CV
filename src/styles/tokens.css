@@ -1,0 +1,49 @@
+/* Tokens de diseño — única fuente de colores, tipografía, espacio, movimiento y breakpoints.
+   (Los breakpoints se repiten en lib/tokens.ts para JS: 820px móvil / 1100px escritorio ancho.) */
+:root {
+  /* Paleta: grises, cafés y neutros cálidos */
+  --c-charcoal: #242321;
+  --c-graphite: #393a38;
+  --c-espresso: #49372e;
+  --c-toast: #806653;
+  --c-copper: #b08968;
+  --c-sand: #c5b5a0;
+  --c-ivory: #eae5dd;
+  --c-ink: var(--c-ivory);
+  --c-ink-soft: #cfc6b8; /* texto secundario con contraste AA sobre carbón */
+  --c-ground: var(--c-charcoal);
+  --c-surface: #2c2b29; /* escalón de tono entre carbón y grafito */
+  --c-surface-2: var(--c-graphite);
+  --c-accent: var(--c-copper);
+
+  /* Tipografía */
+  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --font-text: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fs-hero: clamp(5.2rem, 14vw, 15rem);
+  --fs-h2: clamp(2.4rem, 6.4vw, 6.4rem);
+  --fs-h3: clamp(1.6rem, 2.6vw, 2.5rem);
+  --fs-lead: clamp(1.25rem, 2vw, 1.75rem);
+  --fs-body: clamp(1rem, 1.05vw, 1.1rem);
+  --fs-small: 0.9375rem;
+
+  /* Espacio */
+  --gutter: clamp(16px, 3.2vw, 44px);
+  --section-y: clamp(96px, 13vw, 200px);
+  --gap: clamp(16px, 2vw, 32px);
+
+  /* Formas */
+  --radius: 4px;
+  --radius-arch: 999px;
+
+  /* Sombras: sólo para lo que flota (diálogos, etiquetas 3D) */
+  --shadow-float: 0 30px 80px rgb(0 0 0 / 0.45);
+
+  /* Movimiento */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 180ms;
+  --dur: 420ms;
+  --dur-slow: 900ms;
+
+  --nav-h: 68px;
+}

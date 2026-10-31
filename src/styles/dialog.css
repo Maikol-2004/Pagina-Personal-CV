@@ -1,0 +1,117 @@
+.dlg {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+.dlg__veil {
+  position: absolute;
+  inset: 0;
+  background: rgb(18 17 16 / 0.82);
+}
+.dlg__panel {
+  position: absolute;
+  inset: 0;
+  background: var(--c-espresso);
+  color: var(--c-ivory);
+  display: grid;
+  overflow: hidden;
+}
+.dlg__close {
+  position: absolute;
+  z-index: 3;
+  top: 18px;
+  left: var(--gutter);
+  min-height: 48px;
+  padding: 0 22px;
+  background: var(--c-charcoal);
+  border-radius: 999px;
+  transition: background var(--dur-fast);
+}
+.dlg__close:hover {
+  background: var(--c-graphite);
+}
+.dlg__scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 104px var(--gutter) 80px;
+}
+.dlg__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(32px, 6vw, 96px);
+  align-items: start;
+}
+.dlg__art {
+  position: sticky;
+  top: 0;
+}
+.dlg__art svg {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3.4;
+  border-radius: var(--radius);
+}
+.dlg__title {
+  font-size: clamp(2.2rem, 5.2vw, 4.8rem);
+  margin: 0 0 12px;
+}
+.dlg__meta {
+  color: var(--c-sand);
+  font-size: var(--fs-lead);
+}
+.dlg__text {
+  font-size: var(--fs-lead);
+  line-height: 1.45;
+  max-width: 38ch;
+  margin-top: 32px;
+}
+.dlg__cat {
+  margin-top: 40px;
+}
+.dlg__cat h3 {
+  font-size: 1.5rem;
+  margin-bottom: 14px;
+}
+.dlg__list {
+  display: grid;
+  gap: 10px;
+}
+.dlg__list li {
+  background: var(--c-charcoal);
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.dlg__list small {
+  flex-basis: 100%;
+  color: var(--c-ink-soft);
+}
+.dlg__tag {
+  font-size: 0.8125rem;
+  background: var(--c-toast);
+  color: var(--c-charcoal);
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.dlg__note {
+  margin-top: 48px;
+  color: var(--c-ink-soft);
+  font-size: var(--fs-small);
+  max-width: 60ch;
+}
+@media (max-width: 820px) {
+  .dlg__grid {
+    grid-template-columns: 1fr;
+  }
+  .dlg__art {
+    position: static;
+  }
+  .dlg__scroll {
+    padding-top: 92px;
+  }
+}
