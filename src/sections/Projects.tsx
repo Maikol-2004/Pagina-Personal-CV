@@ -1,9 +1,9 @@
 import { useRef } from 'react'
 import { projects } from '../data/profile'
 import type { Project } from '../data/types'
-import { StageArt } from '../components/StageArt'
-import { gsap } from '../lib/gsap'
+import { ProjectShot } from '../components/ProjectShot'
 import { SectionLabel } from '../components/SectionLabel'
+import { gsap } from '../lib/gsap'
 
 interface Props {
   onOpen: (p: Project, rect: DOMRect | null) => void
@@ -20,10 +20,7 @@ export function Projects({ onOpen }: Props) {
             <br />
             <em>destacados.</em>
           </h2>
-          <p>
-            Una galería que crecerá conmigo. Las fichas marcadas como provisionales son huecos de
-            ejemplo.
-          </p>
+          <p>Software real: del control de proyectos de una empresa a mi propia web.</p>
         </div>
         <ul className="projects__grid">
           {projects.map((p) => (
@@ -46,9 +43,9 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: Props['onO
     const px = (e.clientX - r.left) / r.width - 0.5
     const py = (e.clientY - r.top) / r.height - 0.5
     gsap.to(el, {
-      rotateY: px * 8,
-      rotateX: -py * 6,
-      z: 30,
+      rotateY: px * 6,
+      rotateX: -py * 5,
+      z: 24,
       duration: 0.5,
       ease: 'power3.out',
       overwrite: 'auto',
@@ -72,88 +69,110 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: Props['onO
       onMouseMove={move}
       onMouseLeave={leave}
       onClick={(e) => onOpen(project, e.currentTarget.getBoundingClientRect())}
-      aria-label={`Abrir proyecto: ${project.title}`}
+      aria-label={`Abrir proyecto: ${project.title} ${project.accent}`}
     >
-      <StageArt label={project.badge} tone={project.tone} />
+      <ProjectShot project={project} />
       <span className="pcard__body">
-        {project.provisional && <span className="tag">Provisional</span>}
-        <span className="pcard__title">{project.title}</span>
+        <span className="pcard__meta eyebrow">
+          <span>{project.context}</span>
+          <span className="tag">{project.status}</span>
+        </span>
+        <span className="pcard__title">
+          {project.title} <em>{project.accent}</em>
+        </span>
         <span className="pcard__sum">{project.summary}</span>
-        {project.technologies.length > 0 && (
-          <span className="chips" style={{ display: 'flex' }}>
-            {project.technologies.map((t) => (
-              <span
-                key={t}
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: 4,
-                  padding: '4px 10px',
-                  fontSize: '0.85rem',
-                }}
-              >
-                {t}
-              </span>
-            ))}
-          </span>
-        )}
+        <span className="pcard__tech">
+          {project.technologies.slice(0, 5).map((t) => (
+            <span key={t}>{t}</span>
+          ))}
+        </span>
+        <span className="pcard__cta">
+          Ver proyecto
+          <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 19 19 5M5 5h14v14" />
+          </svg>
+        </span>
       </span>
     </button>
   )
 }
 
+const Block = ({ title, items }: { title: string; items: string[] }) => (
+  <section className="pd__block dlg__in">
+    <h3>{title}</h3>
+    <ul className="pd__list">
+      {items.map((t) => (
+        <li key={t}>{t}</li>
+      ))}
+    </ul>
+  </section>
+)
+
+/** Ficha completa de un proyecto (diálogo cinematográfico). */
 export function ProjectDetail({ project }: { project: Project }) {
-  const empty = (a: string[]) => a.length === 0
   return (
-    <div className="dlg__grid">
-      <div className="dlg__art dlg__in">
-        <StageArt label={project.badge} tone={project.tone} />
-      </div>
-      <div>
-        <h2 className="dlg__title dlg__in">{project.title}</h2>
-        <p className="dlg__meta dlg__in">{project.context}</p>
+    <div className="pd">
+      <div className="pd__top">
+        <p className="eyebrow dlg__in" style={{ color: 'var(--copper)' }}>
+          {project.context}
+        </p>
+        <h2 className="dlg__title dlg__in">
+          {project.title}
+          <br />
+          <em>{project.accent}</em>
+        </h2>
         <p className="dlg__text dlg__in">{project.summary}</p>
-        {(
-          [
-            ['Tecnologías', project.technologies],
-            ['Objetivos', project.objectives],
-            ['Funcionalidades', project.features],
-            ['Retos técnicos', project.challenges],
-          ] as const
-        ).map(([title, list]) => (
-          <section className="dlg__cat dlg__in" key={title}>
-            <h3>{title}</h3>
-            {empty(list as string[]) ? (
-              <p className="muted">Pendiente de completar: el CV no incluye este dato.</p>
-            ) : (
-              <ul className="dlg__list">
-                {(list as string[]).map((t) => (
-                  <li key={t}>{t}</li>
-                ))}
-              </ul>
-            )}
-          </section>
-        ))}
-        <section className="dlg__cat dlg__in">
-          <h3>Enlaces</h3>
-          {project.links.length === 0 ? (
-            <p className="muted">Sin enlaces publicados todavía (GitHub o demostración).</p>
-          ) : (
-            <ul className="dlg__list">
-              {project.links.map((l) => (
-                <li key={l.href}>
-                  <a href={l.href} target="_blank" rel="noreferrer">
-                    {l.label}
-                  </a>
-                </li>
+      </div>
+
+      <div className="pd__shot dlg__in">
+        <ProjectShot project={project} />
+        <p className="pd__caption">
+          Reconstrucción de la interfaz a partir del código del proyecto.
+        </p>
+      </div>
+
+      <dl className="pd__facts dlg__in">
+        <div>
+          <dt className="eyebrow">Rol</dt>
+          <dd>{project.role}</dd>
+        </div>
+        <div>
+          <dt className="eyebrow">Estado</dt>
+          <dd>{project.status}</dd>
+        </div>
+        <div>
+          <dt className="eyebrow">Stack</dt>
+          <dd>
+            <ul className="chips">
+              {project.technologies.map((t) => (
+                <li key={t}>{t}</li>
               ))}
             </ul>
-          )}
-        </section>
-        {project.provisional && (
-          <p className="dlg__note dlg__in">
-            Ficha de ejemplo: no corresponde a un proyecto confirmado en el CV.
-          </p>
-        )}
+          </dd>
+        </div>
+      </dl>
+
+      <div className="pd__cols">
+        <Block title="Objetivos" items={project.objectives} />
+        <Block title="Funcionalidades" items={project.features} />
+        <Block title="Aspectos técnicos" items={project.technical} />
+      </div>
+
+      <div className="pd__links dlg__in">
+        {project.links.map((l) => (
+          <a
+            key={l.href}
+            className="pill pill--solid"
+            href={l.href}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {l.label}
+            <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 19 19 5M5 5h14v14" />
+            </svg>
+          </a>
+        ))}
       </div>
     </div>
   )

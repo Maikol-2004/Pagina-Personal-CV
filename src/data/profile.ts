@@ -31,7 +31,7 @@ const pendienteReto = {
   title: 'Retos y aprendizajes',
 } as const
 
-export const stages: Stage[] = [
+const rawStages: Stage[] = [
   {
     id: 'bachillerato',
     kind: 'education',
@@ -361,54 +361,129 @@ export const stages: Stage[] = [
   },
 ]
 
+/**
+ * Orden de lectura de un currículum: lo más reciente primero (la formación en curso, luego las
+ * experiencias de más reciente a más antigua). El voluntariado, sin fechas, va al final.
+ */
+const recency = (s: Stage) => (s.start === undefined ? -1 : s.end === null ? 9999 : s.end!)
+export const stages: Stage[] = [...rawStages].sort(
+  (a, b) =>
+    recency(b) - recency(a) ||
+    (b.start ?? 0) - (a.start ?? 0) ||
+    Number(a.kind === 'education') - Number(b.kind === 'education'),
+)
+
+/** Etiqueta compacta para la barra de años: «’22–’24», «’24–hoy» o el año suelto. */
+export const rangeLabel = (s: Stage) => {
+  const yy = (n: number) => `’${String(n).slice(2)}`
+  if (s.start === undefined) return ''
+  if (s.end === s.start) return String(s.start)
+  return `${yy(s.start)}–${s.end === null ? 'hoy' : yy(s.end ?? s.start)}`
+}
+
+/** Etiqueta corta de año para la línea temporal ("Hoy" si sigue en curso). */
+export const yearLabel = (s: Stage) => (s.end === null ? 'Hoy' : String(s.end ?? s.start ?? ''))
+
 /** Etapas con fecha: alimentan la línea temporal (la constelación usa todas). */
-export const timelineStages = stages
-  .filter((s) => s.start !== undefined)
-  .sort((a, b) => a.start! - b.start! || (a.end ?? 9999) - (b.end ?? 9999))
+export const timelineStages = stages.filter((s) => s.start !== undefined)
 
 export const projects: Project[] = [
   {
-    id: 'gestion-proyectos',
-    title: 'Aplicación de gestión de proyectos',
+    id: 'ashesfire',
+    title: 'AshesFire',
+    accent: 'gestión de proyectos.',
     summary:
-      'Aplicación interna para gestionar los proyectos de AshesFire, desarrollada durante las prácticas.',
+      'Aplicación web interna para dar de alta proyectos, registrar el seguimiento diario de horas y gastos y consultar costes y rentabilidad.',
     context: 'Prácticas de programador · AshesFire · 2025',
-    technologies: [],
-    objectives: ['Gestionar los proyectos de la empresa desde una aplicación propia.'],
-    features: [],
-    challenges: [],
-    links: [],
-    tone: '#d9ad88',
-    badge: 'AshesFire',
+    role: 'Desarrollo de la aplicación',
+    status: 'Prácticas completadas',
+    technologies: ['Python', 'Streamlit', 'SQLAlchemy', 'PostgreSQL', 'pandas'],
+    objectives: [
+      'Sustituir el control manual de proyectos por una aplicación propia de la empresa.',
+      'Saber en cualquier momento cuánto cuesta un proyecto y si es rentable.',
+    ],
+    features: [
+      'Alta, modificación, finalización y eliminación de proyectos.',
+      'Registro diario de horas (jefe y proyectista), subcontratación y gastos.',
+      'Listado de proyectos con detalle, costes totales y rentabilidad.',
+      'Menú principal que enlaza las seis vistas de la aplicación.',
+    ],
+    technical: [
+      'Modelo relacional con dos entidades: Proyecto y SeguimientoDiario, creado con SQLAlchemy sobre PostgreSQL.',
+      'Coste total = horas × tarifa (jefe y proyectista) + subcontratación + gastos; rentabilidad = (ingreso − coste) / coste.',
+      'Navegación entre vistas mediante el estado de sesión de Streamlit; datos tabulares con pandas.',
+    ],
+    links: [
+      { label: 'Código en GitHub', href: 'https://github.com/Maikol-2004/AshesFire-appPrueba' },
+    ],
+    tone: '#d2a27e',
+    visual: 'ashesfire',
     provisional: false,
   },
   {
-    id: 'proyecto-2',
-    title: 'Proyecto académico DAM (por definir)',
-    summary: 'Hueco reservado para un proyecto del ciclo formativo. Contenido de ejemplo.',
-    context: 'Grado Superior DAM · 2024 – 2027',
-    technologies: ['Java', 'JavaFX', 'SQL'],
-    objectives: ['Describir aquí el objetivo real del proyecto.'],
-    features: ['Funcionalidades pendientes de validación.'],
-    challenges: ['Retos técnicos pendientes de validación.'],
-    links: [],
-    tone: '#b98a63',
-    badge: 'Java',
-    provisional: true,
+    id: 'my-journey',
+    title: 'My Journey',
+    accent: 'portafolio interactivo.',
+    summary:
+      'Este portafolio: currículum interactivo con una línea temporal guiada por el scroll y una constelación 3D que representa la trayectoria como una red.',
+    context: 'Proyecto personal · 2026',
+    role: 'Diseño y desarrollo',
+    status: 'En desarrollo',
+    technologies: [
+      'React',
+      'TypeScript',
+      'Vite',
+      'GSAP',
+      'Three.js',
+      'React Three Fiber',
+      'Vitest',
+    ],
+    objectives: [
+      'Contar la trayectoria profesional como una experiencia, no como una lista.',
+      'Mantener todo el contenido en un único archivo de datos fácil de editar.',
+    ],
+    features: [
+      'Constelación 3D con niveles: experiencias, categorías y detalles, con cámara animada.',
+      'Línea temporal en profundidad con barra de años que se rellena con el scroll.',
+      'Vista de lista accesible equivalente a la escena 3D y soporte de movimiento reducido.',
+      'Diseño adaptado a escritorio y móvil, con interacciones táctiles.',
+    ],
+    technical: [
+      'Generador determinista de la estructura orgánica (ramas recursivas) a partir de los datos, probado con Vitest.',
+      'Shaders propios: dibujado progresivo ligado al scroll, reactividad al cursor y render pausado fuera de pantalla.',
+      'Un solo sistema de animación (GSAP) y carga diferida del chunk de Three.js.',
+    ],
+    links: [
+      { label: 'Código en GitHub', href: 'https://github.com/Maikol-2004/Pagina-Personal-CV' },
+    ],
+    tone: '#c4936a',
+    visual: 'journey',
+    provisional: false,
   },
   {
-    id: 'proyecto-3',
-    title: 'Aplicación Android (por definir)',
-    summary: 'Hueco reservado para un proyecto móvil. Contenido de ejemplo.',
-    context: 'Grado Superior DAM · 2024 – 2027',
-    technologies: ['Android Studio', 'Firebase'],
-    objectives: ['Describir aquí el objetivo real del proyecto.'],
-    features: ['Funcionalidades pendientes de validación.'],
-    challenges: ['Retos técnicos pendientes de validación.'],
-    links: [],
-    tone: '#d2a27e',
-    badge: 'Android',
-    provisional: true,
+    id: 'cv-editorial',
+    title: 'CV web',
+    accent: 'editorial.',
+    summary:
+      'Primera versión de mi currículum en la web: composición editorial con una esfera de cobre construida solo con CSS y escenas que se abren al pulsar.',
+    context: 'Proyecto personal · 2026',
+    role: 'Diseño y desarrollo',
+    status: 'Publicado',
+    technologies: ['HTML', 'CSS', 'JavaScript'],
+    objectives: ['Presentar el CV con una identidad visual propia y sin dependencias externas.'],
+    features: [
+      'Filtros de experiencia y desplegables nativos accesibles con teclado.',
+      'Escenas con iluminación por proximidad del cursor y foco táctil en móvil.',
+      'Adaptación a distintos anchos, movimiento reducido e impresión.',
+    ],
+    technical: [
+      'Sin dependencias de ejecución ni peticiones externas; fuentes alojadas en local.',
+      'Controlador único para abrir y cerrar escenas, con transiciones reversibles.',
+    ],
+    links: [{ label: 'Código en GitHub', href: 'https://github.com/Maikol-2004/Prueba' }],
+    tone: '#b98a63',
+    visual: 'cv',
+    provisional: false,
   },
 ]
 

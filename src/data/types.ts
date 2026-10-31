@@ -39,16 +39,21 @@ export interface Stage {
 export interface Project {
   id: string
   title: string
+  accent: string
   summary: string
+  /** Contexto: dónde y cuándo se hizo. */
   context: string
+  role: string
+  status: string
   technologies: string[]
   objectives: string[]
   features: string[]
-  challenges: string[]
+  /** Aspectos técnicos verificados en el código. */
+  technical: string[]
   links: { label: string; href: string }[]
   tone: string
-  /** Texto corto que se muestra en la placa de color. */
-  badge: string
+  /** Qué ilustración mostrar en la ficha. */
+  visual: 'ashesfire' | 'journey' | 'cv'
   /** true = ficha de ejemplo pendiente de validación. */
   provisional: boolean
 }

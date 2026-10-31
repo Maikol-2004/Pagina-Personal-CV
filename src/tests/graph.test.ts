@@ -36,9 +36,10 @@ describe('graph de la constelación', () => {
 })
 
 describe('datos', () => {
-  it('la línea temporal está ordenada cronológicamente', () => {
-    const years = timelineStages.map((s) => s.start!)
-    expect([...years].sort((a, b) => a - b)).toEqual(years)
+  it('la línea temporal va de lo más reciente a lo más antiguo, con la formación en curso primero', () => {
+    expect(timelineStages[0].end).toBeNull()
+    const ends = timelineStages.map((s) => s.end ?? 9999)
+    expect([...ends].sort((a, b) => b - a)).toEqual(ends)
   })
   it('todo contenido no extraído del CV está marcado como provisional o es derivado', () => {
     const ids = new Set<string>()

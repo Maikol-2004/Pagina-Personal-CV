@@ -86,6 +86,12 @@ export function ConstellationSection({ onOpenStage }: Props) {
     return () => st.kill()
   }, [reduced])
 
+  // El modo lista cambia la altura de la sección: hay que recalcular todos los disparadores de scroll.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => ScrollTrigger.refresh())
+    return () => cancelAnimationFrame(id)
+  }, [mode])
+
   const stage = findStage(focus.stage)
   const cat = findCat(stage, focus.category)
   const item = findItem(cat, focus.item)
@@ -120,7 +126,12 @@ export function ConstellationSection({ onOpenStage }: Props) {
   }, [focus.stage, focus.category, focus.item])
 
   return (
-    <section ref={outer} className="cn" id="constelacion" aria-labelledby="cn-title">
+    <section
+      ref={outer}
+      className={`cn${mode === 'list' ? ' cn--list' : ''}`}
+      id="constelacion"
+      aria-labelledby="cn-title"
+    >
       <div ref={sticky} className="cn__sticky">
         <header className="cn__head">
           <p className="eyebrow dot-label muted">
@@ -179,7 +190,7 @@ export function ConstellationSection({ onOpenStage }: Props) {
           {mode === '3d' && (
             <>
               <button className="pill" onClick={back} disabled={!focus.stage}>
-                ← {focus.item ? 'Categoría' : focus.category ? 'Experiencia' : 'Vista global'}
+                ← {focus.item ? 'A la categoría' : focus.category ? 'A la experiencia' : 'Volver'}
               </button>
               <button className="pill" onClick={() => setFocus(NO_FOCUS)} disabled={!focus.stage}>
                 Vista global
@@ -220,54 +231,80 @@ export function ConstellationSection({ onOpenStage }: Props) {
         )}
 
         {mode === '3d' && stage && (
-          <aside
-            className="cn-ficha"
-            aria-live="polite"
-            style={{ ['--tone' as string]: stage.tone }}
-          >
-            <button
-              className="cn-ficha__x"
-              onClick={back}
-              aria-label="Cerrar ficha y subir un nivel"
-            >
-              ×
-            </button>
+          <aside className="cn-ficha" aria-live="polite">
+            <header className="cn-ficha__top">
+              <nav className="cn-ficha__crumbs eyebrow" aria-label="Ubicación">
+                <button onClick={() => setFocus(NO_FOCUS)}>Global</button>
+                <span aria-hidden="true">/</span>
+                <button onClick={() => goStage(stage)} aria-current={!cat}>
+                  {stage.company}
+                </button>
+                {cat && (
+                  <>
+                    <span aria-hidden="true">/</span>
+                    <button onClick={() => goCat(stage, cat)} aria-current={!item}>
+                      {cat.title}
+                    </button>
+                  </>
+                )}
+              </nav>
+              <button
+                className="cn-ficha__x"
+                onClick={back}
+                aria-label="Cerrar ficha y subir un nivel"
+              >
+                ×
+              </button>
+            </header>
+
             {!cat && (
               <>
-                <h3>{stage.role}</h3>
-                <p className="muted">
-                  {stage.company} · {stage.period}
+                <p className="eyebrow cn-ficha__kind">
+                  {KIND[stage.kind]} · {stage.period}
                 </p>
-                <p>{stage.summary}</p>
-                <ul className="cn-ficha__list">
+                <h3>{stage.role}</h3>
+                <p className="cn-ficha__company">
+                  {stage.company}
+                  {stage.place ? ` · ${stage.place}` : ''}
+                </p>
+                <p className="cn-ficha__sum">{stage.summary}</p>
+                <p className="eyebrow muted">Explora esta rama</p>
+                <ul className="cn-ficha__rows">
                   {stage.categories.map((c) => (
                     <li key={c.id}>
                       <button onClick={() => goCat(stage, c)}>
-                        {c.title} <span className="muted">({c.items.length})</span>
+                        <span>{c.title}</span>
+                        <span className="cn-ficha__n">{c.items.length}</span>
+                        <Chevron />
                       </button>
                     </li>
                   ))}
                 </ul>
                 <button
-                  className="pill pill--solid"
+                  className="pill pill--solid cn-ficha__cta"
                   onClick={(e) => onOpenStage(stage, e.currentTarget.getBoundingClientRect())}
                 >
                   Abrir ficha completa
+                  <Chevron />
                 </button>
               </>
             )}
             {cat && !item && (
               <>
-                <p className="muted">
-                  {stage.company} · {stage.role}
-                </p>
+                <p className="eyebrow cn-ficha__kind">Categoría</p>
                 <h3>{cat.title}</h3>
-                <ul className="cn-ficha__list">
+                <p className="cn-ficha__company">
+                  {stage.role} · {stage.company}
+                </p>
+                <ul className="cn-ficha__rows">
                   {cat.items.map((i) => (
                     <li key={i.id}>
                       <button onClick={() => goItem(stage, cat, i)}>
-                        {i.label}
-                        {i.provisional && <span className="dlg__tag"> Por validar</span>}
+                        <span>
+                          {i.label}
+                          {i.provisional && <span className="dlg__tag">Por validar</span>}
+                        </span>
+                        <Chevron />
                       </button>
                     </li>
                   ))}
@@ -276,11 +313,14 @@ export function ConstellationSection({ onOpenStage }: Props) {
             )}
             {cat && item && (
               <>
-                <p className="muted">
-                  {stage.company} · {cat.title}
-                </p>
+                <p className="eyebrow cn-ficha__kind">{cat.title}</p>
                 <h3>{item.label}</h3>
-                <p>{item.detail ?? 'Dato tomado directamente del currículum.'}</p>
+                <p className="cn-ficha__company">
+                  {stage.role} · {stage.company}
+                </p>
+                <p className="cn-ficha__sum">
+                  {item.detail ?? 'Dato tomado directamente del currículum.'}
+                </p>
                 {item.provisional && (
                   <p className="cn-ficha__warn">
                     Contenido provisional: no figura en el CV y está pendiente de validación.
@@ -300,41 +340,58 @@ function ListFallback({ onList }: { onList: () => void }) {
   return null
 }
 
-/** Modo alternativo accesible: la misma jerarquía como árbol navegable con teclado y lector de pantalla. */
+const KIND: Record<Stage['kind'], string> = {
+  work: 'Experiencia',
+  education: 'Formación',
+  volunteer: 'Voluntariado',
+}
+
+const Chevron = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9 5l7 7-7 7" />
+  </svg>
+)
+
+/** Modo alternativo accesible: la misma jerarquía en tarjetas desplegables, navegable con teclado y lector de pantalla. */
 function Tree({ onOpenStage }: { onOpenStage: (s: Stage, rect: DOMRect | null) => void }) {
   return (
     <ul className="tree" aria-label="Jerarquía profesional">
       {stages.map((s) => (
         <li key={s.id}>
-          <details>
+          <details className="tree__stage">
             <summary>
-              <strong>{s.company}</strong> — {s.role} <span className="muted">({s.period})</span>
+              <span className="tree__co">{s.company}</span>
+              <span className="tree__role">{s.role}</span>
+              <span className="tree__period">{s.period}</span>
+              <Chevron />
             </summary>
-            <p className="muted">{s.summary}</p>
-            <ul>
-              {s.categories.map((c) => (
-                <li key={c.id}>
-                  <details>
-                    <summary>{c.title}</summary>
+            <div className="tree__panel">
+              <p className="muted tree__sum">{s.summary}</p>
+              <div className="tree__cats">
+                {s.categories.map((c) => (
+                  <section key={c.id} className="tree__cat">
+                    <h4>
+                      {c.title} <span>{c.items.length}</span>
+                    </h4>
                     <ul>
                       {c.items.map((i) => (
                         <li key={i.id}>
                           {i.label}
-                          {i.provisional && <span className="dlg__tag"> Por validar</span>}
-                          {i.detail && <small className="muted"> — {i.detail}</small>}
+                          {i.provisional && <span className="dlg__tag">Por validar</span>}
+                          {i.detail && <small className="muted">{i.detail}</small>}
                         </li>
                       ))}
                     </ul>
-                  </details>
-                </li>
-              ))}
-            </ul>
-            <button
-              className="pill"
-              onClick={(e) => onOpenStage(s, e.currentTarget.getBoundingClientRect())}
-            >
-              Abrir ficha completa
-            </button>
+                  </section>
+                ))}
+              </div>
+              <button
+                className="pill"
+                onClick={(e) => onOpenStage(s, e.currentTarget.getBoundingClientRect())}
+              >
+                Abrir ficha completa
+              </button>
+            </div>
           </details>
         </li>
       ))}

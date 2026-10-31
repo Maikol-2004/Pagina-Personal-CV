@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 import { profile } from '../data/profile'
 import { gsap } from '../lib/gsap'
+import { OrbitField } from '../components/OrbitField'
 
 const Arrow = ({ d }: { d: string }) => (
   <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -91,9 +92,8 @@ export function Hero() {
             aria-label="Composición abstracta en cobre: una esfera y su órbita"
           >
             <div className="sculpture-art" aria-hidden="true">
-              <div className="orbit orbit-back" />
               <div className="sphere" />
-              <div className="orbit orbit-front" />
+              <OrbitField />
               <span className="art-point point-1" />
               <span className="art-point point-2" />
             </div>

@@ -54,7 +54,10 @@ export default function App() {
           onClose={() => setDlg(null)}
         >
           {dlg.kind === 'stage' ? (
-            <StageDetail stage={dlg.data} />
+            <StageDetail
+              stage={dlg.data}
+              onStep={(st) => setDlg({ kind: 'stage', data: st, rect: dlg.rect })}
+            />
           ) : (
             <ProjectDetail project={dlg.data} />
           )}

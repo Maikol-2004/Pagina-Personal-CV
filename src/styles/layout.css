@@ -4,7 +4,7 @@
   inset: 0 0 auto 0;
   z-index: 90;
   height: var(--header-h);
-  background: rgb(30 24 20 / 0.94);
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 .header-inner {
@@ -212,26 +212,6 @@ h1 em {
     16px 24px 40px rgb(0 0 0 / 0.2);
   z-index: 2;
   animation: bob 9s ease-in-out infinite alternate;
-}
-.orbit {
-  position: absolute;
-  width: 94%;
-  height: 42%;
-  left: 3%;
-  top: 26%;
-  border-radius: 50%;
-  transform: rotate(-34deg);
-}
-.orbit-back {
-  border: 1px solid rgb(163 121 78 / 0.55);
-  z-index: 1;
-}
-.orbit-front {
-  border: 5px solid transparent;
-  border-bottom-color: #bc8a5e;
-  border-right-color: #e6ba8a;
-  clip-path: inset(48% -5% -10% -5%);
-  z-index: 3;
 }
 .art-point {
   position: absolute;
@@ -513,4 +493,17 @@ h1 em {
 }
 .hero h1 .line > span {
   display: inline-block;
+}
+
+.orbit-canvas {
+  position: absolute;
+  top: 0;
+  left: -15%;
+  pointer-events: none;
+}
+.orbit-canvas--back {
+  z-index: 1;
+}
+.orbit-canvas--front {
+  z-index: 3;
 }

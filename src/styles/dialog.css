@@ -118,3 +118,234 @@
     padding-top: 92px;
   }
 }
+
+/* ── Ficha de etapa ───────────────────────────────────────── */
+.sd {
+  width: min(1240px, 100%);
+  margin-inline: auto;
+}
+.sd__head {
+  display: grid;
+  gap: 10px;
+  max-width: 900px;
+}
+.sd__head .dlg__title {
+  margin: 4px 0 0;
+}
+.sd__company {
+  font-size: 1.25rem;
+  color: var(--muted);
+}
+.sd__body {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: clamp(28px, 5vw, 80px);
+  margin-top: clamp(32px, 4vw, 56px);
+  align-items: start;
+}
+.sd__side {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 18px;
+}
+.sd__side .art {
+  aspect-ratio: 4 / 3;
+  border-radius: 5px;
+  border: 1px solid var(--copper-soft);
+}
+.sd__facts {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+.sd__facts > div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.sd__facts dt {
+  color: var(--muted);
+}
+.sd__facts dd {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.sd__main .dlg__text {
+  margin-top: 0;
+}
+.sd__cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+.sd__cat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 20px 22px 22px;
+}
+.sd__cat header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.sd__cat h3 {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+.sd__count {
+  min-width: 28px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgb(210 162 126 / 0.15);
+  color: var(--copper);
+  font-size: 0.8rem;
+  text-align: center;
+}
+.sd__cat ul {
+  display: grid;
+  gap: 12px;
+}
+.sd__cat li {
+  position: relative;
+  padding-left: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  line-height: 1.45;
+}
+.sd__cat li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--copper);
+}
+.sd__cat small {
+  flex-basis: 100%;
+  color: var(--muted);
+}
+.sd__nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: clamp(40px, 5vw, 72px);
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+/* ── Ficha de proyecto ────────────────────────────────────── */
+.pd {
+  width: min(1240px, 100%);
+  margin-inline: auto;
+  display: grid;
+  gap: clamp(28px, 4vw, 48px);
+}
+.pd__top {
+  max-width: 900px;
+}
+.pd__top .dlg__title {
+  margin: 14px 0 0;
+}
+.pd__shot {
+  max-width: 760px;
+}
+.pd__shot .shot__body {
+  aspect-ratio: 16 / 8;
+}
+.pd__caption {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.pd__facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  border-block: 1px solid var(--line);
+}
+.pd__facts > div {
+  padding: 20px 24px 20px 0;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.pd__facts dt {
+  color: var(--muted);
+}
+.pd__facts dd {
+  margin: 0;
+}
+.pd__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+.pd__block {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 22px 24px 26px;
+}
+.pd__block h3 {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+}
+.pd__list {
+  display: grid;
+  gap: 12px;
+}
+.pd__list li {
+  position: relative;
+  padding-left: 16px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.pd__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--copper);
+}
+.pd__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.pd__links .icon {
+  width: 16px;
+}
+@media (max-width: 820px) {
+  .sd__body {
+    grid-template-columns: 1fr;
+  }
+  .sd__side {
+    position: static;
+  }
+  .pd__facts {
+    grid-template-columns: 1fr;
+  }
+  .pd__facts > div {
+    border-bottom: 1px solid var(--line);
+  }
+  .sd__nav .pill {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { timelineStages } from '../data/profile'
+import { rangeLabel, timelineStages, yearLabel } from '../data/profile'
 import type { Stage } from '../data/types'
 import { StageArt } from '../components/StageArt'
 import { gsap, ScrollTrigger } from '../lib/gsap'
@@ -133,10 +133,11 @@ export function Timeline({ onOpen }: Props) {
           </h2>
           <p className="tl__year" aria-live="polite" aria-atomic="true">
             <span className="sr-only">Etapa actual: </span>
-            {cur.start}
+            {yearLabel(cur)}
           </p>
           <p className="tl__count eyebrow">
-            Etapa {String(active + 1).padStart(2, '0')} / {String(n).padStart(2, '0')}
+            Etapa {String(active + 1).padStart(2, '0')} / {String(n).padStart(2, '0')} · de lo más
+            reciente a lo más antiguo
           </p>
         </div>
 
@@ -169,7 +170,7 @@ export function Timeline({ onOpen }: Props) {
               onClick={() => goTo(i)}
             >
               <span className="tl__dot" aria-hidden="true" />
-              <span className="tl__tickyear">{s.start}</span>
+              <span className="tl__tickyear">{rangeLabel(s)}</span>
               <span className="sr-only"> {s.role}</span>
             </button>
           ))}
@@ -228,11 +229,7 @@ function TiltCard({ stage, onOpen }: { stage: Stage; onOpen: Props['onOpen'] }) 
       onMouseLeave={onLeave}
       onClick={open}
     >
-      <StageArt
-        className="tl__art"
-        label={stage.start ? String(stage.start) : stage.company}
-        tone={stage.tone}
-      />
+      <StageArt className="tl__art" label={yearLabel(stage)} tone={stage.tone} />
       <div className="tl__body">
         <h3>{stage.role}</h3>
         <p className="tl__company">
