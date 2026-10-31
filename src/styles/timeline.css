@@ -1,12 +1,12 @@
 .tl {
   position: relative;
-  background: var(--c-charcoal);
+  background: var(--c-ground);
 }
 .tl__pin {
   position: relative;
   height: 100svh;
   overflow: hidden;
-  background: var(--c-charcoal);
+  background: var(--c-ground);
 }
 .tl__side {
   position: absolute;
@@ -73,7 +73,7 @@
 }
 /* periodo incluido en la línea de empresa */
 .tl__company {
-  color: var(--c-sand);
+  color: var(--c-ink-soft);
 }
 .tl__sum {
   max-width: 44ch;
@@ -84,7 +84,7 @@
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  color: var(--c-sand);
+  color: var(--c-ink-soft);
   font-size: var(--fs-small);
   transition:
     max-height var(--dur-slow) var(--ease-out),
@@ -161,7 +161,7 @@
   background: var(--c-copper);
 }
 .tl__tick[aria-current='true'] .tl__dot {
-  background: var(--c-ivory);
+  background: var(--c-charcoal);
   transform: scale(1.25);
 }
 .tl__tickyear {
@@ -214,7 +214,7 @@
     left: 0;
     right: 0;
     padding-inline: var(--gutter);
-    background: var(--c-charcoal);
+    background: var(--c-ground);
   }
   .tl__track {
     left: calc(var(--gutter) + 22px);

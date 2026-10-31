@@ -212,7 +212,11 @@ function TiltCard({ stage, onOpen }: { stage: Stage; onOpen: Props['onOpen'] }) 
 
   return (
     <div ref={ref} className="tl__tilt" onMouseMove={onMove} onMouseLeave={onLeave} onClick={open}>
-      <StageArt className="tl__art" seed={stage.id} tone={stage.tone} />
+      <StageArt
+        className="tl__art"
+        label={stage.start ? String(stage.start) : stage.company}
+        tone={stage.tone}
+      />
       <div className="tl__body">
         <h3>{stage.role}</h3>
         <p className="tl__company">

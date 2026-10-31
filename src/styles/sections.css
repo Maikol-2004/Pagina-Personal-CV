@@ -44,11 +44,8 @@
   display: block;
   overflow: hidden;
 }
-.pcard__art svg {
-  width: 112%;
-  max-width: none;
-  margin: -4% -6%;
-  height: auto;
+.pcard__art .art {
+  width: 100%;
   aspect-ratio: 16 / 9;
 }
 .pcard__body {
@@ -94,7 +91,7 @@
   gap: var(--gap);
 }
 .skills__study {
-  background: var(--c-surface-2);
+  background: var(--c-graphite);
   padding: clamp(20px, 2.4vw, 36px);
   border-radius: var(--radius);
   display: grid;
@@ -130,6 +127,7 @@
   font-size: 1.5rem;
   letter-spacing: -0.01em;
   background: var(--c-surface-2);
+  color: var(--c-ink);
   border-radius: var(--radius);
   transition:
     background var(--dur) var(--ease-out),
@@ -175,4 +173,34 @@
   .skills__map {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Placa de etapa: campo de color plano + etiqueta grande + punto que deriva ── */
+.art {
+  position: relative;
+  display: grid;
+  align-items: end;
+  overflow: hidden;
+  padding: clamp(16px, 2vw, 28px);
+  background: var(--tone, var(--c-copper));
+  color: var(--c-charcoal);
+}
+.art__label {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 6vw, 5.5rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-weight: 300;
+}
+.art__dot {
+  position: absolute;
+  right: 12%;
+  top: 14%;
+  width: 28%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.4);
+  animation: orb-float 8s var(--ease-in-out) infinite alternate;
 }

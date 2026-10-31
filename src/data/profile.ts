@@ -398,6 +398,7 @@ export const projects: Project[] = [
     challenges: [],
     links: [],
     tone: '#C5B5A0',
+    badge: 'AshesFire',
     provisional: false,
   },
   {
@@ -411,6 +412,7 @@ export const projects: Project[] = [
     challenges: ['Retos técnicos pendientes de validación.'],
     links: [],
     tone: '#B08968',
+    badge: 'Java',
     provisional: true,
   },
   {
@@ -423,7 +425,8 @@ export const projects: Project[] = [
     features: ['Funcionalidades pendientes de validación.'],
     challenges: ['Retos técnicos pendientes de validación.'],
     links: [],
-    tone: '#806653',
+    tone: '#C9A27E',
+    badge: 'Android',
     provisional: true,
   },
 ]

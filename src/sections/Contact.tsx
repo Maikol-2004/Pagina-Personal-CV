@@ -5,10 +5,16 @@ export function Contact() {
   const mail = useMagnetic<HTMLAnchorElement>()
   return (
     <section className="section contact" id="contacto" aria-labelledby="ct-title">
-      <div className="contact__arches" aria-hidden="true">
-        <span />
-        <span />
-        <span />
+      <div className="orbs" aria-hidden="true">
+        <span className="orb orb--1">
+          <i />
+        </span>
+        <span className="orb orb--2">
+          <i />
+        </span>
+        <span className="orb orb--3">
+          <i />
+        </span>
       </div>
       <h2 id="ct-title" data-reveal>
         Construyamos algo juntos

@@ -63,7 +63,7 @@ button {
   color: var(--c-charcoal);
 }
 :focus-visible {
-  outline: 2px solid var(--c-sand);
+  outline: 2px solid var(--c-focus);
   outline-offset: 4px;
 }
 .sr-only {
@@ -129,8 +129,8 @@ p {
   gap: 12px;
   min-height: 52px;
   padding: 0 28px;
-  background: var(--c-ivory);
-  color: var(--c-charcoal);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
   font-weight: 500;
   text-decoration: none;
   border-radius: var(--radius);
@@ -139,17 +139,39 @@ p {
     transform var(--dur) var(--ease-out);
 }
 .btn:hover {
-  background: var(--c-sand);
+  background: var(--btn-hover);
 }
 .btn:active {
   transform: scale(0.97);
 }
 .btn--quiet {
-  background: var(--c-surface-2);
-  color: var(--c-ivory);
+  background: var(--q-bg);
+  color: var(--q-fg);
 }
 .btn--quiet:hover {
-  background: var(--c-espresso);
+  background: var(--q-hover);
+}
+
+/* Superficies oscuras: texto blanco siempre (nunca texto oscuro sobre gris/marrón). */
+.about__card,
+.tl__tilt,
+.pcard,
+.skills__study,
+.skills__panel,
+.cn,
+.contact,
+.dlg {
+  --c-ink: #ffffff;
+  --c-ink-soft: #ebe4d8;
+  --c-surface-2: #46413c;
+  --c-focus: var(--c-sand);
+  --btn-bg: #f5f1ea;
+  --btn-fg: #242321;
+  --btn-hover: var(--c-sand);
+  --q-bg: rgb(255 255 255 / 0.16);
+  --q-fg: #ffffff;
+  --q-hover: rgb(255 255 255 / 0.28);
+  color: #ffffff;
 }
 
 .chip {
@@ -157,13 +179,13 @@ p {
   align-items: center;
   min-height: 34px;
   padding: 0 14px;
-  background: var(--c-surface-2);
+  background: rgb(255 255 255 / 0.16);
   border-radius: 999px;
   font-size: var(--fs-small);
 }
 .chip--provisional {
-  background: var(--c-espresso);
-  color: var(--c-sand);
+  background: var(--c-toast);
+  color: #ffffff;
 }
 
 /* Entradas: el estado oculto lo pone GSAP (si el script falla, el contenido se ve). */

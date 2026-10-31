@@ -13,7 +13,7 @@ export function StageDetail({ stage }: { stage: Stage }) {
   return (
     <div className="dlg__grid">
       <div className="dlg__art dlg__in">
-        <StageArt seed={stage.id} tone={stage.tone} />
+        <StageArt label={stage.start ? String(stage.start) : stage.company} tone={stage.tone} />
       </div>
       <div>
         <h2 className="dlg__title dlg__in">{stage.role}</h2>

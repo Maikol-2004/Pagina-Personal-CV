@@ -9,11 +9,19 @@
   --c-copper: #b08968;
   --c-sand: #c5b5a0;
   --c-ivory: #eae5dd;
-  --c-ink: var(--c-ivory);
-  --c-ink-soft: #cfc6b8; /* texto secundario con contraste AA sobre carbón */
-  --c-ground: var(--c-charcoal);
-  --c-surface: #2c2b29; /* escalón de tono entre carbón y grafito */
-  --c-surface-2: var(--c-graphite);
+  /* Tema claro por defecto: fondo marfil, texto carbón. Los paneles oscuros (ver abajo) usan texto blanco. */
+  --c-ink: var(--c-charcoal);
+  --c-ink-soft: #5a5047; /* texto secundario, contraste AA sobre marfil */
+  --c-ground: #f5f1ea;
+  --c-surface: #ebe4d8;
+  --c-surface-2: #ded4c3;
+  --c-focus: var(--c-espresso);
+  --btn-bg: var(--c-charcoal);
+  --btn-fg: #ffffff;
+  --btn-hover: var(--c-espresso);
+  --q-bg: var(--c-surface-2);
+  --q-fg: var(--c-charcoal);
+  --q-hover: var(--c-sand);
   --c-accent: var(--c-copper);
 
   /* Tipografía */

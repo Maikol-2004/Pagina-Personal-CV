@@ -47,6 +47,8 @@ export interface Project {
   challenges: string[]
   links: { label: string; href: string }[]
   tone: string
+  /** Texto corto que se muestra en la placa de color. */
+  badge: string
   /** true = ficha de ejemplo pendiente de validación. */
   provisional: boolean
 }

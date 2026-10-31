@@ -24,18 +24,17 @@ export function Hero() {
     const mm = gsap.matchMedia()
     const ctx = gsap.context(() => {
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Entrada: letras, subtítulo y arcos 3D en secuencia.
+        // Entrada: letras, subtítulo y círculos en secuencia.
         const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
         tl.from('.hero__chi', { yPercent: 115, rotate: 6, duration: 1.4, stagger: 0.035 })
           .from('.hero__sub > *', { y: 24, opacity: 0, duration: 1, stagger: 0.1 }, '-=0.9')
-          .from('.slab', { y: 120, opacity: 0, rotateX: -40, duration: 1.6, stagger: 0.12 }, 0.2)
+          .from('.orb', { scale: 0.4, opacity: 0, duration: 1.6, stagger: 0.15 }, 0.2)
           .from('.hero__scroll', { opacity: 0, duration: 1 }, '-=0.4')
 
-        // Scroll: cada plano de profundidad viaja a una velocidad distinta (parallax por capas).
-        gsap.utils.toArray<HTMLElement>('.slab').forEach((el, i) => {
+        // Scroll: cada círculo sube a distinta velocidad (parallax por capas).
+        gsap.utils.toArray<HTMLElement>('.orb').forEach((el, i) => {
           gsap.to(el, {
-            yPercent: -8 - i * 9,
-            scale: 1 + i * 0.03,
+            yPercent: -10 - i * 18,
             ease: 'none',
             scrollTrigger: {
               trigger: root.current,
@@ -57,15 +56,19 @@ export function Hero() {
           },
         })
 
-        // Ratón: la escena se inclina y las capas se desplazan en sentidos opuestos.
+        // Ratón: los círculos siguen al cursor con distinta intensidad (profundidad).
         if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
-        const rx = gsap.quickTo('.hero__scene', 'rotationX', { duration: 1, ease: 'power3.out' })
-        const ry = gsap.quickTo('.hero__scene', 'rotationY', { duration: 1, ease: 'power3.out' })
+        const movers = gsap.utils.toArray<HTMLElement>('.orb').map((el) => ({
+          x: gsap.quickTo(el, 'x', { duration: 1.2, ease: 'power3.out' }),
+          y: gsap.quickTo(el, 'y', { duration: 1.2, ease: 'power3.out' }),
+        }))
         const move = (e: MouseEvent) => {
           const nx = e.clientX / window.innerWidth - 0.5
           const ny = e.clientY / window.innerHeight - 0.5
-          ry(nx * 16)
-          rx(-ny * 10)
+          movers.forEach((m, i) => {
+            m.x(-nx * (30 + i * 40))
+            m.y(-ny * (24 + i * 30))
+          })
         }
         window.addEventListener('mousemove', move)
         return () => window.removeEventListener('mousemove', move)
@@ -79,12 +82,16 @@ export function Hero() {
 
   return (
     <section ref={root} className="hero" id="inicio" aria-labelledby="hero-title">
-      <div className="hero__scene" aria-hidden="true">
-        <div className="slab slab--1" />
-        <div className="slab slab--2" />
-        <div className="slab slab--3" />
-        <div className="slab slab--4" />
-        <div className="slab slab--sun" />
+      <div className="orbs" aria-hidden="true">
+        <span className="orb orb--1">
+          <i />
+        </span>
+        <span className="orb orb--2">
+          <i />
+        </span>
+        <span className="orb orb--3">
+          <i />
+        </span>
       </div>
       <div className="hero__title">
         <h1 id="hero-title" aria-label={profile.shortName}>

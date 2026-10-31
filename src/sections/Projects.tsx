@@ -83,7 +83,7 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: Props['onO
       aria-label={`Abrir proyecto: ${project.title}`}
     >
       <span className="pcard__art">
-        <StageArt seed={project.id} tone={project.tone} />
+        <StageArt label={project.badge} tone={project.tone} />
       </span>
       <span className="pcard__body">
         <span className="pcard__title">{project.title}</span>
@@ -108,7 +108,7 @@ export function ProjectDetail({ project }: { project: Project }) {
   return (
     <div className="dlg__grid">
       <div className="dlg__art dlg__in">
-        <StageArt seed={project.id} tone={project.tone} />
+        <StageArt label={project.badge} tone={project.tone} />
       </div>
       <div>
         <h2 className="dlg__title dlg__in">{project.title}</h2>
