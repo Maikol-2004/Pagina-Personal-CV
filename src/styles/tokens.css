@@ -1,57 +1,37 @@
-/* Tokens de diseño — única fuente de colores, tipografía, espacio, movimiento y breakpoints.
-   (Los breakpoints se repiten en lib/tokens.ts para JS: 820px móvil / 1100px escritorio ancho.) */
+/* Tokens de diseño — una sola gama cromática (cafés y cobre) sobre fondo oscuro. */
+@font-face {
+  font-family: 'MG Sans';
+  src: url('../assets/fonts/sans.woff') format('woff');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MG Editorial';
+  src: url('../assets/fonts/serif-italic.woff') format('woff');
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
 :root {
-  /* Paleta: grises, cafés y neutros cálidos */
-  --c-charcoal: #242321;
-  --c-graphite: #393a38;
-  --c-espresso: #49372e;
-  --c-toast: #806653;
-  --c-copper: #b08968;
-  --c-sand: #c5b5a0;
-  --c-ivory: #eae5dd;
-  /* Tema claro por defecto: fondo marfil, texto carbón. Los paneles oscuros (ver abajo) usan texto blanco. */
-  --c-ink: var(--c-charcoal);
-  --c-ink-soft: #5a5047; /* texto secundario, contraste AA sobre marfil */
-  --c-ground: #f5f1ea;
-  --c-surface: #ebe4d8;
-  --c-surface-2: #ded4c3;
-  --c-focus: var(--c-espresso);
-  --btn-bg: var(--c-charcoal);
-  --btn-fg: #ffffff;
-  --btn-hover: var(--c-espresso);
-  --q-bg: var(--c-surface-2);
-  --q-fg: var(--c-charcoal);
-  --q-hover: var(--c-sand);
-  --c-accent: var(--c-copper);
-
-  /* Tipografía */
-  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
-  --font-text: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --fs-hero: clamp(5.2rem, 14vw, 15rem);
-  --fs-h2: clamp(2.4rem, 6.4vw, 6.4rem);
-  --fs-h3: clamp(1.6rem, 2.6vw, 2.5rem);
-  --fs-lead: clamp(1.25rem, 2vw, 1.75rem);
-  --fs-body: clamp(1rem, 1.05vw, 1.1rem);
-  --fs-small: 0.9375rem;
-
-  /* Espacio */
-  --gutter: clamp(16px, 3.2vw, 44px);
-  --section-y: clamp(96px, 13vw, 200px);
-  --gap: clamp(16px, 2vw, 32px);
-
-  /* Formas */
-  --radius: 4px;
-  --radius-arch: 999px;
-
-  /* Sombras: sólo para lo que flota (diálogos, etiquetas 3D) */
-  --shadow-float: 0 30px 80px rgb(0 0 0 / 0.45);
-
-  /* Movimiento */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --dur-fast: 180ms;
+  color-scheme: dark;
+  --bg: #1e1814;
+  --bg-deep: #17120f;
+  --surface: #2c221c;
+  --raised: #372a21;
+  --card: #251c17;
+  --cream: #f6efe4; /* texto principal (blanco cálido) */
+  --muted: #d0c2b1; /* texto secundario, contraste AA sobre el fondo */
+  --copper: #d2a27e;
+  --copper-soft: rgb(210 162 126 / 0.2);
+  --line: rgb(246 239 228 / 0.16);
+  --line-strong: rgb(246 239 228 / 0.34);
+  --sans: 'MG Sans', 'Helvetica Neue', Arial, sans-serif;
+  --serif: 'MG Editorial', Georgia, serif;
+  --gutter: clamp(20px, 5vw, 80px);
+  --section-space: clamp(80px, 9vw, 140px);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --header-h: 76px;
+  --dur-fast: 200ms;
   --dur: 420ms;
-  --dur-slow: 900ms;
-
-  --nav-h: 68px;
 }

@@ -1,78 +1,78 @@
 import { useEffect, useRef, useState } from 'react'
-import { profile } from '../data/profile'
-import { gsap } from '../lib/gsap'
+import { gsap, ScrollTrigger } from '../lib/gsap'
 
 const links = [
-  { href: '#sobre-mi', label: 'Sobre mí' },
-  { href: '#trayectoria', label: 'Trayectoria' },
-  { href: '#constelacion', label: 'Constelación' },
-  { href: '#proyectos', label: 'Proyectos' },
-  { href: '#competencias', label: 'Competencias' },
+  { id: 'perfil', label: 'Perfil' },
+  { id: 'trayectoria', label: 'Trayectoria' },
+  { id: 'constelacion', label: 'Constelación' },
+  { id: 'proyectos', label: 'Proyectos' },
+  { id: 'habilidades', label: 'Habilidades' },
+  { id: 'contacto', label: 'Contacto' },
 ]
 
-/** Botón magnético: se acerca ligeramente al cursor (sólo con puntero fino). */
-export function useMagnetic<T extends HTMLElement>() {
-  const ref = useRef<T>(null)
+/** Cabecera fija: marca, navegación con sección actual, descarga del CV y barra de progreso de lectura. */
+export function Header() {
+  const [open, setOpen] = useState(false)
+  const [current, setCurrent] = useState('')
+  const bar = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    const el = ref.current
-    if (!el || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
-    const x = gsap.quickTo(el, 'x', { duration: 0.5, ease: 'power3.out' })
-    const y = gsap.quickTo(el, 'y', { duration: 0.5, ease: 'power3.out' })
-    const move = (e: MouseEvent) => {
-      const r = el.getBoundingClientRect()
-      x((e.clientX - (r.left + r.width / 2)) * 0.28)
-      y((e.clientY - (r.top + r.height / 2)) * 0.4)
-    }
-    const leave = () => {
-      x(0)
-      y(0)
-    }
-    el.addEventListener('mousemove', move)
-    el.addEventListener('mouseleave', leave)
+    const st = ScrollTrigger.create({
+      start: 0,
+      end: 'max',
+      onUpdate: (s) => bar.current && gsap.set(bar.current, { scaleX: s.progress }),
+    })
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && setCurrent(e.target.id)),
+      { rootMargin: '-45% 0px -50% 0px' },
+    )
+    links.forEach((l) => {
+      const el = document.getElementById(l.id)
+      if (el) io.observe(el)
+    })
     return () => {
-      el.removeEventListener('mousemove', move)
-      el.removeEventListener('mouseleave', leave)
+      st.kill()
+      io.disconnect()
     }
   }, [])
-  return ref
-}
 
-export function Nav() {
-  const [open, setOpen] = useState(false)
-  const cta = useMagnetic<HTMLAnchorElement>()
   useEffect(() => {
     document.documentElement.style.overflow = open ? 'hidden' : ''
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
+
   return (
-    <header className="nav">
-      <a className="nav__brand" href="#inicio" onClick={() => setOpen(false)}>
-        {profile.shortName}
-      </a>
-      <nav className="nav__links" aria-label="Principal" data-open={open}>
-        <ul>
+    <header className="header">
+      <div className="header-inner container">
+        <a className="brand" href="#inicio" aria-label="Michael Guzmán, inicio">
+          mg<span>CV / 26</span>
+        </a>
+        <nav className="nav" aria-label="Principal" data-open={open}>
           {links.map((l) => (
-            <li key={l.href}>
-              <a href={l.href} onClick={() => setOpen(false)}>
-                {l.label}
-              </a>
-            </li>
+            <a
+              key={l.id}
+              href={`#${l.id}`}
+              aria-current={current === l.id}
+              onClick={() => setOpen(false)}
+            >
+              {l.label}
+            </a>
           ))}
-        </ul>
-      </nav>
-      <a ref={cta} className="btn nav__cta" href="#contacto">
-        Contacto
-      </a>
-      <button
-        className="nav__toggle"
-        aria-expanded={open}
-        aria-controls="menu"
-        onClick={() => setOpen((o) => !o)}
-      >
-        {open ? 'Cerrar' : 'Menú'}
-      </button>
+        </nav>
+        <a
+          className="pill pill--solid"
+          href={`${import.meta.env.BASE_URL}Michael-Guzman-CV.pdf`}
+          download
+        >
+          Descargar CV
+        </a>
+        <button className="menu-btn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          {open ? 'Cerrar' : 'Menú'}
+        </button>
+      </div>
+      <div ref={bar} className="reading-progress" aria-hidden="true" />
     </header>
   )
 }

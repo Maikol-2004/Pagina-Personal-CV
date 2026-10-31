@@ -3,6 +3,7 @@ import { projects } from '../data/profile'
 import type { Project } from '../data/types'
 import { StageArt } from '../components/StageArt'
 import { gsap } from '../lib/gsap'
+import { SectionLabel } from '../components/SectionLabel'
 
 interface Props {
   onOpen: (p: Project, rect: DOMRect | null) => void
@@ -11,20 +12,27 @@ interface Props {
 export function Projects({ onOpen }: Props) {
   return (
     <section className="section projects" id="proyectos" aria-labelledby="pr-title">
-      <h2 id="pr-title" data-reveal>
-        Proyectos destacados
-      </h2>
-      <p className="lead muted projects__lede" data-reveal>
-        Una galería que crecerá conmigo. Las fichas marcadas como provisionales son huecos de
-        ejemplo.
-      </p>
-      <ul className="projects__grid">
-        {projects.map((p, i) => (
-          <li key={p.id} className={`projects__item projects__item--${i + 1}`} data-reveal>
-            <ProjectCard project={p} onOpen={onOpen} />
-          </li>
-        ))}
-      </ul>
+      <div className="container">
+        <SectionLabel n="04" left="Proyectos" right="Lo que construyo" />
+        <div className="section-heading" data-reveal>
+          <h2 id="pr-title">
+            Proyectos
+            <br />
+            <em>destacados.</em>
+          </h2>
+          <p>
+            Una galería que crecerá conmigo. Las fichas marcadas como provisionales son huecos de
+            ejemplo.
+          </p>
+        </div>
+        <ul className="projects__grid">
+          {projects.map((p) => (
+            <li key={p.id} className="projects__item" data-reveal>
+              <ProjectCard project={p} onOpen={onOpen} />
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   )
 }
@@ -38,61 +46,51 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: Props['onO
     const px = (e.clientX - r.left) / r.width - 0.5
     const py = (e.clientY - r.top) / r.height - 0.5
     gsap.to(el, {
-      rotateY: px * 10,
-      rotateX: -py * 8,
-      z: 40,
+      rotateY: px * 8,
+      rotateX: -py * 6,
+      z: 30,
       duration: 0.5,
-      ease: 'power3.out',
-      overwrite: 'auto',
-    })
-    gsap.to(el.querySelector('.pcard__art'), {
-      x: -px * 18,
-      y: -py * 14,
-      duration: 0.6,
       ease: 'power3.out',
       overwrite: 'auto',
     })
   }
   const leave = () => {
-    const el = ref.current
-    if (!el) return
-    gsap.to(el, {
-      rotateX: 0,
-      rotateY: 0,
-      z: 0,
-      duration: 0.9,
-      ease: 'expo.out',
-      overwrite: 'auto',
-    })
-    gsap.to(el.querySelector('.pcard__art'), {
-      x: 0,
-      y: 0,
-      duration: 0.9,
-      ease: 'expo.out',
-      overwrite: 'auto',
-    })
+    if (ref.current)
+      gsap.to(ref.current, {
+        rotateX: 0,
+        rotateY: 0,
+        z: 0,
+        duration: 0.9,
+        ease: 'expo.out',
+        overwrite: 'auto',
+      })
   }
   return (
     <button
       ref={ref}
-      className="pcard"
-      style={{ ['--tone' as string]: project.tone }}
+      className="pcard scene"
       onMouseMove={move}
       onMouseLeave={leave}
       onClick={(e) => onOpen(project, e.currentTarget.getBoundingClientRect())}
       aria-label={`Abrir proyecto: ${project.title}`}
     >
-      <span className="pcard__art">
-        <StageArt label={project.badge} tone={project.tone} />
-      </span>
+      <StageArt label={project.badge} tone={project.tone} />
       <span className="pcard__body">
+        {project.provisional && <span className="tag">Provisional</span>}
         <span className="pcard__title">{project.title}</span>
         <span className="pcard__sum">{project.summary}</span>
-        {project.provisional && <span className="chip chip--provisional">Provisional</span>}
         {project.technologies.length > 0 && (
-          <span className="pcard__tech">
+          <span className="chips" style={{ display: 'flex' }}>
             {project.technologies.map((t) => (
-              <span className="chip" key={t}>
+              <span
+                key={t}
+                style={{
+                  border: '1px solid var(--line)',
+                  borderRadius: 4,
+                  padding: '4px 10px',
+                  fontSize: '0.85rem',
+                }}
+              >
                 {t}
               </span>
             ))}

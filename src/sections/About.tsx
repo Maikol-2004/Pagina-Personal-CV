@@ -1,83 +1,41 @@
-import { useLayoutEffect, useRef } from 'react'
 import { profile } from '../data/profile'
-import { gsap } from '../lib/gsap'
+import { SectionLabel } from '../components/SectionLabel'
 
-/** Cada palabra del texto principal se enciende a medida que avanza el scroll (lectura guiada). */
 export function About() {
-  const root = useRef<HTMLElement>(null)
-  const words = profile.about.join(' ').split(' ')
-
-  useLayoutEffect(() => {
-    const mm = gsap.matchMedia()
-    const ctx = gsap.context(() => {
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        gsap.fromTo(
-          '.about__w',
-          { opacity: 0.18 },
-          {
-            opacity: 1,
-            stagger: 0.1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '.about__text',
-              start: 'top 80%',
-              end: 'bottom 55%',
-              scrub: 0.5,
-            },
-          },
-        )
-        // Tarjetas en capas: velocidades distintas generan profundidad.
-        gsap.utils.toArray<HTMLElement>('.about__card').forEach((el, i) => {
-          gsap.fromTo(
-            el,
-            { yPercent: 14 + i * 12 },
-            {
-              yPercent: -6 - i * 8,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: '.about__cards',
-                start: 'top bottom',
-                end: 'bottom top',
-                scrub: 0.6,
-              },
-            },
-          )
-        })
-      })
-    }, root)
-    return () => {
-      ctx.revert()
-      mm.revert()
-    }
-  }, [])
-
   return (
-    <section ref={root} className="section about" id="sobre-mi" aria-labelledby="about-title">
-      <div className="about__top">
-        <h2 id="about-title" data-reveal>
-          Sobre mí
-        </h2>
-        <p className="muted about__where" data-reveal>
-          {profile.location}
-        </p>
-      </div>
-      <p className="about__text" aria-label={profile.about.join(' ')}>
-        <span aria-hidden="true">
-          {words.map((w, i) => (
-            <span className="about__w" key={i}>
-              {w}{' '}
+    <section className="profile section" id="perfil" aria-labelledby="profile-title">
+      <div className="container">
+        <SectionLabel n="01" left="Perfil" right="Un poco sobre mí" />
+        <div className="profile-main">
+          <div data-reveal>
+            <h2 id="profile-title">
+              La tecnología
+              <br />
+              empieza con las
+              <br />
+              <em>personas.</em>
+            </h2>
+            <span className="flourish" aria-hidden="true" />
+          </div>
+          <div className="profile-copy" data-reveal>
+            <span className="eyebrow dot-label" style={{ color: 'var(--copper)' }}>
+              De la experiencia a las ideas
             </span>
+            <p className="lead">{profile.about[0]}</p>
+            <p>{profile.about[1]}</p>
+            <a className="text-link" href={profile.linkedin} target="_blank" rel="noreferrer">
+              Conecta conmigo en LinkedIn
+            </a>
+          </div>
+        </div>
+        <ul className="values" data-reveal>
+          {profile.values.map((v, i) => (
+            <li key={v}>
+              <b className="eyebrow">0{i + 1} /</b>
+              <span>{v}</span>
+            </li>
           ))}
-        </span>
-      </p>
-      <div className="about__cards">
-        {profile.philosophy.map((p, i) => (
-          <article className={`about__card about__card--${i + 1}`} key={p.title}>
-            <h3>{p.title}</h3>
-            <p>{p.text}</p>
-            {p.provisional && <span className="chip chip--provisional">Texto por validar</span>}
-          </article>
-        ))}
+        </ul>
       </div>
     </section>
   )

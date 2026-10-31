@@ -1,41 +1,63 @@
 import { profile } from '../data/profile'
-import { useMagnetic } from '../components/Nav'
+import { SectionLabel } from '../components/SectionLabel'
+
+const Out = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 19 19 5M5 5h14v14" />
+  </svg>
+)
 
 export function Contact() {
-  const mail = useMagnetic<HTMLAnchorElement>()
+  const tel = `+34 ${profile.phone.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4')}`
   return (
-    <section className="section contact" id="contacto" aria-labelledby="ct-title">
-      <div className="orbs" aria-hidden="true">
-        <span className="orb orb--1">
-          <i />
-        </span>
-        <span className="orb orb--2">
-          <i />
-        </span>
-        <span className="orb orb--3">
-          <i />
-        </span>
+    <footer className="section contact" id="contacto" aria-labelledby="ct-title">
+      <div className="container">
+        <SectionLabel n="07" left="Contacto" right="Todo empieza con un hola" />
+        <div data-reveal>
+          <h2 id="ct-title">
+            <a href={`mailto:${profile.email}`}>
+              Hagamos algo
+              <br />
+              <em>con sentido.</em>
+              <span className="contact-arrow">
+                <Out />
+              </span>
+            </a>
+          </h2>
+          <p className="contact-sub">¿Conectamos? Me encantará conocer tu próximo proyecto.</p>
+        </div>
+        <div className="contact-links" data-reveal>
+          <a href={`mailto:${profile.email}`}>
+            <span className="eyebrow">Escríbeme</span>
+            <span className="row">
+              {profile.email} <Out />
+            </span>
+          </a>
+          <a href={`tel:+34${profile.phone}`}>
+            <span className="eyebrow">Llámame</span>
+            <span className="row">
+              {tel} <Out />
+            </span>
+          </a>
+          <a href={profile.linkedin} target="_blank" rel="noreferrer">
+            <span className="eyebrow">Conectemos</span>
+            <span className="row">
+              LinkedIn <Out />
+            </span>
+          </a>
+          <a href={`${import.meta.env.BASE_URL}Michael-Guzman-CV.pdf`} download>
+            <span className="eyebrow">Guárdalo para después</span>
+            <span className="row">
+              Descargar CV <Out />
+            </span>
+          </a>
+        </div>
+        <div className="footer-bottom eyebrow">
+          <span>© 2026 {profile.name}</span>
+          <span>Con curiosidad, desde Madrid.</span>
+          <a href="#inicio">Volver arriba ↑</a>
+        </div>
       </div>
-      <h2 id="ct-title" data-reveal>
-        Construyamos algo juntos
-      </h2>
-      <p className="lead contact__lead" data-reveal>
-        Busco mi siguiente reto profesional en desarrollo de software. Escríbeme y hablamos.
-      </p>
-      <div className="contact__links" data-reveal>
-        <a ref={mail} className="btn" href={`mailto:${profile.email}`}>
-          {profile.email}
-        </a>
-        <a className="btn btn--quiet" href={`tel:+34${profile.phone}`}>
-          {profile.phone}
-        </a>
-        <a className="btn btn--quiet" href={profile.linkedin} target="_blank" rel="noreferrer">
-          LinkedIn
-        </a>
-      </div>
-      <p className="muted contact__foot" data-reveal>
-        {profile.name} · {profile.location}
-      </p>
-    </section>
+    </footer>
   )
 }

@@ -1,52 +1,40 @@
 import { useLayoutEffect, useRef } from 'react'
 import { profile } from '../data/profile'
 import { gsap } from '../lib/gsap'
-import { useMagnetic } from '../components/Nav'
 
-/** Letras separadas para la entrada escalonada (el texto accesible va en aria-label). */
-function Letters({ text }: { text: string }) {
-  return (
-    <span className="hero__word" aria-hidden="true">
-      {[...text].map((ch, i) => (
-        <span className="hero__ch" key={i}>
-          <span className="hero__chi">{ch}</span>
-        </span>
-      ))}
-    </span>
-  )
-}
+const Arrow = ({ d }: { d: string }) => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d={d} />
+  </svg>
+)
 
 export function Hero() {
   const root = useRef<HTMLElement>(null)
-  const cta = useMagnetic<HTMLAnchorElement>()
 
   useLayoutEffect(() => {
     const mm = gsap.matchMedia()
     const ctx = gsap.context(() => {
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Entrada: letras, subtítulo y círculos en secuencia.
-        const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
-        tl.from('.hero__chi', { yPercent: 115, rotate: 6, duration: 1.4, stagger: 0.035 })
-          .from('.hero__sub > *', { y: 24, opacity: 0, duration: 1, stagger: 0.1 }, '-=0.9')
-          .from('.orb', { scale: 0.4, opacity: 0, duration: 1.6, stagger: 0.15 }, 0.2)
-          .from('.hero__scroll', { opacity: 0, duration: 1 }, '-=0.4')
+        gsap
+          .timeline({ defaults: { ease: 'expo.out' } })
+          .from('.hero h1 .line > span', { yPercent: 115, duration: 1.4, stagger: 0.12 })
+          .from('.hero-kicker, .hero-full', { opacity: 0, y: 14, duration: 1, stagger: 0.1 }, 0.4)
+          .from('.sculpture-art', { scale: 0.8, opacity: 0, duration: 1.8 }, 0.2)
+          .from(
+            '.hero-bottom > *, .hero-top, .hero-foot',
+            { opacity: 0, y: 20, duration: 1, stagger: 0.08 },
+            0.7,
+          )
 
-        // Scroll: cada círculo sube a distinta velocidad (parallax por capas).
-        gsap.utils.toArray<HTMLElement>('.orb').forEach((el, i) => {
-          gsap.to(el, {
-            yPercent: -10 - i * 18,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: root.current,
-              start: 'top top',
-              end: 'bottom top',
-              scrub: 0.6,
-            },
-          })
+        // Scroll: el objeto y el titular viajan a distinta velocidad.
+        gsap.to('.sculpture', {
+          yPercent: -14,
+          ease: 'none',
+          scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: 0.6 },
         })
-        gsap.to('.hero__title', {
-          yPercent: -18,
-          opacity: 0.2,
+        gsap.to('.hero-name', {
+          yPercent: -10,
+          opacity: 0.25,
           ease: 'none',
           scrollTrigger: {
             trigger: root.current,
@@ -56,19 +44,12 @@ export function Hero() {
           },
         })
 
-        // Ratón: los círculos siguen al cursor con distinta intensidad (profundidad).
+        // Ratón: el objeto se inclina hacia el cursor.
         if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
-        const movers = gsap.utils.toArray<HTMLElement>('.orb').map((el) => ({
-          x: gsap.quickTo(el, 'x', { duration: 1.2, ease: 'power3.out' }),
-          y: gsap.quickTo(el, 'y', { duration: 1.2, ease: 'power3.out' }),
-        }))
+        const art = root.current!.querySelector<HTMLElement>('.sculpture-art')!
         const move = (e: MouseEvent) => {
-          const nx = e.clientX / window.innerWidth - 0.5
-          const ny = e.clientY / window.innerHeight - 0.5
-          movers.forEach((m, i) => {
-            m.x(-nx * (30 + i * 40))
-            m.y(-ny * (24 + i * 30))
-          })
+          art.style.setProperty('--ty', `${(e.clientX / innerWidth - 0.5) * 18}deg`)
+          art.style.setProperty('--tx', `${-(e.clientY / innerHeight - 0.5) * 12}deg`)
         }
         window.addEventListener('mousemove', move)
         return () => window.removeEventListener('mousemove', move)
@@ -82,35 +63,78 @@ export function Hero() {
 
   return (
     <section ref={root} className="hero" id="inicio" aria-labelledby="hero-title">
-      <div className="orbs" aria-hidden="true">
-        <span className="orb orb--1">
-          <i />
-        </span>
-        <span className="orb orb--2">
-          <i />
-        </span>
-        <span className="orb orb--3">
-          <i />
-        </span>
-      </div>
-      <div className="hero__title">
-        <h1 id="hero-title" aria-label={profile.shortName}>
-          <Letters text="Michael" />
-          <br />
-          <Letters text="Guzmán" />
-        </h1>
-        <div className="hero__sub">
-          <p className="lead">{profile.headline}.</p>
-          <p className="muted hero__tag">{profile.tagline}</p>
-          <a ref={cta} className="btn" href="#trayectoria">
-            Recorrer mi trayectoria
+      <div className="hero-glow" aria-hidden="true" />
+      <div className="container">
+        <div className="hero-top eyebrow">
+          <span className="dot-label">Desarrollo · Personas · Posibilidades</span>
+          <span>Currículum personal / 2026</span>
+        </div>
+        <div className="hero-title">
+          <div className="hero-name">
+            <span className="hero-kicker eyebrow">Hola, soy</span>
+            <h1 id="hero-title" aria-label={profile.shortName}>
+              <span className="line" aria-hidden="true">
+                <span>Michael</span>
+              </span>
+              <span className="line" aria-hidden="true">
+                <span>
+                  <em>
+                    Guzmán<span aria-hidden="true">.</span>
+                  </em>
+                </span>
+              </span>
+            </h1>
+            <span className="hero-full eyebrow">{profile.name}</span>
+          </div>
+          <figure
+            className="sculpture"
+            aria-label="Composición abstracta en cobre: una esfera y su órbita"
+          >
+            <div className="sculpture-art" aria-hidden="true">
+              <div className="orbit orbit-back" />
+              <div className="sphere" />
+              <div className="orbit orbit-front" />
+              <span className="art-point point-1" />
+              <span className="art-point point-2" />
+            </div>
+            <figcaption>
+              <span>
+                Siempre en
+                <br />
+                <em>construcción.</em>
+              </span>
+              <span className="eyebrow muted">
+                Curiosidad
+                <br />
+                en órbita
+              </span>
+            </figcaption>
+          </figure>
+        </div>
+        <div className="hero-bottom">
+          <p className="hero-statement">
+            Curiosidad para aprender.
+            <br />
+            Compromiso para <em>crear.</em>
+          </p>
+          <div className="hero-intro">
+            <p>
+              {profile.headline}. {profile.tagline}
+            </p>
+            <a className="text-link" href="#trayectoria">
+              Explora mi trayectoria <Arrow d="M5 19 19 5M5 5h14v14" />
+            </a>
+          </div>
+          <a className="circle-link" href="#perfil" aria-label="Descubrir mi perfil">
+            <Arrow d="M12 3v18M5 14l7 7 7-7" />
           </a>
         </div>
+        <div className="hero-foot eyebrow">
+          <span>{profile.location} · España</span>
+          <span>Desliza para descubrir</span>
+          <span>40°28′ N · 3°52′ O</span>
+        </div>
       </div>
-      <a className="hero__scroll" href="#sobre-mi" aria-label="Bajar a la siguiente sección">
-        <span className="hero__dot" />
-        Desliza
-      </a>
     </section>
   )
 }

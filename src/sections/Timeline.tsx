@@ -123,10 +123,20 @@ export function Timeline({ onOpen }: Props) {
     >
       <div ref={pin} className="tl__pin">
         <div className="tl__side">
-          <h2 id="tl-title">Mi trayectoria</h2>
+          <p className="eyebrow dot-label muted">
+            <b style={{ color: 'var(--copper)', fontWeight: 400 }}>02</b> Trayectoria
+          </p>
+          <h2 id="tl-title">
+            Experiencia
+            <br />
+            <em>en movimiento.</em>
+          </h2>
           <p className="tl__year" aria-live="polite" aria-atomic="true">
             <span className="sr-only">Etapa actual: </span>
             {cur.start}
+          </p>
+          <p className="tl__count eyebrow">
+            Etapa {String(active + 1).padStart(2, '0')} / {String(n).padStart(2, '0')}
           </p>
         </div>
 
@@ -211,7 +221,13 @@ function TiltCard({ stage, onOpen }: { stage: Stage; onOpen: Props['onOpen'] }) 
   }
 
   return (
-    <div ref={ref} className="tl__tilt" onMouseMove={onMove} onMouseLeave={onLeave} onClick={open}>
+    <div
+      ref={ref}
+      className="tl__tilt scene"
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      onClick={open}
+    >
       <StageArt
         className="tl__art"
         label={stage.start ? String(stage.start) : stage.company}
@@ -230,7 +246,7 @@ function TiltCard({ stage, onOpen }: { stage: Stage; onOpen: Props['onOpen'] }) 
           ))}
         </ul>
         <button
-          className="btn tl__open"
+          className="pill pill--solid tl__open"
           onClick={(e) => {
             e.stopPropagation()
             open(e)

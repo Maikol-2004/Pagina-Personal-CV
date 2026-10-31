@@ -123,10 +123,17 @@ export function ConstellationSection({ onOpenStage }: Props) {
     <section ref={outer} className="cn" id="constelacion" aria-labelledby="cn-title">
       <div ref={sticky} className="cn__sticky">
         <header className="cn__head">
-          <h2 id="cn-title">Constelación profesional</h2>
+          <p className="eyebrow dot-label muted">
+            <b style={{ color: 'var(--copper)', fontWeight: 400 }}>03</b> Constelación
+          </p>
+          <h2 id="cn-title">
+            Mi trayectoria
+            <br />
+            <em>en red.</em>
+          </h2>
           <p className="muted cn__lede">
-            Mi trayectoria como una red: cada experiencia es una rama; al entrar en ella se
-            despliegan sus responsabilidades, habilidades y aprendizajes.
+            Cada experiencia es una rama; al entrar en ella se despliegan sus responsabilidades,
+            habilidades y aprendizajes.
           </p>
         </header>
 
@@ -165,35 +172,28 @@ export function ConstellationSection({ onOpenStage }: Props) {
 
         <div className="cn__controls">
           {webgl && (
-            <button
-              className="btn btn--quiet"
-              onClick={() => setMode(mode === '3d' ? 'list' : '3d')}
-            >
+            <button className="pill" onClick={() => setMode(mode === '3d' ? 'list' : '3d')}>
               {mode === '3d' ? 'Ver como lista' : 'Ver en 3D'}
             </button>
           )}
           {mode === '3d' && (
             <>
-              <button className="btn btn--quiet" onClick={back} disabled={!focus.stage}>
+              <button className="pill" onClick={back} disabled={!focus.stage}>
                 ← {focus.item ? 'Categoría' : focus.category ? 'Experiencia' : 'Vista global'}
               </button>
-              <button
-                className="btn btn--quiet"
-                onClick={() => setFocus(NO_FOCUS)}
-                disabled={!focus.stage}
-              >
+              <button className="pill" onClick={() => setFocus(NO_FOCUS)} disabled={!focus.stage}>
                 Vista global
               </button>
               <span className="cn__zoom" role="group" aria-label="Zoom">
                 <button
-                  className="btn btn--quiet cn__round"
+                  className="pill cn__round"
                   onClick={() => setZoom((z) => Math.max(0.6, +(z - 0.2).toFixed(1)))}
                   aria-label="Acercar"
                 >
                   +
                 </button>
                 <button
-                  className="btn btn--quiet cn__round"
+                  className="pill cn__round"
                   onClick={() => setZoom((z) => Math.min(1.5, +(z + 0.2).toFixed(1)))}
                   aria-label="Alejar"
                 >
@@ -209,7 +209,7 @@ export function ConstellationSection({ onOpenStage }: Props) {
             {stages.map((s) => (
               <button
                 key={s.id}
-                className="chip cn__chip"
+                className="pill cn__chip"
                 aria-pressed={focus.stage === s.id}
                 onClick={() => goStage(s)}
               >
@@ -249,7 +249,7 @@ export function ConstellationSection({ onOpenStage }: Props) {
                   ))}
                 </ul>
                 <button
-                  className="btn"
+                  className="pill pill--solid"
                   onClick={(e) => onOpenStage(stage, e.currentTarget.getBoundingClientRect())}
                 >
                   Abrir ficha completa
@@ -330,7 +330,7 @@ function Tree({ onOpenStage }: { onOpenStage: (s: Stage, rect: DOMRect | null) =
               ))}
             </ul>
             <button
-              className="btn btn--quiet"
+              className="pill"
               onClick={(e) => onOpenStage(s, e.currentTarget.getBoundingClientRect())}
             >
               Abrir ficha completa

@@ -37,7 +37,7 @@ interface Props {
   reduced: boolean
 }
 
-const IVORY = new Color('#eae5dd')
+const IVORY = new Color('#f6efe4')
 let haloTexture: CanvasTexture | null = null
 function getHalo() {
   if (haloTexture) return haloTexture
@@ -376,8 +376,8 @@ function Ambient({ graph, ctx }: { graph: Graph; ctx: Ctx }) {
   const coreLines = useMemo(() => linesGeometry(graph.core.lines), [graph])
   const corePoints = useMemo(() => pointsGeometry(graph.core.points), [graph])
   const dustPoints = useMemo(() => pointsGeometry(graph.dust), [graph])
-  const sand = useMemo(() => new Color('#c5b5a0'), [])
-  const toast = useMemo(() => new Color('#806653'), [])
+  const sand = useMemo(() => new Color('#d2a27e'), [])
+  const toast = useMemo(() => new Color('#9c6f4d'), [])
   const coreGrow = useRef(0)
   const dustGrow = useRef(0)
   const opacity = useRef(0.8)

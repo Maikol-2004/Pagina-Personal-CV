@@ -56,6 +56,8 @@ export interface Project {
 export interface SkillGroup {
   id: string
   title: string
+  accent: string
+  label: string
   kind: 'tecnologias' | 'herramientas' | 'conocimientos' | 'competencias'
   note: string
   items: string[]

@@ -8,36 +8,17 @@ import type { Project, SkillGroup, Stage } from './types'
 export const profile = {
   name: 'Michael Javier Guzmán Giraldo',
   shortName: 'Michael Guzmán',
-  headline: 'Desarrollador de aplicaciones multiplataforma en formación',
-  tagline:
-    'Vengo del trato con el cliente y del trabajo físico; hoy construyo software con esa misma constancia.',
+  headline: 'Estudiante de Desarrollo de Aplicaciones Multiplataforma',
+  tagline: 'Una mirada humana al mundo de la tecnología.',
   location: 'Majadahonda, Madrid',
   email: 'giraldomaicol123@gmail.com',
   phone: '658170221',
   linkedin: 'https://www.linkedin.com/in/michael-guzman-giraldo',
   about: [
-    'Profesional con experiencia en atención al cliente, ventas y servicios, dispuesto a ofrecer un trato cercano y de calidad.',
-    'Destaco por mi afán de superación, mi interés por aprender y mi motivación por asumir nuevos retos profesionales.',
-    'Busco desarrollo y experiencia profesional, aportando compromiso y una actitud positiva en cada proyecto.',
+    'Mi trayectoria conecta la atención al cliente, las ventas y los servicios con una nueva etapa en el desarrollo de aplicaciones.',
+    'Me gusta resolver problemas, aprender y asumir nuevos retos. Aporto un trato cercano, compromiso y una actitud positiva a cada proyecto, con la motivación de seguir creciendo profesionalmente.',
   ],
-  /** Texto de filosofía/intereses: redactado a partir del perfil del CV, pendiente de validar. */
-  philosophy: [
-    {
-      title: 'Trato cercano',
-      text: 'Cada producto lo usa una persona: escuchar primero y construir después.',
-      provisional: true,
-    },
-    {
-      title: 'Aprender haciendo',
-      text: 'Del mostrador al código, he aprendido cada oficio practicándolo.',
-      provisional: true,
-    },
-    {
-      title: 'Compromiso',
-      text: 'Una actitud positiva y constante en cada proyecto, también en los difíciles.',
-      provisional: true,
-    },
-  ],
+  values: ['Curiosidad constante', 'Actitud proactiva', 'Trabajo en equipo', 'Trato cercano'],
   languages: [
     { name: 'Español', level: 'Nativo' },
     { name: 'Inglés', level: 'Medio' },
@@ -62,7 +43,7 @@ export const stages: Stage[] = [
     summary: 'Etapa de formación previa a los estudios de desarrollo de software.',
     description:
       'Estudios de Bachillerato cursados en Tecnosistemas entre 2018 y 2020, de forma paralela a los primeros trabajos.',
-    tone: '#8E7B6B',
+    tone: '#a07a5a',
     categories: [
       {
         id: 'estudios',
@@ -95,7 +76,7 @@ export const stages: Stage[] = [
     summary: 'Atención al cliente y servicio de mesas.',
     description:
       'Primer contacto con el trabajo de cara al público: atender, servir y cobrar en un establecimiento de comidas.',
-    tone: '#B08968',
+    tone: '#b98a63',
     categories: [
       {
         id: 'funciones',
@@ -144,7 +125,7 @@ export const stages: Stage[] = [
     summary: 'Venta y asesoramiento en productos tecnológicos.',
     description:
       'Gestión de un punto de venta de productos tecnológicos: del asesoramiento al cliente a la organización del espacio.',
-    tone: '#C9A27E',
+    tone: '#d2a27e',
     categories: [
       {
         id: 'funciones',
@@ -192,7 +173,7 @@ export const stages: Stage[] = [
     summary: 'Atención, asesoramiento y organización de producto.',
     description:
       'Trabajo en tienda de ropa atendiendo y asesorando al cliente y manteniendo el espacio ordenado.',
-    tone: '#A9876B',
+    tone: '#c4936a',
     categories: [
       {
         id: 'funciones',
@@ -227,7 +208,7 @@ export const stages: Stage[] = [
     summary: 'Apoyo en tareas de construcción y reforma.',
     description:
       'Trabajo físico en equipo en obras de construcción y reforma, con responsabilidad en materiales y preparación de mezclas.',
-    tone: '#806653',
+    tone: '#9c6f4d',
     categories: [
       {
         id: 'funciones',
@@ -272,7 +253,7 @@ export const stages: Stage[] = [
     summary: 'Formación en desarrollo de software, en curso.',
     description:
       'Ciclo formativo de grado superior en el que se desarrolla la base técnica actual: lenguajes, bases de datos y desarrollo móvil.',
-    tone: '#D8C7AE',
+    tone: '#e0b892',
     categories: [
       {
         id: 'estudios',
@@ -306,7 +287,7 @@ export const stages: Stage[] = [
     summary: 'Desarrollo de una aplicación de gestión de proyectos.',
     description:
       'Prácticas como programador en las que se desarrolla una aplicación para la gestión de los proyectos de la empresa.',
-    tone: '#C5B5A0',
+    tone: '#d9ad88',
     categories: [
       {
         id: 'funciones',
@@ -365,7 +346,7 @@ export const stages: Stage[] = [
     period: 'Voluntariado',
     summary: 'Organización de eventos y captación de socios.',
     description: 'Colaboración como voluntario en la fundación.',
-    tone: '#D1B89A',
+    tone: '#caa07c',
     categories: [
       {
         id: 'funciones',
@@ -397,7 +378,7 @@ export const projects: Project[] = [
     features: [],
     challenges: [],
     links: [],
-    tone: '#C5B5A0',
+    tone: '#d9ad88',
     badge: 'AshesFire',
     provisional: false,
   },
@@ -411,7 +392,7 @@ export const projects: Project[] = [
     features: ['Funcionalidades pendientes de validación.'],
     challenges: ['Retos técnicos pendientes de validación.'],
     links: [],
-    tone: '#B08968',
+    tone: '#b98a63',
     badge: 'Java',
     provisional: true,
   },
@@ -425,7 +406,7 @@ export const projects: Project[] = [
     features: ['Funcionalidades pendientes de validación.'],
     challenges: ['Retos técnicos pendientes de validación.'],
     links: [],
-    tone: '#C9A27E',
+    tone: '#d2a27e',
     badge: 'Android',
     provisional: true,
   },
@@ -433,31 +414,38 @@ export const projects: Project[] = [
 
 export const skillGroups: SkillGroup[] = [
   {
-    id: 'lenguajes',
-    title: 'Tecnologías',
+    id: 'desarrollo',
+    title: 'Código &',
+    accent: 'aplicaciones.',
+    label: 'DESARROLLO',
     kind: 'tecnologias',
-    note: 'Lenguajes y marcos con los que trabajo.',
-    items: ['Java', 'JavaFX', 'JavaSwing', 'Python', 'JavaScript', 'HTML', 'CSS', 'XML'],
+    note: 'Del lenguaje a la interfaz.',
+    items: ['Java', 'JavaFX', 'Java Swing', 'Python', 'JavaScript', 'HTML', 'CSS', 'XML'],
   },
   {
     id: 'datos',
-    title: 'Datos',
-    kind: 'conocimientos',
-    note: 'Bases de datos y persistencia.',
-    items: ['SQL', 'PL/SQL', 'Hibernate', 'Firebase'],
-  },
-  {
-    id: 'herramientas',
-    title: 'Herramientas',
+    title: 'Datos &',
+    accent: 'conexiones.',
+    label: 'DATOS Y ENTORNO',
     kind: 'herramientas',
-    note: 'Entorno de trabajo diario.',
-    items: ['Android Studio', 'Linux GNU', 'Git / GitHub'],
+    note: 'La estructura detrás de cada idea.',
+    items: [
+      'SQL',
+      'PL/SQL',
+      'Hibernate',
+      'Firebase',
+      'Android Studio',
+      'GNU/Linux',
+      'Git / GitHub',
+    ],
   },
   {
-    id: 'competencias',
-    title: 'Competencias profesionales',
+    id: 'personas',
+    title: 'Personas &',
+    accent: 'soluciones.',
+    label: 'HABILIDADES HUMANAS',
     kind: 'competencias',
-    note: 'Soft skills indicadas en el CV.',
+    note: 'La forma de afrontar cada reto.',
     items: [
       'Resolución de problemas',
       'Trabajo en equipo',
@@ -466,5 +454,14 @@ export const skillGroups: SkillGroup[] = [
       'Gestión del tiempo',
       'Proactividad',
     ],
+  },
+  {
+    id: 'idiomas',
+    title: 'Palabras &',
+    accent: 'conversaciones.',
+    label: 'IDIOMAS',
+    kind: 'conocimientos',
+    note: 'Conectar también es comunicar.',
+    items: ['Español · nativo', 'Inglés · nivel medio'],
   },
 ]
