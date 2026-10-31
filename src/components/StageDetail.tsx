@@ -54,7 +54,7 @@ export function StageDetail({ stage, onStep }: { stage: Stage; onStep: (s: Stage
 
       <div className="sd__body">
         <aside className="sd__side dlg__in">
-          <StageArt label={yearLabel(stage)} tone={stage.tone} />
+          <StageArt label={yearLabel(stage)} tone={stage.tone} variant={Math.max(idx, 0)} />
           <dl className="sd__facts">
             <div>
               <dt className="eyebrow">Organización</dt>

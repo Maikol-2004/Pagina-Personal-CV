@@ -52,6 +52,37 @@ function MiniConstellation() {
   )
 }
 
+const SPORTS = ['Todos', 'Fútbol', 'Pádel', 'Basket']
+
+/** Reconstrucción esquemática de la pantalla de inicio de MatchUp (categorías + partido con ocupación). */
+function PhoneMatchUp() {
+  return (
+    <div className="shot__phone">
+      <div className="shot__sports">
+        {SPORTS.map((x, i) => (
+          <span key={x} className={i === 1 ? 'is-on' : ''}>
+            {x}
+          </span>
+        ))}
+      </div>
+      {[0.7, 0.4].map((fill, i) => (
+        <div key={i} className="shot__match">
+          <span className="shot__match-t" />
+          <span className="shot__match-s" />
+          <span className="shot__bar2">
+            <i style={{ width: `${fill * 100}%` }} />
+          </span>
+        </div>
+      ))}
+      <span className="shot__nav">
+        <i />
+        <i />
+        <i />
+      </span>
+    </div>
+  )
+}
+
 /** Ilustración del proyecto dentro de un marco de ventana. No es una captura: reconstruye la interfaz real. */
 export function ProjectShot({ project, className = '' }: { project: Project; className?: string }) {
   return (
@@ -62,6 +93,7 @@ export function ProjectShot({ project, className = '' }: { project: Project; cla
         <i />
         <span>
           {project.visual === 'ashesfire' && 'Ashes Fire — Proyectos'}
+          {project.visual === 'matchup' && 'MatchUp — Android'}
           {project.visual === 'journey' && 'My Journey'}
           {project.visual === 'cv' && 'Michael Guzmán — Desarrollo & personas'}
         </span>
@@ -77,6 +109,7 @@ export function ProjectShot({ project, className = '' }: { project: Project; cla
             ))}
           </div>
         )}
+        {project.visual === 'matchup' && <PhoneMatchUp />}
         {project.visual === 'journey' && <MiniConstellation />}
         {project.visual === 'cv' && (
           <div className="shot__cv">

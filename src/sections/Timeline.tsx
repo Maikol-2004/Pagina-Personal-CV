@@ -152,7 +152,7 @@ export function Timeline({ onOpen }: Props) {
               data-active={i === active}
               style={{ ['--tone' as string]: s.tone }}
             >
-              <TiltCard stage={s} onOpen={onOpen} />
+              <TiltCard stage={s} index={i} live={Math.abs(i - active) <= 1} onOpen={onOpen} />
             </li>
           ))}
         </ol>
@@ -184,7 +184,17 @@ export function Timeline({ onOpen }: Props) {
  * Tarjeta con tres estados: reposo → hover (se acerca a cámara, inclinación 3D, vista previa) → click (diálogo).
  * En táctil no hay hover: la vista previa es visible siempre y el toque abre el detalle.
  */
-function TiltCard({ stage, onOpen }: { stage: Stage; onOpen: Props['onOpen'] }) {
+function TiltCard({
+  stage,
+  index,
+  live,
+  onOpen,
+}: {
+  stage: Stage
+  index: number
+  live: boolean
+  onOpen: Props['onOpen']
+}) {
   const ref = useRef<HTMLDivElement>(null)
   const preview = stage.categories[0]?.items.slice(0, 3) ?? []
 
@@ -229,7 +239,13 @@ function TiltCard({ stage, onOpen }: { stage: Stage; onOpen: Props['onOpen'] }) 
       onMouseLeave={onLeave}
       onClick={open}
     >
-      <StageArt className="tl__art" label={yearLabel(stage)} tone={stage.tone} />
+      <StageArt
+        className="tl__art"
+        label={yearLabel(stage)}
+        tone={stage.tone}
+        variant={index}
+        live={live}
+      />
       <div className="tl__body">
         <h3>{stage.role}</h3>
         <p className="tl__company">

@@ -421,6 +421,36 @@ export const projects: Project[] = [
     provisional: false,
   },
   {
+    id: 'matchup',
+    title: 'MatchUp',
+    accent: 'app Android de partidos.',
+    summary:
+      'Aplicación Android para organizar y unirse a partidos de fútbol, pádel y basket: crear partidos, pedir plaza, añadir amigos y seguir las invitaciones desde el móvil.',
+    context: 'Proyecto personal · Android · 2026',
+    role: 'Diseño y desarrollo',
+    status: 'En desarrollo',
+    technologies: ['Kotlin', 'Jetpack Compose', 'Material 3', 'Android Studio'],
+    objectives: [
+      'Facilitar que un grupo organice un partido y que otros jugadores encuentren plaza cerca.',
+      'Reunir en una sola app el partido, los jugadores, las solicitudes y las notificaciones.',
+    ],
+    features: [
+      'Introducción y onboarding animados, acceso con cuentas locales y creación de avatar.',
+      'Inicio con categorías por deporte, partidos recomendados y barra de ocupación por partido.',
+      'Creación de partidos con nivel, lugar, fecha, capacidad, precio, vestuarios, material y modo privado.',
+      'Solicitudes de plaza, invitaciones, amigos, notificaciones y perfil público de cada jugador.',
+    ],
+    technical: [
+      'Interfaz íntegra con Jetpack Compose y Material 3 sobre Android (minSdk 26), unas 10.800 líneas de Kotlin.',
+      'Persistencia local con SharedPreferences: partidos, cuentas, amistades, solicitudes y categorías.',
+      'Pantallas separadas por responsabilidad y repositorios locales para categorías, social y notificaciones.',
+    ],
+    links: [],
+    tone: '#e0b892',
+    visual: 'matchup',
+    provisional: false,
+  },
+  {
     id: 'my-journey',
     title: 'My Journey',
     accent: 'portafolio interactivo.',
@@ -480,7 +510,10 @@ export const projects: Project[] = [
       'Sin dependencias de ejecución ni peticiones externas; fuentes alojadas en local.',
       'Controlador único para abrir y cerrar escenas, con transiciones reversibles.',
     ],
-    links: [{ label: 'Código en GitHub', href: 'https://github.com/Maikol-2004/Prueba' }],
+    links: [
+      { label: 'Ver la web', href: 'https://maikol-2004.github.io/Prueba/' },
+      { label: 'Código en GitHub', href: 'https://github.com/Maikol-2004/Prueba' },
+    ],
     tone: '#b98a63',
     visual: 'cv',
     provisional: false,
