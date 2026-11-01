@@ -214,8 +214,8 @@ export function Projects({ onOpen }: Props) {
                 {project.id === 'ashesfire' &&
                   'Capturas de la app en ejecución con datos de ejemplo.'}
                 {project.id === 'matchup' && 'Capturas reales de la app en un móvil Android.'}
-                {project.id !== 'ashesfire' &&
-                  project.id !== 'matchup' &&
+                {project.id === 'portfolio-narrativo' && 'Imágenes de la web publicada.'}
+                {['my-journey', 'cv-editorial'].includes(project.id) &&
                   'Capturas del sitio en ejecución.'}
               </p>
             </div>

@@ -53,7 +53,7 @@ export interface Project {
   links: { label: string; href: string }[]
   tone: string
   /** Qué ilustración mostrar en la ficha. */
-  visual: 'ashesfire' | 'matchup' | 'journey' | 'cv'
+  visual: 'ashesfire' | 'matchup' | 'journey' | 'cv' | 'portfolio'
   /** true = ficha de ejemplo pendiente de validación. */
   provisional: boolean
 }

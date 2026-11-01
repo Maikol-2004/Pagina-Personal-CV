@@ -518,6 +518,35 @@ export const projects: Project[] = [
     visual: 'cv',
     provisional: false,
   },
+  {
+    id: 'portfolio-narrativo',
+    title: 'Portfolio narrativo',
+    accent: 'para otra persona.',
+    summary:
+      'Portafolio web que desarrollé para Alba De Vicente (ingeniera de software fullstack): su currículum convertido en una experiencia interactiva con línea del tiempo, vistas de detalle y versión móvil propia.',
+    context: 'Proyecto para un tercero · Alba De Vicente · 2026',
+    role: 'Desarrollo del portafolio',
+    status: 'Publicado',
+    technologies: ['React 19', 'TypeScript', 'Vite', 'GSAP + ScrollTrigger', 'Lenis', 'Motion'],
+    objectives: [
+      'Convertir el currículum en PDF, que es la versión resumida, en una web que es la versión extendida.',
+      'Que cada etapa profesional sea un capítulo que se descubre con el scroll y se explora en detalle.',
+    ],
+    features: [
+      'Línea del tiempo acoplada al scroll, con hitos que se acercan y se retiran en profundidad.',
+      'Vista de detalle en cuatro capítulos, con transición cinematográfica desde el propio hito y vuelta al mismo punto.',
+      'Accesible: navegación por teclado, foco gestionado, reduced motion y sin violaciones en las pruebas con axe-core.',
+      'Experiencia táctil propia en móvil, no una versión reducida de la de escritorio.',
+    ],
+    technical: [
+      'Contenido separado de la presentación: se actualiza editando un único archivo de datos.',
+      'Animación del scroll con GSAP y ScrollTrigger, desplazamiento suave con Lenis y transiciones con Motion.',
+    ],
+    links: [{ label: 'Ver la web', href: 'https://pagina-personal-cv.vercel.app/' }],
+    tone: '#c9a27e',
+    visual: 'portfolio',
+    provisional: false,
+  },
 ]
 
 /** Los proyectos como ramas de la constelación (mismos datos que la galería, sin duplicar contenido). */

@@ -7,7 +7,7 @@ export type Layer = {
   src: string
   alt: string
   title?: string
-  kind: 'window' | 'phone' | 'card'
+  kind: 'window' | 'phone' | 'card' | 'raw'
   /** Posición y tamaño dentro del escaparate, en %. */
   left: number
   top: number
@@ -163,6 +163,38 @@ export const PROJECT_LAYERS: Record<string, Layer[]> = {
       left: 78,
       top: 10,
       width: 21,
+      depth: 3,
+      z: 3,
+    },
+  ],
+  'portfolio-narrativo': [
+    {
+      src: 'narrativo-timeline',
+      alt: 'Línea del tiempo del portfolio narrativo',
+      kind: 'raw',
+      left: 0,
+      top: 3,
+      width: 74,
+      depth: 1,
+      z: 1,
+    },
+    {
+      src: 'narrativo-detail',
+      alt: 'Vista de detalle de una etapa: los retos',
+      kind: 'raw',
+      left: 24,
+      top: 43,
+      width: 46,
+      depth: 2,
+      z: 2,
+    },
+    {
+      src: 'narrativo-phone',
+      alt: 'Portada del portfolio narrativo en móvil',
+      kind: 'raw',
+      left: 77,
+      top: 24,
+      width: 20,
       depth: 3,
       z: 3,
     },

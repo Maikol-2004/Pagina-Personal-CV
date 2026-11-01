@@ -413,3 +413,15 @@
     transform-origin: 0 50%;
   }
 }
+
+.dev--raw .dev__in {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  overflow: visible;
+  box-shadow: none;
+}
+.dev--raw .dev__in img {
+  border-radius: 8px;
+  box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.7);
+}
