@@ -531,6 +531,16 @@ function Scene({
   const controls = useRef<OrbitControlsImpl | null>(null)
   const sway = useRef<Group>(null)
 
+  // OrbitControls fuerza `touch-action: none` en el lienzo y eso bloquea el scroll de la página en el móvil.
+  // En táctil lo devolvemos a `pan-y`: el scroll vertical sigue siendo de la página y el arrastre horizontal gira la escena.
+  useEffect(() => {
+    if (!coarse) return
+    const el = gl.domElement
+    el.style.touchAction = 'pan-y'
+    const id = requestAnimationFrame(() => (el.style.touchAction = 'pan-y'))
+    return () => cancelAnimationFrame(id)
+  }, [gl, coarse])
+
   useEffect(() => {
     document.body.style.cursor = hovered ? 'pointer' : ''
     return () => {
@@ -564,7 +574,7 @@ function Scene({
         makeDefault
         enablePan={false}
         enableZoom={false}
-        enableRotate={!coarse}
+        enableRotate
         enableDamping
         dampingFactor={0.06}
         rotateSpeed={0.55}
