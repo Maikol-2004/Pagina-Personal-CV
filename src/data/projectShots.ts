@@ -16,6 +16,8 @@ export type Layer = {
   depth: number
   z: number
   rotate?: number
+  /** true = sólo aparece en la galería de la ficha, no en el escaparate. */
+  gallery?: boolean
 }
 
 export const PROJECT_LAYERS: Record<string, Layer[]> = {
@@ -56,50 +58,45 @@ export const PROJECT_LAYERS: Record<string, Layer[]> = {
   ],
   matchup: [
     {
-      src: 'matchup-portada',
-      alt: 'Pantalla de portada de MatchUp',
+      src: 'matchup-onboarding',
+      alt: 'Pantalla de bienvenida de MatchUp: Organiza, Comparte, Juega',
       kind: 'phone',
-      left: 4,
-      top: 4,
-      width: 30,
-      depth: 2,
-      z: 3,
-    },
-    {
-      src: 'matchup-futbol',
-      alt: 'Fútbol en MatchUp',
-      title: 'Fútbol',
-      kind: 'card',
-      left: 40,
-      top: 0,
-      width: 44,
+      left: 0,
+      top: 14,
+      width: 29,
       depth: 1,
       z: 1,
-      rotate: -3,
     },
     {
-      src: 'matchup-padel',
-      alt: 'Pádel en MatchUp',
-      title: 'Pádel',
-      kind: 'card',
-      left: 52,
-      top: 32,
-      width: 44,
-      depth: 2,
-      z: 2,
-      rotate: 2,
-    },
-    {
-      src: 'matchup-basket',
-      alt: 'Basket en MatchUp',
-      title: 'Basket',
-      kind: 'card',
-      left: 36,
-      top: 62,
-      width: 44,
+      src: 'matchup-inicio',
+      alt: 'Inicio de MatchUp: explorar partidos por deporte',
+      kind: 'phone',
+      left: 33,
+      top: 2,
+      width: 31,
       depth: 3,
       z: 3,
-      rotate: -1.5,
+    },
+    {
+      src: 'matchup-perfil',
+      alt: 'Perfil de jugador en MatchUp con rendimiento por deporte',
+      kind: 'phone',
+      left: 69,
+      top: 16,
+      width: 29,
+      depth: 2,
+      z: 2,
+    },
+    {
+      src: 'matchup-splash',
+      alt: 'Pantalla de entrada de MatchUp',
+      kind: 'phone',
+      left: 0,
+      top: 0,
+      width: 0,
+      depth: 0,
+      z: 0,
+      gallery: true,
     },
   ],
   'my-journey': [
@@ -160,7 +157,7 @@ export const PROJECT_LAYERS: Record<string, Layer[]> = {
       z: 2,
     },
     {
-      src: 'cv-m-hero',
+      src: 'cv-m-exp',
       alt: 'CV web en móvil',
       kind: 'phone',
       left: 78,

@@ -11,6 +11,7 @@ import { Skills } from './sections/Skills'
 import { Contact } from './sections/Contact'
 import { useRevealAll } from './hooks/useRevealAll'
 import { useProximity } from './hooks/useProximity'
+import { projects } from './data/profile'
 import type { Project, Stage } from './data/types'
 
 type Dlg =
@@ -22,14 +23,16 @@ export default function App() {
   useRevealAll()
   useProximity()
 
-  const openStage = useCallback(
-    (data: Stage, rect: DOMRect | null) => setDlg({ kind: 'stage', data, rect }),
-    [],
-  )
   const openProject = useCallback(
     (data: Project, rect: DOMRect | null) => setDlg({ kind: 'project', data, rect }),
     [],
   )
+  // Las ramas de proyecto de la constelación abren la ficha de proyecto; el resto, la ficha de etapa.
+  const openStage = useCallback((data: Stage, rect: DOMRect | null) => {
+    const project =
+      data.kind === 'project' ? projects.find((p) => `proj-${p.id}` === data.id) : undefined
+    setDlg(project ? { kind: 'project', data: project, rect } : { kind: 'stage', data, rect })
+  }, [])
 
   return (
     <>

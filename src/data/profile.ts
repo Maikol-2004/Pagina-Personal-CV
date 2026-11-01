@@ -520,6 +520,47 @@ export const projects: Project[] = [
   },
 ]
 
+/** Los proyectos como ramas de la constelación (mismos datos que la galería, sin duplicar contenido). */
+export const projectStages: Stage[] = projects.map((p) => ({
+  id: `proj-${p.id}`,
+  kind: 'project',
+  company: p.title + (stages.some((s) => s.company === p.title) ? ' (app)' : ''),
+  role: p.accent.replace(/\.$/, ''),
+  period: p.status,
+  summary: p.summary,
+  description: p.summary,
+  tone: p.tone,
+  categories: [
+    {
+      id: 'obj',
+      kind: 'funciones',
+      title: 'Objetivos',
+      items: p.objectives.map((t, i) => ({ id: `${p.id}-o${i}`, label: t })),
+    },
+    {
+      id: 'fun',
+      kind: 'proyectos',
+      title: 'Funcionalidades',
+      items: p.features.map((t, i) => ({ id: `${p.id}-f${i}`, label: t })),
+    },
+    {
+      id: 'tec',
+      kind: 'tecnologias',
+      title: 'Tecnologías',
+      items: p.technologies.map((t, i) => ({ id: `${p.id}-t${i}`, label: t })),
+    },
+    {
+      id: 'asp',
+      kind: 'aprendizajes',
+      title: 'Aspectos técnicos',
+      items: p.technical.map((t, i) => ({ id: `${p.id}-a${i}`, label: t })),
+    },
+  ],
+}))
+
+/** Todo lo que muestra la constelación: etapas profesionales y proyectos. */
+export const constellationStages: Stage[] = [...stages, ...projectStages]
+
 export const skillGroups: SkillGroup[] = [
   {
     id: 'desarrollo',

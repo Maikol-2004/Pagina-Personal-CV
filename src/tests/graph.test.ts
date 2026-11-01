@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { stages, timelineStages } from '../data/profile'
+import { constellationStages as stages, timelineStages } from '../data/profile'
 import { buildGraph, countNodes } from '../three/graph'
 
 describe('graph de la constelación', () => {

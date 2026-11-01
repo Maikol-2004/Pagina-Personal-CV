@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { stages } from '../data/profile'
+import { constellationStages as stages } from '../data/profile'
 import type { Category, Item, Stage } from '../data/types'
 import { gsap, ScrollTrigger } from '../lib/gsap'
 import { useIsCoarse, useReducedMotion } from '../hooks/useMedia'
@@ -143,8 +143,8 @@ export function ConstellationSection({ onOpenStage }: Props) {
             <em>en red.</em>
           </h2>
           <p className="muted cn__lede">
-            Cada experiencia es una rama; al entrar en ella se despliegan sus responsabilidades,
-            habilidades y aprendizajes.
+            Cada experiencia y cada proyecto es una rama; al entrar en ella se despliegan sus
+            responsabilidades, habilidades y aprendizajes.
           </p>
         </header>
 
@@ -262,9 +262,9 @@ export function ConstellationSection({ onOpenStage }: Props) {
                 <p className="eyebrow cn-ficha__kind">
                   {KIND[stage.kind]} · {stage.period}
                 </p>
-                <h3>{stage.role}</h3>
+                <h3>{stage.kind === 'project' ? stage.company : stage.role}</h3>
                 <p className="cn-ficha__company">
-                  {stage.company}
+                  {stage.kind === 'project' ? stage.role : stage.company}
                   {stage.place ? ` · ${stage.place}` : ''}
                 </p>
                 <p className="cn-ficha__sum">{stage.summary}</p>
@@ -344,6 +344,7 @@ const KIND: Record<Stage['kind'], string> = {
   work: 'Experiencia',
   education: 'Formación',
   volunteer: 'Voluntariado',
+  project: 'Proyecto',
 }
 
 const Chevron = () => (

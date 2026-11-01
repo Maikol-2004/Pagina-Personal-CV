@@ -8,6 +8,7 @@ const KIND: Record<Stage['kind'], string> = {
   work: 'Experiencia',
   education: 'Formación',
   volunteer: 'Voluntariado',
+  project: 'Proyecto',
 }
 
 /** Ficha completa de una etapa: cabecera, datos clave, categorías en tarjetas y navegación entre etapas. */

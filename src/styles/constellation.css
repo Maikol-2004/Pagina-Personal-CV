@@ -47,7 +47,7 @@
   position: absolute;
   z-index: 40;
   left: var(--gutter);
-  bottom: 88px;
+  bottom: 142px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;

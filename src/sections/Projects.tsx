@@ -179,39 +179,41 @@ export function Projects({ onOpen }: Props) {
             </div>
 
             <div ref={stage} className="showcase__stage" data-project={project.id}>
-              {PROJECT_LAYERS[project.id]?.map((l) => (
-                <div
-                  key={l.src}
-                  className={`dev dev--${l.kind}`}
-                  style={{
-                    left: `${l.left}%`,
-                    top: `${l.top}%`,
-                    width: `${l.width}%`,
-                    zIndex: l.z,
-                  }}
-                >
+              {PROJECT_LAYERS[project.id]
+                ?.filter((l) => !l.gallery)
+                .map((l) => (
                   <div
-                    className="dev__in"
-                    data-depth={l.depth}
-                    style={{ transform: l.rotate ? `rotate(${l.rotate}deg)` : undefined }}
+                    key={l.src}
+                    className={`dev dev--${l.kind}`}
+                    style={{
+                      left: `${l.left}%`,
+                      top: `${l.top}%`,
+                      width: `${l.width}%`,
+                      zIndex: l.z,
+                    }}
                   >
-                    {l.kind === 'window' && (
-                      <div className="dev__bar">
-                        <i />
-                        <i />
-                        <i />
-                        <span>{l.title}</span>
-                      </div>
-                    )}
-                    <img src={shotUrl(l.src)} alt={l.alt} loading="lazy" decoding="async" />
-                    {l.kind === 'card' && <span className="dev__cap">{l.title}</span>}
+                    <div
+                      className="dev__in"
+                      data-depth={l.depth}
+                      style={{ transform: l.rotate ? `rotate(${l.rotate}deg)` : undefined }}
+                    >
+                      {l.kind === 'window' && (
+                        <div className="dev__bar">
+                          <i />
+                          <i />
+                          <i />
+                          <span>{l.title}</span>
+                        </div>
+                      )}
+                      <img src={shotUrl(l.src)} alt={l.alt} loading="lazy" decoding="async" />
+                      {l.kind === 'card' && <span className="dev__cap">{l.title}</span>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
               <p className="showcase__note">
                 {project.id === 'ashesfire' &&
                   'Capturas de la app en ejecución con datos de ejemplo.'}
-                {project.id === 'matchup' && 'Recursos gráficos reales de la app.'}
+                {project.id === 'matchup' && 'Capturas reales de la app en un móvil Android.'}
                 {project.id !== 'ashesfire' &&
                   project.id !== 'matchup' &&
                   'Capturas del sitio en ejecución.'}

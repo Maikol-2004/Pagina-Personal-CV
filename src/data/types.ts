@@ -2,7 +2,7 @@
 
 export type CategoryKind =
   'funciones' | 'proyectos' | 'habilidades' | 'tecnologias' | 'aprendizajes'
-export type StageKind = 'work' | 'education' | 'volunteer'
+export type StageKind = 'work' | 'education' | 'volunteer' | 'project'
 
 export interface Item {
   id: string
