@@ -11,13 +11,13 @@ export function Skills() {
     <>
       <section className="section skills" id="habilidades" aria-labelledby="sk-title">
         <div className="container">
-          <SectionLabel n="05" left="Habilidades" right="Ideas que se convierten en soluciones" />
+          <SectionLabel n="05" left="Competencias" right="Ideas que se convierten en soluciones" />
           <div className="skills-layout">
             <div className="skills-intro" data-reveal>
               <h2 id="sk-title">
-                Mi caja de
+                Competencias
                 <br />
-                <em>herramientas.</em>
+                <em>digitales.</em>
               </h2>
               <p>
                 Conocimientos técnicos.

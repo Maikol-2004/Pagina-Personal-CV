@@ -6,7 +6,7 @@ const links = [
   { id: 'trayectoria', label: 'Trayectoria' },
   { id: 'constelacion', label: 'Constelación' },
   { id: 'proyectos', label: 'Proyectos' },
-  { id: 'habilidades', label: 'Habilidades' },
+  { id: 'habilidades', label: 'Competencias' },
   { id: 'contacto', label: 'Contacto' },
 ]
 
