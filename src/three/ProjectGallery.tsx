@@ -290,6 +290,7 @@ function ExhibitShadow({enabled}:{enabled:boolean}){
 function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress: React.RefObject<number>;selected:number|null;phase:Phase;quality:Quality;yaw:React.RefObject<number>;onSelect:(i:number)=>void;onArrive:()=>void}) {
   const materials=useArchitecturalMaterials()
   const woodPhoto=usePhotoMaps('dark_wood',[1,1])
+  const ceilingGlow=useMemo(()=>new Color('#f4dfc5').multiplyScalar(2.1),[])
   useEffect(()=>{
     if(!woodPhoto)return
     materials.wall.map=woodPhoto.diff;materials.wall.normalMap=woodPhoto.normal;materials.wall.bumpMap=null;materials.wall.roughnessMap=woodPhoto.rough;materials.wall.needsUpdate=true
@@ -302,7 +303,20 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     <ambientLight intensity={phase==='focused'?.18:.28}/>
     <Environment resolution={128}><Lightformer form="rect" intensity={3} color="#ffe0b8" position={[0,5,-10]} scale={[6,25,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={1.5} color="#c69a73" position={[4,2,-15]} scale={[30,4,1]} rotation={[0,-Math.PI/2,0]}/></Environment>
     <hemisphereLight args={["#ffe1bf","#38251b",phase==='focused'?.83:1.1]}/>
-    <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[7,ROOM_LENGTH]}/><MeshReflectorMaterial resolution={quality==='ultra'?1024:quality==='medium'?256:mobile?512:768} mirror={.12} mixBlur={.75} mixStrength={.28} blur={mobile?[80,40]:[160,75]} color="#121313" metalness={.08} roughness={.38}/></mesh>
+    {/* Continuous polished graphite resin: actual planar reflections, not painted light streaks. */}
+    <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]} receiveShadow>
+      <planeGeometry args={[7,ROOM_LENGTH]}/>
+      <MeshReflectorMaterial
+        resolution={mobile?(quality==='ultra'||quality==='high'?1024:512):quality==='ultra'?2048:quality==='medium'?512:1024}
+        mirror={.44}
+        mixStrength={2.7}
+        mixBlur={.18}
+        blur={mobile?[24,12]:[16,8]}
+        color="#202122"
+        metalness={.16}
+        roughness={.16}
+      />
+    </mesh>
     <Block position={[0,4.5,ROOM_CENTER]} size={[7,.3,ROOM_LENGTH]} color="#211813"/>
     <Block position={[0,2.2,ROOM_BACK_Z]} size={[7,4.5,.3]} color="#302219"/>
     {[-1,1].map(side=><group key={side}>
@@ -328,7 +342,7 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     {!mobile&&<Sparkles count={45} scale={[5,3,ROOM_LENGTH-4]} position={[0,2,ROOM_CENTER]} size={1.2} speed={.12} opacity={.18} color="#d2a27e"/>}
     {Array.from({length:21},(_,i)=><group key={i} position={[0,4.29,10-i*3.3]}>
       <Block position={[0,.04,0]} size={[6.7,.15,.38]} color="#17120f"/>
-      <mesh><boxGeometry args={[5.8,.035,.045]}/><meshBasicMaterial color="#f4dfc5" toneMapped={false}/></mesh>
+      <mesh position={[0,-.067,0]}><boxGeometry args={[5.8,.025,.105]}/><meshBasicMaterial color={ceilingGlow} toneMapped={false}/></mesh>
       <pointLight position={[0,-.2,0]} color="#f7d9b6" intensity={5.5} distance={8} decay={2}/>
     </group>)}
     <Block position={[0,2.3,ROOM_BACK_Z+.3]} size={[4.9,3.5,.12]} color="#201712"/>
