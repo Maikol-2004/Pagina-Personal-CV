@@ -115,12 +115,18 @@ try{
       },i)
     }
     for(const id of ['ashesfire','matchup','my-journey','cv-editorial','portfolio-narrativo']){
-      const response=await page.request.get(base+'gallery-posters/'+id+'.svg')
+      const response=await page.request.get(base+'gallery-posters/editorial/'+id+'.svg')
       assert.ok(response.ok(),'Missing poster '+id)
       assert.match(await response.text(),/viewBox="0 0 1400 1120"/)
     }
     await walk(0)
     await page.locator('.gallery-viewport canvas').waitFor()
+    const atmosphere=page.getByLabel('Ambiente de la galería')
+    assert.equal(await atmosphere.inputValue(),'infinity')
+    await atmosphere.selectOption('architecture')
+    assert.equal(await page.locator('.gallery-viewport').getAttribute('data-atmosphere'),'architecture')
+    await atmosphere.selectOption('infinity')
+    assert.equal(await page.locator('.gallery-viewport').getAttribute('data-atmosphere'),'infinity')
     const quality=page.getByLabel('Calidad gráfica')
     for(const mode of ['auto','medium']){
       await quality.selectOption(mode)
