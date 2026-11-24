@@ -1,18 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
+import { PROJECT_OVERVIEW } from '../data/projectOverview'
+import { transitionShot } from '../lib/projectTransition'
 import { PROJECT_LAYERS } from '../data/projectShots'
 import { projectCosts } from '../lib/galleryLogic'
 import type { Project } from '../data/types'
 import './projectExperience.css'
 
 const url=(name:string)=>import.meta.env.BASE_URL+'projects/'+name+'.webp'
-
-const themes:Record<string,{label:string;headline:string;sub:string;tabs:string[]}>={
-  matchup:{label:'02 / MOBILE EXPERIENCE',headline:'El partido empieza aquí.',sub:'Organiza. Comparte. Juega.',tabs:['Bienvenida','Explorar partidos','Perfil','Inicio']},
-  ashesfire:{label:'01 / OPERATIONS CENTER',headline:'Del trabajo diario a la rentabilidad.',sub:'Gestión · Seguimiento · Control',tabs:['Proyectos','Menú principal','Costes']},
-  'my-journey':{label:'03 / DIGITAL UNIVERSE',headline:'Una trayectoria conectada.',sub:'Cada nodo cuenta una historia.',tabs:['Portada','Constelación','Cronología móvil']},
-  'cv-editorial':{label:'04 / DIGITAL EDITORIAL',headline:'Una identidad en cada detalle.',sub:'Tipografía, composición y movimiento.',tabs:['Portada','Trayectoria','Móvil']},
-  'portfolio-narrativo':{label:'05 / INTERACTIVE STORY',headline:'Una carrera, muchos capítulos.',sub:'Una historia profesional que se descubre.',tabs:['Cronología','Detalle','Móvil']},
-}
 
 function Orbit({project}:{project:Project}){
   const [active,setActive]=useState(0)
@@ -77,15 +71,6 @@ function EditorialDemo({shots,kind}:{shots:typeof PROJECT_LAYERS[string];kind:st
     <figure className="demo-editorial" onTouchStart={e=>{touch.current=e.touches[0].clientX}} onTouchEnd={e=>{if(touch.current===null)return;const dx=e.changedTouches[0].clientX-touch.current;touch.current=null;if(Math.abs(dx)>45)setStep(v=>Math.max(0,Math.min(shots.length-1,v+(dx<0?1:-1))))}}><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.alt}</figcaption></figure>
   </section>
 }
-function FeatureStory({project}:{project:Project}){
-  const [active,setActive]=useState(0)
-  const sections=[{label:'El objetivo',items:project.objectives},{label:'La solución',items:project.features},{label:'La tecnología',items:project.technical}]
-  const part=sections[active]
-  return <section className="px-story">
-    <div className="px-story-intro"><span className="px-kicker">BEHIND THE PROJECT</span><h3>De la idea<br/>al desarrollo.</h3><p>Explora el trabajo que hay detrás de {project.title}.</p></div>
-    <div className="px-story-body"><div className="px-tabs" role="group" aria-label="Aspectos del desarrollo">{sections.map((s,i)=><button key={s.label} aria-pressed={i===active} onClick={()=>setActive(i)}>{s.label}</button>)}</div><div key={active} className="px-story-items">{part.items.map((item,i)=><article key={item}><span>{String(i+1).padStart(2,'0')}</span><p>{item}</p></article>)}</div></div>
-  </section>
-}
 function DeviceCompare({project}:{project:Project}){
   const shots=PROJECT_LAYERS[project.id]??[]
   const desktop=shots.find(s=>s.kind==='window'||s.src==='narrativo-timeline')
@@ -98,106 +83,126 @@ function DeviceCompare({project}:{project:Project}){
     <div className={'px-compare-devices is-'+mode}>{mode!=='phone'&&<figure className="px-compare-desktop"><img loading="lazy" src={url(desktop.src)} alt={desktop.alt}/><figcaption>Escritorio</figcaption></figure>}{mode!=='desktop'&&<figure className="px-compare-phone"><img loading="lazy" src={url(phone.src)} alt={phone.alt}/><figcaption>Móvil</figcaption></figure>}</div>
   </section>
 }
-const projectJourney:Record<string,{action:string;heading:string;sub:string}> = {
-  matchup:{action:'Probar la app',heading:'Del equipo al partido.',sub:'Una demostración de la experiencia deportiva.'},
-  ashesfire:{action:'Simular rentabilidad',heading:'Cada decisión cuenta.',sub:'Experimenta con el coste y los ingresos de un proyecto.'},
-  'my-journey':{action:'Explorar tecnologías',heading:'El universo detrás de esta web.',sub:'Descubre cómo se conectan sus tecnologías.'},
-  'cv-editorial':{action:'Explorar la edición',heading:'Un currículum que también cuenta una historia.',sub:'Compara la composición y su adaptación a distintos dispositivos.'},
-  'portfolio-narrativo':{action:'Leer los capítulos',heading:'Una trayectoria que cobra vida.',sub:'Recorre sus diferentes escenas narrativas.'},
-}
-const sequenceCopy:Record<string,string[]> = {
-  matchup:['La bienvenida al deporte.','Explora partidos y encuentra tu equipo.','Tu identidad como jugador.','Una entrada con identidad propia.'],
-  ashesfire:['Una vista central de los proyectos.','Cada herramienta en su lugar.','Los costes y la rentabilidad, a la vista.'],
-  'my-journey':['El inicio de una trayectoria.','La experiencia convertida en conexiones.','Una cronología pensada también para móvil.'],
-  'cv-editorial':['Una portada con identidad visual.','La experiencia profesional como relato.','La misma información, adaptada a tu mano.'],
-  'portfolio-narrativo':['El tiempo como hilo conductor.','Cada capítulo descubre una etapa.','Una historia adaptada a pantallas pequeñas.'],
-}
-function CinematicSequence({project}:{project:Project}){
-  const shots=PROJECT_LAYERS[project.id]??[]
-  const root=useRef<HTMLElement>(null)
-  const [active,setActive]=useState(0)
+type Chapter='screens'|'features'|'stack'|'demo'
+const chapterOrder:Chapter[]=['screens','features','stack','demo']
+
+/** Shared card expansion follows the native scroll. No extra canvas, pinning or React work per frame. */
+function useUnfold(root:React.RefObject<HTMLDivElement|null>){
   useEffect(()=>{
-    const el=root.current,scroll=el?.closest('.dlg__scroll')
-    if(!el||!scroll)return
-    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    let frame=0
-    const cards=Array.from(el.querySelectorAll<HTMLElement>('.px-sequence-step'))
-    const update=()=>{
-      frame=0
-      const bounds=scroll.getBoundingClientRect()
-      let index=0,best=Infinity
-      cards.forEach((card,i)=>{
-        const r=card.getBoundingClientRect()
-        const distance=Math.abs(r.top+r.height*.5-(bounds.top+bounds.height*.5))
-        if(distance<best){best=distance;index=i}
-        if(!reduced){const v=Math.max(-1,Math.min(1,(r.top+r.height*.5-bounds.top-bounds.height*.5)/Math.max(1,bounds.height)))
-          card.style.setProperty('--scene-shift',(v*26).toFixed(2)+'px')
-          card.style.setProperty('--scene-angle',(v*7).toFixed(2)+'deg')}
-      })
-      setActive(index)
+    const el=root.current,scroll=el?.closest<HTMLElement>('.dlg__scroll')
+    if(!el||!scroll||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return
+    const pairs=chapterOrder.flatMap(key=>{
+      const source=el.querySelector<HTMLElement>('[data-unfold-source="'+key+'"]')
+      const target=el.querySelector<HTMLElement>('[data-unfold-target="'+key+'"]')
+      const surface=target?.querySelector<HTMLElement>('.px-unfold-surface')
+      return source&&target&&surface?[{source,target,surface}]:[]
+    })
+    let raf=0
+    function update(){
+      raf=0
+      const viewport=scroll!.getBoundingClientRect()
+      // Read all positions before applying transforms, to avoid repeated layout recalculation.
+      const positions=pairs.map(({source,target,surface})=>({source:source.getBoundingClientRect(),target:target.getBoundingClientRect(),surface}))
+      for(const {source,target,surface} of positions){
+        const p=Math.max(0,Math.min(1,(viewport.bottom-target.top)/(viewport.height*.54)))
+        const ease=p*p*(3-2*p)
+        const scale=Math.max(.58,Math.min(1,source.width/Math.max(1,target.width)))
+        const shift=Math.max(-target.width*.25,Math.min(target.width*.25,source.left-target.left))
+        surface.style.setProperty('--unfold-x',((1-ease)*shift).toFixed(2)+'px')
+        surface.style.setProperty('--unfold-scale',(scale+(1-scale)*ease).toFixed(3))
+        surface.style.setProperty('--unfold-detail',(.6+.4*ease).toFixed(3))
+      }
     }
-    const tick=()=>{if(!frame)frame=requestAnimationFrame(update)}
-    scroll.addEventListener('scroll',tick,{passive:true})
-    window.addEventListener('resize',tick);tick()
-    return()=>{scroll.removeEventListener('scroll',tick);window.removeEventListener('resize',tick);cancelAnimationFrame(frame)}
-  },[])
-  return <section ref={root} className="px-sequence">
-    <header><span className="px-kicker">IN MOTION</span><h3>El proyecto, en movimiento.</h3><p>Desplázate para descubrir las capturas originales.</p></header>
-    {shots.map((s,i)=><article key={s.src} className={'px-sequence-step '+(i===active?'is-current':'')}><div className="px-sequence-copy"><span>0{i+1} / {project.title}</span><h4>{sequenceCopy[project.id]?.[i]??s.title??s.alt}</h4><p>{s.alt}</p></div><figure className={'px-sequence-shot px-sequence-shot--'+s.kind}><img loading="lazy" decoding="async" src={url(s.src)} alt={s.alt}/></figure></article>)}
-  </section>
+    const tick=()=>{if(!raf)raf=requestAnimationFrame(update)}
+    const observer=new ResizeObserver(tick);observer.observe(el);observer.observe(scroll)
+    scroll.addEventListener('scroll',tick,{passive:true});tick()
+    return()=>{observer.disconnect();scroll.removeEventListener('scroll',tick);cancelAnimationFrame(raf);for(const {surface} of pairs){surface.style.removeProperty('--unfold-x');surface.style.removeProperty('--unfold-scale');surface.style.removeProperty('--unfold-detail')}}
+  },[root])
 }
+
 export function ProjectExperience({project}:{project:Project}){
-  const [active,setActive]=useState(0)
-  const root=useRef<HTMLDivElement>(null)
-  useEffect(()=>{
-    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return
-    const el=root.current
-    if(!el)return
-    const nodes=el.querySelectorAll('.px-story,.px-comparison')
-    const observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}}},{threshold:.12,root:el.closest('.dlg__scroll')})
-    nodes.forEach(node=>{node.classList.add('px-reveal');observer.observe(node)})
-    return()=>{observer.disconnect();nodes.forEach(node=>node.classList.remove('px-reveal'))}
-  },[])
   const shots=PROJECT_LAYERS[project.id]??[]
-  const theme=themes[project.id]??{label:'PROJECT SHOWCASE',headline:project.title,sub:project.accent,tabs:[]}
+  const identity=PROJECT_OVERVIEW[project.id]
+  const lead=transitionShot(project.id)??shots[0]
+  const [active,setActive]=useState(Math.max(0,shots.findIndex(s=>s.src===lead?.src)))
+  const root=useRef<HTMLDivElement>(null)
+  useUnfold(root)
   const current=shots[active]??shots[0]
-  const journey=projectJourney[project.id]
-  function goToDemo(){const el=root.current?.querySelector<HTMLElement>('.px-primary-experience');el?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'})}
+  const otherShots=shots.map((shot,index)=>({shot,index})).filter(({shot})=>shot.src!==lead?.src).slice(0,2)
+  function jump(chapter:Chapter,index?:number){
+    if(index!==undefined)setActive(index)
+    const target=root.current?.querySelector<HTMLElement>('[data-unfold-target="'+chapter+'"]')
+    target?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'})
+    target?.querySelector<HTMLElement>('h3')?.focus({preventScroll:true})
+  }
   return <div ref={root} className={'px px--'+project.id}>
-    <header className="px-hero dlg__in">
-      <div className="px-copy">
-        <span className="px-kicker">{theme.label}</span>
-        <p className="px-brand">{project.title}</p>
-        <h2>{theme.headline}</h2>
-        <p className="px-sub">{theme.sub}</p>
-        <p>{project.summary}</p>
-        <span className="px-status">{project.status} · {project.role}</span>{journey&&<button className="px-hero-action" onClick={goToDemo}>{journey.action} <span aria-hidden="true">↘</span></button>}
+    <header className="px-hero px-overview dlg__in" aria-label="Proyecto de un vistazo">
+      <div className="px-copy px-overview-intro">
+        <span className="px-kicker">PROJECT / OVERVIEW</span>
+        <h2>{project.title}<span>.</span></h2>
+        <p className="px-sub">{identity?.descriptor??project.accent}</p>
+        <p className="px-overview-summary">{project.summary}</p>
+        <div className="px-overview-meta"><span>{project.status}</span><span>{project.role}</span></div>
       </div>
-      <div className="px-visual">
-        {project.id==='cv-editorial'&&<div className="px-sphere" aria-hidden="true"/>}
-        {project.id==='my-journey'&&<div className="px-halo" aria-hidden="true"/>}
-        {project.id==='matchup'&&shots.slice(0,3).map((s,i)=><button key={s.src} className={'px-device px-device--'+i+(i===active?' is-active':'')} aria-pressed={i===active} onClick={()=>setActive(i)} aria-label={s.alt}><img src={url(s.src)} alt={s.alt}/></button>)}
-        {project.id!=='matchup'&&current&&<figure className={'px-screen px-screen--'+current.kind}><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.title??current.alt}</figcaption></figure>}
+      <div className="px-visual px-overview-screens" data-unfold-source="screens">
+        {lead&&<button className="px-preview px-preview-main" onClick={()=>jump('screens',shots.indexOf(lead))} aria-label={'Ampliar '+lead.alt}>
+          <img src={url(lead.src)} alt={lead.alt} data-transition-shot={lead.src} fetchPriority="high"/>
+          <span>{identity?.screenLabels[shots.indexOf(lead)]??lead.title??'Vista principal'} <b>↗</b></span>
+        </button>}
+        <div className="px-preview-side">{otherShots.map(({shot,index})=><button key={shot.src} className="px-preview" onClick={()=>jump('screens',index)} aria-label={'Ampliar '+shot.alt}>
+          <img src={url(shot.src)} alt={shot.alt} decoding="async"/>
+          <span>{identity?.screenLabels[index]??shot.title??'Vista'} <b>↗</b></span>
+        </button>)}</div>
       </div>
+      <button className="px-overview-card px-overview-features" data-unfold-source="features" onClick={()=>jump('features')}>
+        <span className="px-card-label">01 / FUNCIONALIDADES <b>↘</b></span>
+        <strong>{identity?.purpose??project.objectives[0]}</strong>
+        <span className="px-feature-tags">{(identity?.features??project.features).map(f=><span key={f}>{f}</span>)}</span>
+      </button>
+      <button className="px-overview-card px-overview-stack" data-unfold-source="stack" onClick={()=>jump('stack')}>
+        <span className="px-card-label">02 / TECNOLOGÍAS <b>↘</b></span>
+        <strong>Cómo está construido.</strong>
+        <span className="px-feature-tags">{project.technologies.map(t=><span key={t}>{t}</span>)}</span>
+      </button>
+      <button className="px-overview-card px-overview-demo px-hero-action" data-unfold-source="demo" onClick={()=>jump('demo')}>
+        <span className="px-card-label">03 / INTERACTIVO <b>↘</b></span>
+        <strong>{identity?.demo??'Explora el proyecto'}</strong>
+        <span>{identity?.demoHint??'Descubre la experiencia.'}</span>
+        <span className="px-demo-cta">Explorar ahora →</span>
+      </button>
+      <div className="px-overview-foot"><span>Capturas originales · {project.context}</span><span>Selecciona una tarjeta o desliza para ampliar ↓</span></div>
     </header>
-    <section className="px-explore dlg__in">
-      <div className="px-section-head"><span>INTERACTIVE SHOWCASE</span><h3>{project.id==='portfolio-narrativo'?'Explora los capítulos':project.id==='ashesfire'?'Explora el centro de control':'Descubre la experiencia'}</h3><p>Capturas originales del proyecto. Esta presentación no ejecuta la aplicación.</p></div>
-      <div className="px-tabs" role="group" aria-label="Escenas del proyecto">{shots.map((s,i)=><button key={s.src} aria-pressed={i===active} onClick={()=>setActive(i)}>{project.id==='portfolio-narrativo'&&<small>0{i+1} </small>}{theme.tabs[i]??s.title??s.alt}</button>)}</div>
-      {current&&<figure className={'px-detail px-detail--'+current.kind}><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.alt}</figcaption></figure>}
-      {project.id==='ashesfire'&&<div className="px-metrics"><div><strong>{shots.length}</strong><span>Vistas en esta exposición</span></div><div><strong>{project.features.length}</strong><span>Funcionalidades documentadas</span></div><div><strong>{project.technologies.length}</strong><span>Tecnologías del proyecto</span></div></div>}
-      {project.id==='portfolio-narrativo'&&<div className="px-chapters">{shots.map((s,i)=><button key={s.src} aria-pressed={i===active} onClick={()=>setActive(i)}><span>0{i+1}</span>{theme.tabs[i]}</button>)}</div>}
-      {project.id==='cv-editorial'&&<div className="px-editorial"><span>01 / Diseño</span><span>02 / Trayectoria</span><span>03 / Adaptabilidad</span></div>}
-      {project.id==='matchup'&&<div className="px-sports"><span>FÚTBOL</span><span>PÁDEL</span><span>BASKET</span></div>}
+    <section className="px-unfold" data-unfold-target="screens">
+      <div className="px-unfold-surface px-explore">
+        <header className="px-section-head"><span>VISTAS / {project.title}</span><h3 tabIndex={-1}>El proyecto en acción.</h3><p>Las mismas capturas de la portada, ahora a tamaño completo. No ejecutan la aplicación original.</p></header>
+        <div className="px-tabs" role="group" aria-label="Escenas del proyecto">{shots.map((s,i)=><button key={s.src} aria-pressed={i===active} onClick={()=>setActive(i)}>{identity?.screenLabels[i]??s.title??s.alt}</button>)}</div>
+        {current&&<figure className={'px-detail px-detail--'+current.kind+(current.src==='narrativo-phone'?' px-detail--phone':'')}><img key={current.src} src={url(current.src)} alt={current.alt} loading="lazy" decoding="async"/><figcaption>{current.alt}</figcaption></figure>}
+        <DeviceCompare project={project}/>
+      </div>
     </section>
-    <section className="px-primary-experience">
-      {journey&&<header className="px-primary-head"><span className="px-kicker">EXPERIENCE / {project.title}</span><h3>{journey.heading}</h3><p>{journey.sub}</p></header>}
-      {project.id==='matchup'&&<MatchDemo/>}
-      {project.id==='ashesfire'&&<CostsDemo/>}
-      {project.id==='my-journey'&&<Orbit project={project}/>}
-      {(project.id==='cv-editorial'||project.id==='portfolio-narrativo')&&<EditorialDemo shots={shots} kind={project.id}/>}
+    <section className="px-unfold" data-unfold-target="features">
+      <div className="px-unfold-surface px-unfold-info">
+        <header className="px-section-head"><span>01 / FUNCIONALIDADES</span><h3 tabIndex={-1}>De la idea a la solución.</h3></header>
+        <div className="px-unfold-content"><div className="px-objective"><h4>El objetivo</h4>{project.objectives.map(t=><p key={t}>{t}</p>)}</div>
+          <div className="px-expanded-features">{project.features.map((feature,i)=><article key={feature}><span className="px-kicker">0{i+1}</span><h4>{identity?.features[i]??'Funcionalidad '+(i+1)}</h4><p>{feature}</p></article>)}</div></div>
+      </div>
     </section>
-    <CinematicSequence project={project}/>
-    <DeviceCompare project={project}/>
-    <FeatureStory project={project}/>
+    <section className="px-unfold" data-unfold-target="stack">
+      <div className="px-unfold-surface px-unfold-info">
+        <header className="px-section-head"><span>02 / TECNOLOGÍAS</span><h3 tabIndex={-1}>Cómo está construido.</h3></header>
+        <div className="px-unfold-content"><div className="px-stack-expanded">{project.technologies.map(t=><span key={t}>{t}</span>)}</div>
+          <div className="px-expanded-features">{project.technical.map((t,i)=><article key={t}><span className="px-kicker">0{i+1} / IMPLEMENTACIÓN</span><p>{t}</p></article>)}</div></div>
+      </div>
+    </section>
+    <section className="px-unfold px-primary-experience" data-unfold-target="demo">
+      <div className="px-unfold-surface px-unfold-info">
+        <header className="px-section-head"><span>03 / INTERACTIVO</span><h3 tabIndex={-1}>{identity?.demo??'Explora el proyecto'}</h3><p>{identity?.demoHint}</p></header>
+        {project.id==='matchup'&&<MatchDemo/>}
+        {project.id==='ashesfire'&&<CostsDemo/>}
+        {project.id==='my-journey'&&<Orbit project={project}/>}
+        {(project.id==='cv-editorial'||project.id==='portfolio-narrativo')&&<EditorialDemo shots={shots} kind={project.id}/>}
+      </div>
+    </section>
+    <button className="px-back-overview" onClick={()=>root.current?.querySelector('.px-overview')?.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})}>↑ Volver a la vista general</button>
   </div>
 }
