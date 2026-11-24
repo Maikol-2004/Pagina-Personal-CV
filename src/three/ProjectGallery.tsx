@@ -1,7 +1,7 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, MeshReflectorMaterial, useTexture, Environment, Lightformer, Sparkles } from '@react-three/drei'
+import { Html, MeshReflectorMaterial, useTexture, Environment, Lightformer } from '@react-three/drei'
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Vector3, Color, Matrix4, Mesh, InstancedMesh, TextureLoader, Group, PointLight, SpotLight, Object3D, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
+import { Vector3, Color, Matrix4, Mesh, InstancedMesh, Group, PointLight, SpotLight, Object3D, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
 import { projects } from '../data/profile'
 import type { Project } from '../data/types'
 import { GalleryEffects } from './GalleryEffects'
@@ -60,7 +60,7 @@ function CeilingLights(){
       lamp.position.set(0,4.09,ceilingPositions[index][2])
     })
   })
-  return <group ref={group}>{Array.from({length:5},(_,i)=><pointLight key={i} position={[0,4.09,10-i*3.3]} color="#f7d9b6" intensity={5.5} distance={10} decay={2}/>)}</group>
+  return <group ref={group}>{Array.from({length:5},(_,i)=><pointLight key={i} position={[0,4.09,10-i*3.3]} color="#f2e6d4" intensity={5.5} distance={10} decay={2}/>)}</group>
 }
 function ExhibitionLights({selected,phase}:{selected:number|null;phase:Phase}){
   const group=useRef<Group>(null)
@@ -83,49 +83,46 @@ function ExhibitionLights({selected,phase}:{selected:number|null;phase:Phase}){
 function Block({ position, size, color, metal = 0, roughness = .7 }: { position: [number,number,number]; size: [number,number,number]; color: string; metal?: number; roughness?: number }) {
   return <mesh position={position} castShadow receiveShadow><boxGeometry args={size}/><meshStandardMaterial color={color} metalness={metal} roughness={roughness}/></mesh>
 }
-// Locally generated grain and stone maps: no external texture requests.
+/** Shared, deterministic stone and brushed bronze maps. No runtime network dependencies. */
 function useArchitecturalMaterials(){
   return useMemo(()=>{
-    const make=(wood:boolean, data=false)=>{
-      const canvas=document.createElement('canvas');canvas.width=canvas.height=1024
-      const ctx=canvas.getContext('2d')!
-      const pixels=ctx.createImageData(1024,1024)
-      for(let y=0;y<1024;y++)for(let x=0;x<1024;x++){
-        const i=(y*1024+x)*4
-        const grain=wood?Math.sin(x*.29+Math.sin(y*.013)*3+Math.sin(y*.04)*.7)*9+Math.sin(x*1.7+y*.008)*5:Math.sin(x*.028+y*.019+Math.sin(y*.031)*2)*5
-        const noise=(Math.sin(x*127.1+y*311.7)*43758.5453)%1*3
-        const v=grain+noise+(wood?Math.sin(x*.075+Math.sin(y*.008)*1.7)*7:Math.sin(x*.04+y*.025+Math.sin(y*.017)*2)*4)
-        pixels.data[i]=data?128+v*3:(wood?83:68)+v;pixels.data[i+1]=data?128+v*3:(wood?58:53)+v;pixels.data[i+2]=data?128+v*3:(wood?42:44)+v;pixels.data[i+3]=255
-      }
-      ctx.putImageData(pixels,0,0)
-      const t=new CanvasTexture(canvas);if(!data)t.colorSpace=SRGBColorSpace;t.wrapS=t.wrapT=RepeatWrapping;t.anisotropy=8
-      return t
+    const n=512
+    const canvas=()=>{const c=document.createElement('canvas');c.width=c.height=n;return c}
+    const color=canvas(),height=canvas(),metal=canvas()
+    const cc=color.getContext('2d')!,hc=height.getContext('2d')!,mc=metal.getContext('2d')!
+    const rgb=cc.createImageData(n,n),relief=hc.createImageData(n,n),brushed=mc.createImageData(n,n)
+    const fract=(x:number)=>x-Math.floor(x)
+    const hash=(x:number,y:number)=>fract(Math.sin(x*127.1+y*311.7)*43758.5453123)
+    const noise=(x:number,y:number,period:number)=>{
+      const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy
+      const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy)
+      const wrap=(k:number)=>(k%period+period)%period
+      const a=hash(wrap(ix),wrap(iy)),b=hash(wrap(ix+1),wrap(iy))
+      const d=hash(wrap(ix),wrap(iy+1)),e=hash(wrap(ix+1),wrap(iy+1))
+      return (a+(b-a)*u)*(1-v)+(d+(e-d)*u)*v
     }
-    const wood=make(true),woodRelief=make(true,true)
-    return {wood,woodRelief,wall:new MeshStandardMaterial({map:wood,bumpMap:woodRelief,bumpScale:.035,roughnessMap:woodRelief,roughness:.95,metalness:.03})}
+    for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+      const i=(y*n+x)*4, u=x/n,v=y/n
+      const broad=noise(u*5,v*5,5),medium=noise(u*17,v*17,17),fine=noise(u*67,v*67,67),grit=hash(x,y)
+      const vein=Math.pow(Math.max(0,1-Math.abs(Math.sin((u*5+v*3+broad*.8)*Math.PI))*7),2)
+      const h=.44*broad+.25*medium+.19*fine+.12*grit
+      const k=(h-.5)*47+vein*7
+      rgb.data.set([80+k,77+k,72+k,255],i)
+      const reliefValue=55+h*145-vein*15
+      relief.data.set([reliefValue,reliefValue,reliefValue,255],i)
+      const brushing=(hash(x,0)-.5)*23+(hash(x,y)-.5)*5
+      brushed.data.set([157+brushing,136+brushing,111+brushing,255],i)
+    }
+    cc.putImageData(rgb,0,0);hc.putImageData(relief,0,0);mc.putImageData(brushed,0,0)
+    const tex=(c:HTMLCanvasElement,isColor:boolean)=>{
+      const t=new CanvasTexture(c);if(isColor)t.colorSpace=SRGBColorSpace
+      t.wrapS=t.wrapT=RepeatWrapping;t.anisotropy=4;return t
+    }
+    const stone=tex(color,true),bump=tex(height,false),bronze=tex(metal,true)
+    const wall=new MeshStandardMaterial({map:stone,bumpMap:bump,bumpScale:.085,roughness:.88,metalness:.02})
+    const trim=new MeshStandardMaterial({map:bronze,metalness:.8,roughness:.34})
+    return {stone,bump,bronze,wall,trim}
   },[])
-}
-// Optional locally served photographic maps. Procedural materials remain available offline.
-function usePhotoMaps(asset:string,repeat:[number,number]){
-  const [maps,setMaps]=useState<{diff:import('three').Texture;normal:import('three').Texture;rough:import('three').Texture}|null>(null)
-  const gl=useThree(s=>s.gl)
-  const [rx,ry]=repeat
-  useEffect(()=>{
-    let cancelled=false
-    const loader=new TextureLoader()
-    const loaded:import('three').Texture[]=[]
-    const load=async (name:string,color:boolean)=>{
-      const t=await loader.loadAsync(import.meta.env.BASE_URL+'gallery-materials/'+asset+'-'+name+'.img')
-      if(cancelled){t.dispose();throw new Error('Cancelled')}
-      loaded.push(t);t.wrapS=t.wrapT=RepeatWrapping;t.repeat.set(rx,ry)
-      t.anisotropy=Math.min(8,gl.capabilities.getMaxAnisotropy())
-      if(color)t.colorSpace=SRGBColorSpace
-      return t
-    }
-    void Promise.all([load('diff',true),load('nor_gl',false),load('rough',false)]).then(([diff,normal,rough])=>{if(!cancelled)setMaps({diff,normal,rough})}).catch(()=>{})
-    return()=>{cancelled=true;loaded.forEach(t=>t.dispose())}
-  },[asset,rx,ry,gl])
-  return maps
 }
 function ContactStrips(){
   const tex=useMemo(()=>{
@@ -143,12 +140,12 @@ function Reception({progress}:{progress:React.RefObject<number>}){
   useFrame((_,dt)=>{if(light.current){const target=progress.current<.25?11:3;light.current.intensity+=(target-light.current.intensity)*(1-Math.exp(-dt*3))}})
   return <group>
     {[-1,1].map(side=><group key={side} position={[side*3.12,2.1,1.5]} rotation={[0,-side*Math.PI/2,0]}>
-      <Block position={[0,0,-.08]} size={[5.1,3.3,.18]} color="#211812"/>
+      <Block position={[0,0,-.08]} size={[5.1,3.3,.18]} color="#27282a"/>
       <Block position={[0,1.67,.02]} size={[5.1,.035,.05]} color="#d2a27e" metal={.7}/>
       <Block position={[0,-1.67,.02]} size={[5.1,.035,.05]} color="#d2a27e" metal={.7}/>
       <Html transform position={[0,0,.12]} distanceFactor={5} style={{pointerEvents:'none'}}><div className="gallery-reception"><strong>MG.</strong><span>THE EXHIBITION</span><p>Cinco proyectos. Una trayectoria.</p></div></Html>
     </group>)}
-    <pointLight ref={light} position={[0,3.4,1.5]} color="#ffd4a6" intensity={11} distance={10}/>
+    <pointLight ref={light} position={[0,3.4,1.5]} color="#ecddc7" intensity={11} distance={10}/>
     <Html position={[0,3.35,-2.4]} transform distanceFactor={7} style={{pointerEvents:'none'}}><div className="gallery-entry-sign">THE EXHIBITION <span>↓</span></div></Html>
   </group>
 }
@@ -259,68 +256,75 @@ function ExhibitShadow({enabled}:{enabled:boolean}){
 }
 function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive}: {progress: React.RefObject<number>;selected:number|null;phase:Phase;quality:Quality;adaptiveDpr:number;yaw:React.RefObject<number>;onSelect:(i:number)=>void;onArrive:(rect?:DOMRect|null)=>void}) {
   const materials=useArchitecturalMaterials()
-  const woodPhoto=usePhotoMaps('dark_wood',[1,1])
-  const ceilingGlow=useMemo(()=>new Color('#f4dfc5').multiplyScalar(2.1),[])
-  const fixtures=useMemo(()=>ceilingPositions.map(([x,y,z]):[number,number,number]=>[x,y+.04,z]),[])
-  const strips=useMemo(()=>ceilingPositions.map(([x,y,z]):[number,number,number]=>[x,y-.067,z]),[])
-  const boards=useMemo(()=>[-1,1].flatMap(side=>Array.from({length:23},(_,i)=>ROOM_FRONT_Z-1.5-i*3).filter(z=>alcoves(side).every(a=>Math.abs(a-z)>alcoveHalf+1.5)).map((z):[number,number,number]=>[side*3.39,2.2,z])),[])
-  const trim=useMemo(()=>boards.map(([x,y,z]):[number,number,number]=>[x-Math.sign(x)*.09,y,z+1.46]),[boards])
-  const copper=useMemo(()=>boards.map(([x,y,z]):[number,number,number]=>[x-Math.sign(x)*.08,y,z+1.40]),[boards])
-  useEffect(()=>{
-    if(!woodPhoto)return
-    materials.wall.map=woodPhoto.diff;materials.wall.normalMap=woodPhoto.normal;materials.wall.bumpMap=null;materials.wall.roughnessMap=woodPhoto.rough;materials.wall.needsUpdate=true
-  },[materials,woodPhoto])
   const mobile=useThree(s=>s.size.width<700)
-  useEffect(()=>()=>{materials.wood.dispose();materials.woodRelief.dispose();materials.wall.dispose()},[materials])
+  const ceilingGlow=useMemo(()=>new Color('#f2e7d7').multiplyScalar(2.25),[])
+  const accentGlow=useMemo(()=>new Color('#e0c4a0').multiplyScalar(1.55),[])
+  const architecture=useMemo(()=>{
+    const positions=(fn:(side:number,z:number)=>[number,number,number])=>[-1,1].flatMap(side=>Array.from({length:8},(_,i)=>fn(side,6-i*8)))
+    const panels=([-1,1] as const).flatMap(side=>wallSegments(side).flatMap(seg=>{
+      const count=Math.max(1,Math.floor(seg.length/2.3))
+      const step=seg.length/count
+      return Array.from({length:count},(_,i)=>({side,z:seg.z-seg.length/2+step*(i+.5),length:step-.055}))
+    }))
+    const flutes: [number,number,number][]=[]
+    for(const side of [-1,1])for(const z of [6,-2,-10,-18,-26,-34,-42,-50]){
+      if(alcoves(side).some(a=>Math.abs(a-z)<3.05))continue
+      for(let j=0;j<7;j++)flutes.push([side*3.13,2.28,z+(j-3)*.12])
+    }
+    return {panels,flutes,
+      pillars:positions((s,z)=>[s*3.14,2.25,z]),
+      pillarInset:positions((s,z)=>[s*2.94,2.25,z]),
+      pillarEdges:positions((s,z)=>[s*2.91,2.25,z+.31]),
+      pillarLights:positions((s,z)=>[s*2.887,2.25,z-.30]),
+      crossbeams:Array.from({length:8},(_,i):[number,number,number]=>[0,4.13,6-i*8]),
+      crossTrim:Array.from({length:8},(_,i):[number,number,number]=>[0,3.965,6-i*8]),
+      coves:[[-2.67,4.13,ROOM_CENTER],[2.67,4.13,ROOM_CENTER]] as [number,number,number][],
+      coveLights:[[-2.50,4.04,ROOM_CENTER],[2.50,4.04,ROOM_CENTER]] as [number,number,number][],
+      fixtures:ceilingPositions.map(([x,y,z]):[number,number,number]=>[x,y+.04,z]),
+      strips:ceilingPositions.map(([x,y,z]):[number,number,number]=>[x,y-.067,z])
+    }
+  },[])
+  useEffect(()=>()=>{materials.stone.dispose();materials.bump.dispose();materials.bronze.dispose();materials.wall.dispose();materials.trim.dispose()},[materials])
   return <>
-    <color attach="background" args={['#17120f']}/>
-    <fog attach="fog" args={['#17120f',25,68]}/>
-    <ambientLight intensity={phase==='focused'?.18:.28}/>
-    <Environment resolution={128}><Lightformer form="rect" intensity={3} color="#ffe0b8" position={[0,5,-10]} scale={[6,25,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={1.5} color="#c69a73" position={[4,2,-15]} scale={[30,4,1]} rotation={[0,-Math.PI/2,0]}/></Environment>
-    <hemisphereLight args={["#ffe1bf","#38251b",phase==='focused'?.83:1.1]}/>
-    {/* Continuous polished graphite resin: actual planar reflections, not painted light streaks. */}
+    <color attach="background" args={['#141619']}/>
+    <fog attach="fog" args={['#141619',30,72]}/>
+    <ambientLight intensity={phase==='focused'?.25:.38}/>
+    <Environment resolution={128}><Lightformer form="rect" intensity={3} color="#f4e8d5" position={[0,5,-10]} scale={[6,25,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={1.5} color="#b8ac9c" position={[4,2,-15]} scale={[30,4,1]} rotation={[0,-Math.PI/2,0]}/></Environment>
+    <hemisphereLight args={["#f6ebd9","#343b42",phase==='focused'?.83:1.1]}/>
+    {/* Keep the dark, continuous floor and the optimized real reflection buffer. */}
     <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]} receiveShadow>
       <planeGeometry args={[7,ROOM_LENGTH]}/>
-      <MeshReflectorMaterial
-        resolution={reflectionSize(quality,adaptiveDpr,mobile)}
-        mirror={.40}
-        mixStrength={4.5}
-        mixBlur={0}
-        blur={[0,0]}
-        color="#111214"
-        metalness={.12}
-        roughness={.18}
-      />
+      <MeshReflectorMaterial resolution={reflectionSize(quality,adaptiveDpr,mobile)} mirror={.40} mixStrength={4.5} mixBlur={0} blur={[0,0]} color="#101113" metalness={.12} roughness={.18}/>
     </mesh>
-    <Block position={[0,4.5,ROOM_CENTER]} size={[7,.3,ROOM_LENGTH]} color="#211813"/>
-    <Block position={[0,2.2,ROOM_BACK_Z]} size={[7,4.5,.3]} color="#302219"/>
+    <Block position={[0,4.5,ROOM_CENTER]} size={[7,.3,ROOM_LENGTH]} color="#242628"/>
+    <Block position={[0,2.2,ROOM_BACK_Z]} size={[7,4.5,.3]} color="#343437"/>
     {[-1,1].map(side=><group key={side}>
-      <Block position={[side*3.55,2.2,ROOM_CENTER]} size={[.3,4.5,ROOM_LENGTH]} color="#372a21"/>
-      {wallSegments(side).map(s=><Block key={s.z} position={[side*3.36,.15,s.z]} size={[.12,.3,s.length]} color="#916b4d" metal={.65}/>)}
-      <Block position={[side*3.35,4.15,ROOM_CENTER]} size={[.12,.12,ROOM_LENGTH]} color="#b98a63" metal={.6}/>
-      <mesh position={[side*3.26,4.02,ROOM_CENTER]}><boxGeometry args={[.035,.045 ,ROOM_LENGTH-1]}/><meshBasicMaterial color="#eed4b7" toneMapped={false}/></mesh>
-      {wallSegments(side).map(s=><mesh key={s.z} position={[side*3.25,.31,s.z]}><boxGeometry args={[.025,.025,s.length]}/><meshBasicMaterial color="#d3a477" toneMapped={false}/></mesh>)}
+      <Block position={[side*3.55,2.2,ROOM_CENTER]} size={[.3,4.5,ROOM_LENGTH]} color="#303134"/>
+      <Block position={[side*3.33,.12,ROOM_CENTER]} size={[.17,.24,ROOM_LENGTH]} color="#222426" metal={.25}/>
+      <mesh position={[side*3.229,.25,ROOM_CENTER]}><boxGeometry args={[.024,.035,ROOM_LENGTH-1]}/><meshBasicMaterial color={accentGlow} toneMapped={false}/></mesh>
+      <Block position={[side*3.34,4.22,ROOM_CENTER]} size={[.16,.18,ROOM_LENGTH]} color="#383633"/>
+      <mesh position={[side*3.23,4.11,ROOM_CENTER]}><boxGeometry args={[.035,.035,ROOM_LENGTH-1]}/><meshBasicMaterial color={accentGlow} toneMapped={false}/></mesh>
     </group>)}
-    <BoxBatch positions={boards} size={[.08,3.85,2.88]} material={materials.wall}/>
-    <BoxBatch positions={trim} size={[.16,4.25,.085]} color="#211813"/>
-    <BoxBatch positions={copper} size={[.05,4.1,.025]} color="#a77d58" metal={.65}/>
-    {Array.from({length:8},(_,i)=><group key={'portal'+i} position={[0,0,6-i*8]}>
-      {[-1,1].map(side=><group key={side}>
-        <Block position={[side*3.13,2.2,0]} size={[.45,4.4,.52]} color="#241a14"/>
-        <Block position={[side*2.89,2.2,0]} size={[.025,4.15,.38]} color="#b98a63" metal={.7}/>
-      </group>)}
-      <Block position={[0,i%2===0?4.12:4.26,0]} size={[6.1,i%2===0?.55:.3,.65]} color="#241a14"/>
-      <mesh position={[0,3.83,0]}><boxGeometry args={[5.7,.025,.045]}/><meshBasicMaterial color="#ffe0b8" toneMapped={false}/></mesh>
-    </group>)}
-    {!mobile&&quality==='ultra'&&<Sparkles count={24} scale={[5,3,ROOM_LENGTH-4]} position={[0,2,ROOM_CENTER]} size={1.2} speed={.12} opacity={.18} color="#d2a27e"/>}
-    <BoxBatch positions={fixtures} size={[6.7,.15,.38]} color="#17120f"/>
-    <BoxBatch positions={strips} size={[5.8,.025,.105]} glow={ceilingGlow}/>
+    {/* Real stone slabs, slightly stepped relative to one another. Nothing overlaps the five posters. */}
+    {architecture.panels.map((p,i)=><mesh key={i} position={[p.side*(i%2?3.32:3.36),2.24,p.z]} material={materials.wall} receiveShadow><boxGeometry args={[.12,3.85,p.length]}/></mesh>)}
+    <BoxBatch positions={architecture.pillars} size={[.49,4.38,.76]} material={materials.wall}/>
+    <BoxBatch positions={architecture.pillarInset} size={[.18,3.98,.66]} color="#292b2d" metal={.25}/>
+    <BoxBatch positions={architecture.flutes} size={[.13,3.72,.058]} material={materials.trim}/>
+    <BoxBatch positions={architecture.pillarEdges} size={[.045,4.12,.035]} material={materials.trim}/>
+    <BoxBatch positions={architecture.pillarLights} size={[.025,3.58,.028]} glow={accentGlow}/>
+    {/* Layered ceiling: a recessed central channel plus broad crossbeams and continuous coves. */}
+    <BoxBatch positions={architecture.coves} size={[.72,.28,ROOM_LENGTH]} color="#2d2d2f" metal={.18}/>
+    <BoxBatch positions={architecture.coveLights} size={[.075,.028,ROOM_LENGTH-1]} glow={ceilingGlow}/>
+    <BoxBatch positions={architecture.crossbeams} size={[5.8,.28,.66]} color="#303031" metal={.12}/>
+    <BoxBatch positions={architecture.crossTrim} size={[5.74,.035,.12]} material={materials.trim}/>
+    <BoxBatch positions={architecture.fixtures} size={[6.7,.15,.38]} color="#242527"/>
+    <BoxBatch positions={architecture.strips} size={[5.8,.025,.105]} glow={ceilingGlow}/>
     <CeilingLights/>
     <ExhibitionLights selected={selected} phase={phase}/>
-    <Block position={[0,2.3,ROOM_BACK_Z+.3]} size={[4.9,3.5,.12]} color="#201712"/>
-    <Block position={[0,4.08,ROOM_BACK_Z+.45]} size={[5,.06,.16]} color="#d2a27e" metal={.6}/>
+    <mesh position={[0,2.3,ROOM_BACK_Z+.26]} material={materials.wall}><boxGeometry args={[5.4,4.1,.14]}/></mesh>
+    <Block position={[0,4.32,ROOM_BACK_Z+.44]} size={[5.4,.08,.16]} color="#b69d80" metal={.7}/>
     <Html position={[0,2.35,ROOM_BACK_Z+.55]} transform distanceFactor={6} style={{pointerEvents:'none'}}><div className="gallery-end"><strong>MG.</strong><span>MY JOURNEY</span><p>Cada proyecto, un paso más en mi trayectoria.</p></div></Html>
-    <pointLight position={[0,3.8,ROOM_BACK_Z+2.2]} color="#ffce99" intensity={12} distance={7}/>
+    <pointLight position={[0,3.8,ROOM_BACK_Z+2.2]} color="#e8d5bc" intensity={12} distance={7}/>
     <ContactStrips/>
     {quality==='ultra'&&!mobile&&<ExhibitShadow enabled/>}
     <Reception progress={progress}/>
@@ -470,6 +474,6 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
     </div></div>}
     {fallback&&<p className="gallery-fallback-note">Explora los proyectos directamente, sin animación 3D.</p>}
     <div className="gallery-access" aria-label="Acceso directo a proyectos">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title} ↗</button>)}</div>
-    <p className="gallery-material-credit">Materiales fotográficos: <a href="https://polyhaven.com/" target="_blank" rel="noreferrer">Poly Haven (CC0)</a> · con alternativa procedural.</p>
+    <p className="gallery-material-credit">Materiales procedurales originales · piedra, bronce satinado y suelo pulido.</p>
   </div>
 }
