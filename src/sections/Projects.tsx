@@ -44,51 +44,12 @@ export function Projects({ onOpen, activeProjectId }: Props) {
   </section>
 }
 
-const Block = ({ title, items }: { title: string; items: string[] }) => (
-  <section className="pd__block dlg__in">
-    <h3>{title}</h3>
-    <ul className="pd__list">
-      {items.map((t) => (
-        <li key={t}>{t}</li>
-      ))}
-    </ul>
-  </section>
-)
-
 /** Ficha completa de un proyecto (diálogo cinematográfico) con galería de imágenes reales. */
 export function ProjectDetail({ project }: { project: Project }) {
   return (
     <div className="pd">
       <ProjectExperience key={project.id} project={project}/>
-      <p className="eyebrow dlg__in">{project.context}</p>
-      <dl className="pd__facts dlg__in">
-        <div>
-          <dt className="eyebrow">Rol</dt>
-          <dd>{project.role}</dd>
-        </div>
-        <div>
-          <dt className="eyebrow">Estado</dt>
-          <dd>{project.status}</dd>
-        </div>
-        <div>
-          <dt className="eyebrow">Stack</dt>
-          <dd>
-            <ul className="chips">
-              {project.technologies.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
-            </ul>
-          </dd>
-        </div>
-      </dl>
-
-      <div className="pd__cols">
-        <Block title="Objetivos" items={project.objectives} />
-        <Block title="Funcionalidades" items={project.features} />
-        <Block title="Aspectos técnicos" items={project.technical} />
-      </div>
-
-      <div className="pd__links dlg__in">
+      <div className="pd__links">
         {project.links.map((l) => (
           <a
             key={l.href}
