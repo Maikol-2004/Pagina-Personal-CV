@@ -32,11 +32,11 @@ const Out = () => (
 export function Projects({ onOpen, activeProjectId, paused=false }: Props) {
   const direct=<div className="container gallery-access" aria-label="Acceso directo a proyectos">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title}</button>)}</div>
   return <section className="section projects" id="proyectos" aria-labelledby="pr-title">
-    <div className="container">
+    <div className="container projects-intro">
       <SectionLabel n="04" left="Proyectos" right="Lo que construyo" />
       <div className="section-heading" data-reveal>
         <h2 id="pr-title">Proyectos<br/><em>destacados.</em></h2>
-        <p>Una exposición de software real. Recorre la galería y descubre cada proyecto.</p>
+        <div className="projects-intro-copy"><p>Una exposición de software real. Recorre la galería y descubre cada proyecto.</p><a className="projects-intro-link" href="#galeria-inmersiva">Entrar en la exposición <span aria-hidden="true">↓</span></a></div>
       </div>
     </div>
     <GalleryBoundary fallback={direct}><Suspense fallback={direct}>

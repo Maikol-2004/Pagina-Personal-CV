@@ -78,11 +78,11 @@ function ExhibitionLights({selected,phase,spacious=false}:{selected:number|null;
       light.position.set(side*(spacious?INFINITY_WIDTH-.8:exhibitX-.7),spacious?4.8:3.6,projectZ(i)*depth)
       light.color.set(p.id==='matchup'?'#a8ed46':p.tone)
       const proximity=Math.max(0,1-Math.abs(camera.position.z-projectZ(i)*depth)/(9*depth))
-      const target=(spacious?4:2)+(spacious?10:5)*proximity+(selected===i&&phase==='focused'?3:0)
+      const target=(spacious?1.6:2)+(spacious?4.5:5)*proximity+(selected===i&&phase==='focused'?3:0)
       light.intensity+=(target-light.intensity)*(1-Math.exp(-dt*4))
     })
   })
-  return <group ref={group}>{[0,1].map(i=><pointLight key={i} intensity={2} distance={spacious?12:5}/>)}</group>
+  return <group ref={group}>{[0,1].map(i=><pointLight key={i} intensity={2} distance={spacious?8:5}/>)}</group>
 }
 function Block({ position, size, color, metal = 0, roughness = .7 }: { position: [number,number,number]; size: [number,number,number]; color: string; metal?: number; roughness?: number }) {
   return <mesh position={position} castShadow receiveShadow><boxGeometry args={size}/><meshStandardMaterial color={color} metalness={metal} roughness={roughness}/></mesh>
@@ -162,7 +162,8 @@ function Artwork({project,index,onSelect,floating=false}:{project:Project;index:
   const gl=useThree(s=>s.gl)
   useEffect(()=>{
     texture.colorSpace=SRGBColorSpace
-    texture.anisotropy=Math.min(8,gl.capabilities.getMaxAnisotropy())
+    texture.anisotropy=gl.capabilities.getMaxAnisotropy()
+    texture.generateMipmaps=true
     texture.minFilter=LinearMipmapLinearFilter;texture.magFilter=LinearFilter
     texture.needsUpdate=true
   },[texture,gl])
@@ -172,7 +173,7 @@ function Artwork({project,index,onSelect,floating=false}:{project:Project;index:
       <Block position={[0,0,-.055]} size={[4.88,3.92,.10]} color="#8d6e4e" metal={.88} roughness={.23}/>
       <Block position={[0,0,-.115]} size={[4.75,3.79,.08]} color="#171619" metal={.48} roughness={.36}/>
       <Block position={[0,-2.21,-.10]} size={[.11,.62,.13]} color="#a88a65" metal={.88} roughness={.24}/>
-      <mesh position={[0,-2.49,-.12]}><cylinderGeometry args={[1.9,1.93,.11,40]}/><meshStandardMaterial color="#806447" metalness={.84} roughness={.27}/></mesh>
+      <mesh position={[0,-2.49,-.12]}><cylinderGeometry args={[1.9,1.93,.11,40]}/><meshStandardMaterial color="#342b23" metalness={.84} roughness={.32}/></mesh>
       <mesh position={[0,-2.43,-.12]} rotation={[-Math.PI/2,0,0]}><ringGeometry args={[1.80,1.85,48]}/><meshBasicMaterial color="#e5c39c" toneMapped={false}/></mesh>
       <mesh position={[0,-1.957,.005]}><boxGeometry args={[4.81,.018,.019]}/><meshBasicMaterial color="#d7b18a" toneMapped={false}/></mesh>
     </>}
@@ -368,8 +369,8 @@ function InfinityAtmosphere({quality}:{quality:Quality}){
         ctx.fillStyle=mask;ctx.fillRect(0,0,128,256)
       }else{
         const gradient=ctx.createRadialGradient(64,64,0,64,64,64)
-        gradient.addColorStop(0,'rgba(255,202,141,.35)')
-        gradient.addColorStop(.24,'rgba(196,132,78,.18)')
+        gradient.addColorStop(0,'rgba(255,202,141,.16)')
+        gradient.addColorStop(.24,'rgba(196,132,78,.065)')
         gradient.addColorStop(1,'rgba(196,132,78,0)')
         ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128)
       }
@@ -382,8 +383,8 @@ function InfinityAtmosphere({quality}:{quality:Quality}){
     {projects.map((p,i)=>{
       const z=projectZ(i)*INFINITY_DEPTH,x=(i%2?1:-1)*INFINITY_WIDTH
       return <group key={p.id} position={[x,0,z]}>
-        <mesh position={[0,.026,0]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[12,12]}/><meshBasicMaterial map={textures.halo} transparent depthWrite={false} blending={AdditiveBlending} opacity={.65} toneMapped={false}/></mesh>
-        <mesh position={[0,.035,0]} rotation={[-Math.PI/2,0,0]}><ringGeometry args={[3.8,3.815,64]}/><meshBasicMaterial color="#9b7752" transparent opacity={.45} depthWrite={false}/></mesh>
+        <mesh position={[0,.026,0]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[8.5,8.5]}/><meshBasicMaterial map={textures.halo} transparent depthWrite={false} blending={AdditiveBlending} opacity={.38} toneMapped={false}/></mesh>
+        <mesh position={[0,.035,0]} rotation={[-Math.PI/2,0,0]}><ringGeometry args={[3.8,3.815,64]}/><meshBasicMaterial color="#9b7752" transparent opacity={.22} depthWrite={false}/></mesh>
         {(!mobile&&quality!=='medium')&&<mesh position={[0,7.5,-.6]} rotation={[0,i%2?.24:-.24,i%2?.09:-.09]}><planeGeometry args={[4.5,13]}/><meshBasicMaterial map={textures.beam} transparent opacity={.75} depthWrite={false} blending={AdditiveBlending} toneMapped={false}/></mesh>}
       </group>
     })}
@@ -394,13 +395,13 @@ function InfinityRoom({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,
   const mobile=useThree(s=>s.size.width<700)
   return <>
     <color attach="background" args={['#050405']}/>
-    <fog attach="fog" args={['#050405',52,145]}/>
-    <ambientLight intensity={.30}/>
-    <hemisphereLight args={["#f5e4cd","#101217",.85]}/>
-    <Environment resolution={128}><Lightformer form="rect" intensity={4} color="#f5dcc0" position={[0,9,-35]} scale={[12,70,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={2.1} color="#d6ad83" position={[12,5,-35]} scale={[60,8,1]} rotation={[0,-Math.PI/2,0]}/><Lightformer form="rect" intensity={1.5} color="#f8f0e5" position={[-12,6,-35]} scale={[60,8,1]} rotation={[0,Math.PI/2,0]}/></Environment>
+    <fog attach="fog" args={['#050405',36,124]}/>
+    <ambientLight intensity={.10}/>
+    <hemisphereLight args={["#f5e4cd","#101217",.28]}/>
+    <Environment resolution={128}><Lightformer form="rect" intensity={1.2} color="#f5dcc0" position={[0,9,-35]} scale={[4,35,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={.65} color="#d6ad83" position={[12,5,-35]} scale={[28,3,1]} rotation={[0,-Math.PI/2,0]}/><Lightformer form="rect" intensity={.45} color="#f8f0e5" position={[-12,6,-35]} scale={[28,3,1]} rotation={[0,Math.PI/2,0]}/></Environment>
     <mesh position={[0,.015,ROOM_CENTER*INFINITY_DEPTH]} rotation={[-Math.PI/2,0,0]}>
-      <planeGeometry args={[360,360]}/>
-      <MeshReflectorMaterial resolution={reflectionSize(quality,adaptiveDpr,mobile)} mirror={.40} mixStrength={4.1} mixBlur={0} blur={[0,0]} color="#08090b" metalness={.10} roughness={.18}/>
+      <planeGeometry args={[640,640]}/>
+      <MeshReflectorMaterial resolution={reflectionSize(quality,adaptiveDpr,mobile)} mirror={.26} mixStrength={1.25} mixBlur={0} blur={[0,0]} color="#101113" metalness={.55} roughness={.20} envMapIntensity={0}/>
     </mesh>
     <InfinityAtmosphere quality={quality}/>
     <ExhibitionLights selected={selected} phase={phase} spacious/>
@@ -481,7 +482,7 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
     const gl=canvas.getContext('webgl2')
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!gl)setFallback(true)
     gl?.getExtension('WEBGL_lose_context')?.loseContext()
-    const update=()=>{setMobile(window.innerWidth<700);const el=section.current;if(!el)return;const r=el.getBoundingClientRect();const value=scrollProgress(r.top,r.height,viewport.current?.clientHeight??window.innerHeight);if(Math.abs(progress.current-value)>.0005)yaw.current=0;progress.current=value;setAtEnd(value>.94);setNearestProject(nearestIndex(CAMERA_START_Z-value*length))}
+    const update=()=>{setMobile(window.innerWidth<700);const el=section.current;if(!el)return;const r=el.getBoundingClientRect();const value=scrollProgress(r.top,r.height,viewport.current?.clientHeight??window.innerHeight);if(Math.abs(progress.current-value)>.0005)yaw.current=0;progress.current=value;viewport.current?.style.setProperty('--gallery-entry-fade',String(Math.max(0,1-value/.09)));setAtEnd(value>.94);setNearestProject(nearestIndex(CAMERA_START_Z-value*length))}
     update();window.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update)
     return()=>{window.removeEventListener('scroll',update);window.removeEventListener('resize',update)}
   },[])
@@ -536,14 +537,17 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
     if(d.moved)yaw.current=Math.max(-.85,Math.min(.85,d.start-dx*.005))
   }
   function pointerEnd(){if(drag.current?.moved)ignoreClick.current=performance.now()+350;drag.current=null}
-  const dpr=renderDpr(quality,adaptiveDpr,screen.width,screen.height,screen.native)
+  const walkingDpr=renderDpr(quality,adaptiveDpr,screen.width,screen.height,screen.native)
+  // Keep the frontal artwork crisp, without raising the full walking render budget.
+  const dpr=phase==='focused'||phase==='entering'||phase==='inside'?Math.max(walkingDpr,Math.min(screen.native,1.5,Math.sqrt(2400000/Math.max(1,screen.width*screen.height)))):walkingDpr
   const effects=visible&&tabActive&&!paused&&phase==='walking'&&quality==='ultra'&&!mobile
 
-  return <div className="gallery-shell">
+  return <div className="gallery-shell" id="galeria-inmersiva">
     {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" data-atmosphere={atmosphere} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
       {loaded&&<Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&tabActive&&!paused&&!activeProjectId&&phase!=='inside'?'always':'never'} shadows={atmosphere==='architecture'&&quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:180}} fallback={<p>WebGL no disponible.</p>}>
         <Suspense fallback={null}><Scene progress={progress} selected={selected} phase={phase} quality={quality} adaptiveDpr={adaptiveDpr} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects/>}</Suspense>
       </Canvas>}
+      <div className="gallery-entry-fade" aria-hidden="true"/>
       {!ready&&<div className="gallery-loading" role="status">Preparando la exposición…</div>}
       <div className="gallery-hud"><span>04 / THE EXHIBITION</span></div>
       <div className="gallery-quality"><label>Ambiente <select aria-label="Ambiente de la galería" value={atmosphere} disabled={phase==='entering'||phase==='inside'} onChange={e=>{resume();setAtmosphere(e.target.value as Atmosphere)}}><option value="infinity">Infinito</option><option value="architecture">Arquitectónico</option></select></label><AmbientSound/><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>

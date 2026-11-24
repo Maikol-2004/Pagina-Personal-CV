@@ -109,3 +109,11 @@
 
 .gallery-viewport[data-atmosphere=infinity]{background:#050405}
 .gallery-viewport[data-atmosphere=infinity] .gallery-infinity-title strong{font-size:clamp(66px,9vw,100px);color:#e2c09b}
+
+/* Seamless black entry: the upper fade retracts during the first steps. */
+.gallery-shell{margin-top:0;scroll-margin-top:0;background:#050405}
+.gallery-entry-fade{position:absolute;inset:0 0 auto;height:clamp(90px,28vh,260px);background:linear-gradient(180deg,#050405 0,rgba(5,4,5,.78) 25%,transparent 100%);opacity:var(--gallery-entry-fade,1);pointer-events:none;z-index:1}
+.gallery-viewport[data-atmosphere=architecture] .gallery-entry-fade{background:linear-gradient(180deg,#050405,transparent)}
+.gallery-viewport[data-atmosphere=infinity]:after{background:radial-gradient(ellipse at 50% 48%,transparent 66%,#05040535)}
+.gallery-shell .gallery-access{padding-block:2rem}
+@media(prefers-reduced-motion:reduce){.gallery-entry-fade{display:none}}

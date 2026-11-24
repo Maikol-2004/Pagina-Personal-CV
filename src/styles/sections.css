@@ -425,3 +425,12 @@
   border-radius: 8px;
   box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.7);
 }
+
+/* A continuous introduction, not a hard cut between the editorial site and WebGL. */
+.projects{background:linear-gradient(180deg,#281f19 0,#050405 min(660px,95svh),#050405 calc(100% - 180px),var(--bg-deep) 100%);border-block:0}
+.projects-intro{position:relative;padding-bottom:clamp(48px,9vh,100px)}
+.projects-intro-copy{display:grid;gap:18px;max-width:34ch;align-self:end;color:var(--muted)}
+.projects-intro-link{display:inline-flex;align-items:center;gap:18px;width:fit-content;color:var(--cream);padding:8px 0;border-bottom:1px solid var(--copper);font-size:.83rem;min-height:44px}
+.projects-intro-link span{color:var(--copper);font-size:1.15rem}
+.projects-intro-link:focus-visible{outline:2px solid var(--copper);outline-offset:4px}
+@media(max-width:700px){.projects-intro{padding-bottom:38px}.projects-intro-copy{align-self:start;gap:10px}}
