@@ -5,6 +5,7 @@ interface Props {
   /** Rectángulo del elemento pulsado: el diálogo "nace" desde él y regresa a él. */
   origin: DOMRect | null
   tone: string
+  projectId?: string
   label: string
   onClose: () => void
   children: ReactNode
@@ -21,7 +22,7 @@ const insetFrom = (r: DOMRect | null) => {
  * (sin saltos), el contenido entra escalonado y al cerrar vuelve exactamente a su sitio.
  * El scroll de la página queda congelado en su posición, así que no se pierde el punto de la línea temporal.
  */
-export function CinematicDialog({ origin, tone, label, onClose, children }: Props) {
+export function CinematicDialog({ origin, tone, label, onClose, children, projectId }: Props) {
   const root = useRef<HTMLDivElement>(null)
   const panel = useRef<HTMLDivElement>(null)
   const closing = useRef(false)
@@ -38,6 +39,8 @@ export function CinematicDialog({ origin, tone, label, onClose, children }: Prop
         return
       }
       const tl = gsap.timeline()
+      const entrance = projectId === 'matchup' ? { y: 48, scale: .96 } : projectId === 'ashesfire' ? { x: 36, scale: .99 } : projectId === 'my-journey' ? { scale: .9, y: 16 } : projectId === 'cv-editorial' ? { scale: .97, y: 24 } : projectId === 'portfolio-narrativo' ? { x: -35, rotateY: -5 } : { y: 36 }
+      if(projectId) tl.fromTo('.dlg__portal',{opacity:0,scale:.85},{opacity:.9,scale:1.15,duration:.3,ease:'power2.out'},0).to('.dlg__portal',{opacity:0,duration:.55},.3)
       tl.fromTo('.dlg__veil', { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' }, 0)
         .fromTo(
           panel.current,
@@ -47,8 +50,8 @@ export function CinematicDialog({ origin, tone, label, onClose, children }: Prop
         )
         .fromTo(
           '.dlg__in',
-          { y: 36, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.9, ease: 'expo.out', stagger: 0.07 },
+          { ...entrance, opacity: 0 },
+          { x: 0, y: 0, scale: 1, rotateY: 0, opacity: 1, duration: 0.9, ease: 'expo.out', stagger: 0.07 },
           0.55,
         )
     }, root)
@@ -56,7 +59,7 @@ export function CinematicDialog({ origin, tone, label, onClose, children }: Prop
       ctx.revert()
       document.documentElement.style.overflow = ''
     }
-  }, [origin])
+  }, [origin,projectId])
 
   const close = useCallback(() => {
     if (closing.current) return
@@ -100,13 +103,14 @@ export function CinematicDialog({ origin, tone, label, onClose, children }: Prop
   return (
     <div
       ref={root}
-      className="dlg"
+      className="dlg" data-project={projectId}
       role="dialog"
       aria-modal="true"
       aria-label={label}
       style={{ ['--tone' as string]: tone }}
     >
       <div className="dlg__veil" onClick={close} />
+      {projectId&&<div className="dlg__portal" aria-hidden="true"/>}
       <div ref={panel} className="dlg__panel">
         <button className="dlg__close" onClick={close} data-autofocus aria-label="Cerrar y volver">
           <span aria-hidden="true">←</span> Volver
