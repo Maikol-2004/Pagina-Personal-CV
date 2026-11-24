@@ -1,12 +1,12 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html, MeshReflectorMaterial, useTexture, RoundedBox, Environment, Lightformer, Sparkles } from '@react-three/drei'
-import { Suspense, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Vector3, Color, TextureLoader, Group, SpotLight, Object3D, BufferGeometry, Float32BufferAttribute, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { Vector3, Color, Matrix4, InstancedMesh, TextureLoader, Group, PointLight, SpotLight, Object3D, BufferGeometry, Float32BufferAttribute, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
 import { projects } from '../data/profile'
 import { PROJECT_LAYERS } from '../data/projectShots'
 import type { Project } from '../data/types'
 import { GalleryEffects } from './GalleryEffects'
-import { CAMERA_START_Z, CAMERA_LENGTH as length, projectZ, nearestProject as findNearest, scrollProgress, focusFov, nextSelection, qualityStep, type GalleryPhase as Phase } from '../lib/galleryLogic'
+import { CAMERA_START_Z, CAMERA_LENGTH as length, projectZ, nearestProject as findNearest, scrollProgress, focusFov, nextSelection, qualityStep, renderDpr, reflectionSize, ceilingIndices, type GalleryPhase as Phase } from '../lib/galleryLogic'
 import './projectGallery.css'
 
 type Props = { onOpen: (p: Project, rect: DOMRect | null) => void; activeProjectId?: string }
@@ -32,6 +32,54 @@ const wallSegments = (side:number) => {
 const nearestIndex = (z:number)=>findNearest(z,projects.length)
 const url = (name: string) => import.meta.env.BASE_URL + 'projects/' + name + '.webp'
 
+const ceilingPositions:[number,number,number][]=Array.from({length:21},(_,i)=>[0,4.29,10-i*3.3])
+/** Batch identical static geometry so the main and reflected views use fewer draw calls. */
+function BoxBatch({positions,size,color,metal=0,roughness=.7,material,glow}:{positions:[number,number,number][];size:[number,number,number];color?:string;metal?:number;roughness?:number;material?:MeshStandardMaterial;glow?:Color}){
+  const ref=useRef<InstancedMesh>(null)
+  useLayoutEffect(()=>{
+    const mesh=ref.current;if(!mesh)return
+    const matrix=new Matrix4()
+    positions.forEach((p,i)=>mesh.setMatrixAt(i,matrix.makeTranslation(...p)))
+    mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere()
+  },[positions])
+  return <instancedMesh ref={ref} args={[undefined,undefined,positions.length]} material={material} receiveShadow>
+    <boxGeometry args={size}/>
+    {!material&&(glow?<meshBasicMaterial color={glow} toneMapped={false}/>:<meshStandardMaterial color={color} metalness={metal} roughness={roughness}/>)}
+  </instancedMesh>
+}
+/** All fixtures remain visible; only five nearby lights are evaluated by the GPU. */
+function CeilingLights(){
+  const group=useRef<Group>(null)
+  const last=useRef(-1)
+  useFrame(({camera})=>{
+    const indices=ceilingIndices(camera.position.z)
+    if(!group.current||last.current===indices[0])return
+    last.current=indices[0]
+    indices.forEach(index=>{
+      const lamp=group.current!.children[index%5] as PointLight
+      lamp.position.set(0,4.09,ceilingPositions[index][2])
+    })
+  })
+  return <group ref={group}>{Array.from({length:5},(_,i)=><pointLight key={i} position={[0,4.09,10-i*3.3]} color="#f7d9b6" intensity={5.5} distance={10} decay={2}/>)}</group>
+}
+function ExhibitionLights({selected,phase}:{selected:number|null;phase:Phase}){
+  const group=useRef<Group>(null)
+  useFrame(({camera},dt)=>{
+    if(!group.current)return
+    const nearest=projects.map((_,i)=>i).sort((a,b)=>Math.abs(camera.position.z-projectZ(a))-Math.abs(camera.position.z-projectZ(b))).slice(0,2)
+    if(selected!==null&&phase!=='walking'&&!nearest.includes(selected))nearest[1]=selected
+    nearest.forEach((i,slot)=>{
+      const light=group.current!.children[slot] as PointLight
+      const p=projects[i],side=i%2?1:-1
+      light.position.set(side*(exhibitX-.7),3.6,projectZ(i))
+      light.color.set(p.id==='matchup'?'#a8ed46':p.tone)
+      const proximity=Math.max(0,1-Math.abs(camera.position.z-projectZ(i))/9)
+      const target=2+5*proximity+(selected===i&&phase==='focused'?3:0)
+      light.intensity+=(target-light.intensity)*(1-Math.exp(-dt*4))
+    })
+  })
+  return <group ref={group}>{[0,1].map(i=><pointLight key={i} intensity={2} distance={5}/>)}</group>
+}
 function Block({ position, size, color, metal = 0, roughness = .7 }: { position: [number,number,number]; size: [number,number,number]; color: string; metal?: number; roughness?: number }) {
   return <mesh position={position} castShadow receiveShadow><boxGeometry args={size}/><meshStandardMaterial color={color} metalness={metal} roughness={roughness}/></mesh>
 }
@@ -188,7 +236,6 @@ function Artwork({ project, index, focused, onSelect }: { project: Project; inde
     }
   },[textures,gl])
   const display=useRef<Group>(null)
-  const exhibitLight=useRef<import('three').PointLight>(null)
   const aura=useRef<Group>(null)
   const mobile=useThree(s=>s.size.width<700)
   const accent=project.id==='matchup'?'#a8ed46':project.tone
@@ -197,10 +244,9 @@ function Artwork({ project, index, focused, onSelect }: { project: Project; inde
     if(!display.current)return
     const proximity=Math.max(0,1-Math.abs(camera.position.z-z)/9)
     const ease=1-Math.exp(-dt*4)
-    const target=Math.sin(clock.elapsedTime*1.2)*.06*proximity
+    const target=Math.sin(clock.elapsedTime*1.2)*(focused?.025:.06)*proximity
     display.current.position.y+=(target-display.current.position.y)*ease
     display.current.position.z+=(.09*proximity-display.current.position.z)*ease
-    if(exhibitLight.current)exhibitLight.current.intensity+=(2+5*proximity+(focused?3:0)-exhibitLight.current.intensity)*ease
     if(aura.current){const scale=.92+.08*proximity;aura.current.scale.x+=(scale-aura.current.scale.x)*ease;aura.current.scale.y+=(scale-aura.current.scale.y)*ease}
   })
   return <group position={[side*exhibitX,2.16,z]} rotation={[0,-side*Math.PI/2,0]} onClick={e=>{e.stopPropagation();onSelect()}} onPointerOver={()=>setHover(true)} onPointerOut={()=>setHover(false)}>
@@ -209,7 +255,6 @@ function Artwork({ project, index, focused, onSelect }: { project: Project; inde
     <Block position={[0,0,.06]} size={[4.43,2.76,.04]} color={project.id==='matchup'?'#101a12':'#241b16'}/>
     <Block position={[0,-1.43,.03]} size={[4.5,.07,.36]} color="#b98a63" metal={.65} roughness={.35}/>
     <mesh position={[0,1.38,.22]}><boxGeometry args={[3.9,.045,.08]}/><meshBasicMaterial color={emission} toneMapped={false}/></mesh>
-    <pointLight ref={exhibitLight} position={[0,1.45,.7]} intensity={2} distance={4} color={accent}/>
     <group ref={aura}>
       {[-1,1].map(s=><mesh key={s} position={[s*2.22,0,.11]}><boxGeometry args={[.022,2.7,.025]}/><meshBasicMaterial color={emission} toneMapped={false}/></mesh>)}
     </group>
@@ -257,7 +302,7 @@ function Camera({ progress, selected, phase, yaw, onArrive }: { progress: React.
     const distance=close?1.02:5.8
     const p=targetPosition.set(focus?side*(exhibitX-distance):0,focus?2.16:1.75+Math.sin(progress.current*95)*.018,focus?projectZ(selected!):z)
     const l=targetLook.set(focus?side*exhibitX:Math.sin(yaw.current)*10,focus?2.16:1.75,focus?p.z:z-Math.cos(yaw.current)*10)
-    const a=1-Math.exp(-Math.min(dt,.05)*(close?3.5:focus?4:5))
+    const a=1-Math.exp(-Math.min(dt,.10)*(close?3.5:focus?4:5))
     camera.position.lerp(p,a);look.current.lerp(l,a)
     aimCamera.position.copy(p);aimCamera.lookAt(l);desiredRotation.copy(aimCamera.quaternion);camera.quaternion.slerp(desiredRotation,a)
     if(camera instanceof PerspectiveCamera){
@@ -287,10 +332,15 @@ function ExhibitShadow({enabled}:{enabled:boolean}){
   })
   return <><object3D ref={target}/><spotLight ref={lamp} color="#ffe0b8" intensity={10} angle={.62} penumbra={.85} distance={7} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-bias={-.0003} shadow-normalBias={.025}/></>
 }
-function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress: React.RefObject<number>;selected:number|null;phase:Phase;quality:Quality;yaw:React.RefObject<number>;onSelect:(i:number)=>void;onArrive:()=>void}) {
+function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive}: {progress: React.RefObject<number>;selected:number|null;phase:Phase;quality:Quality;adaptiveDpr:number;yaw:React.RefObject<number>;onSelect:(i:number)=>void;onArrive:()=>void}) {
   const materials=useArchitecturalMaterials()
   const woodPhoto=usePhotoMaps('dark_wood',[1,1])
   const ceilingGlow=useMemo(()=>new Color('#f4dfc5').multiplyScalar(2.1),[])
+  const fixtures=useMemo(()=>ceilingPositions.map(([x,y,z]):[number,number,number]=>[x,y+.04,z]),[])
+  const strips=useMemo(()=>ceilingPositions.map(([x,y,z]):[number,number,number]=>[x,y-.067,z]),[])
+  const boards=useMemo(()=>[-1,1].flatMap(side=>Array.from({length:23},(_,i)=>ROOM_FRONT_Z-1.5-i*3).filter(z=>alcoves(side).every(a=>Math.abs(a-z)>alcoveHalf+1.5)).map((z):[number,number,number]=>[side*3.39,2.2,z])),[])
+  const trim=useMemo(()=>boards.map(([x,y,z]):[number,number,number]=>[x-Math.sign(x)*.09,y,z+1.46]),[boards])
+  const copper=useMemo(()=>boards.map(([x,y,z]):[number,number,number]=>[x-Math.sign(x)*.08,y,z+1.40]),[boards])
   useEffect(()=>{
     if(!woodPhoto)return
     materials.wall.map=woodPhoto.diff;materials.wall.normalMap=woodPhoto.normal;materials.wall.bumpMap=null;materials.wall.roughnessMap=woodPhoto.rough;materials.wall.needsUpdate=true
@@ -307,14 +357,14 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]} receiveShadow>
       <planeGeometry args={[7,ROOM_LENGTH]}/>
       <MeshReflectorMaterial
-        resolution={mobile?(quality==='ultra'||quality==='high'?1024:512):quality==='ultra'?2048:quality==='medium'?512:1024}
-        mirror={.44}
-        mixStrength={2.7}
-        mixBlur={.18}
-        blur={mobile?[24,12]:[16,8]}
-        color="#202122"
-        metalness={.16}
-        roughness={.16}
+        resolution={reflectionSize(quality,adaptiveDpr,mobile)}
+        mirror={.40}
+        mixStrength={4.5}
+        mixBlur={0}
+        blur={[0,0]}
+        color="#111214"
+        metalness={.12}
+        roughness={.18}
       />
     </mesh>
     <Block position={[0,4.5,ROOM_CENTER]} size={[7,.3,ROOM_LENGTH]} color="#211813"/>
@@ -323,14 +373,12 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
       {wallSegments(side).map(s=><Block key={s.z} position={[side*3.55,2.2,s.z]} size={[.3,4.5,s.length]} color="#372a21"/>)}
       {wallSegments(side).map(s=><Block key={s.z} position={[side*3.36,.15,s.z]} size={[.12,.3,s.length]} color="#916b4d" metal={.65}/>)}
       <Block position={[side*3.35,4.15,ROOM_CENTER]} size={[.12,.12,ROOM_LENGTH]} color="#b98a63" metal={.6}/>
-      {Array.from({length:23},(_,i)=>ROOM_FRONT_Z-1.5-i*3).filter(z=>alcoves(side).every(a=>Math.abs(a-z)>alcoveHalf+1.5)).map(z=><group key={z} position={[side*3.39,2.2,z]}>
-        <mesh material={materials.wall} receiveShadow><boxGeometry args={[.08,3.85,2.88]}/></mesh>
-        <Block position={[-side*.09,0,1.46]} size={[.16,4.25,.085]} color="#211813"/>
-        <Block position={[-side*.08,0,1.40]} size={[.05,4.1,.025]} color="#a77d58" metal={.65}/>
-      </group>)}
       <mesh position={[side*3.26,4.02,ROOM_CENTER]}><boxGeometry args={[.035,.045 ,ROOM_LENGTH-1]}/><meshBasicMaterial color="#eed4b7" toneMapped={false}/></mesh>
       {wallSegments(side).map(s=><mesh key={s.z} position={[side*3.25,.31,s.z]}><boxGeometry args={[.025,.025,s.length]}/><meshBasicMaterial color="#d3a477" toneMapped={false}/></mesh>)}
     </group>)}
+    <BoxBatch positions={boards} size={[.08,3.85,2.88]} material={materials.wall}/>
+    <BoxBatch positions={trim} size={[.16,4.25,.085]} color="#211813"/>
+    <BoxBatch positions={copper} size={[.05,4.1,.025]} color="#a77d58" metal={.65}/>
     {Array.from({length:8},(_,i)=><group key={'portal'+i} position={[0,0,6-i*8]}>
       {[-1,1].map(side=><group key={side}>
         <Block position={[side*3.13,2.2,0]} size={[.45,4.4,.52]} color="#241a14"/>
@@ -339,12 +387,11 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
       <Block position={[0,i%2===0?4.12:4.26,0]} size={[6.1,i%2===0?.55:.3,.65]} color="#241a14"/>
       <mesh position={[0,3.83,0]}><boxGeometry args={[5.7,.025,.045]}/><meshBasicMaterial color="#ffe0b8" toneMapped={false}/></mesh>
     </group>)}
-    {!mobile&&<Sparkles count={45} scale={[5,3,ROOM_LENGTH-4]} position={[0,2,ROOM_CENTER]} size={1.2} speed={.12} opacity={.18} color="#d2a27e"/>}
-    {Array.from({length:21},(_,i)=><group key={i} position={[0,4.29,10-i*3.3]}>
-      <Block position={[0,.04,0]} size={[6.7,.15,.38]} color="#17120f"/>
-      <mesh position={[0,-.067,0]}><boxGeometry args={[5.8,.025,.105]}/><meshBasicMaterial color={ceilingGlow} toneMapped={false}/></mesh>
-      <pointLight position={[0,-.2,0]} color="#f7d9b6" intensity={5.5} distance={8} decay={2}/>
-    </group>)}
+    {!mobile&&quality==='ultra'&&<Sparkles count={24} scale={[5,3,ROOM_LENGTH-4]} position={[0,2,ROOM_CENTER]} size={1.2} speed={.12} opacity={.18} color="#d2a27e"/>}
+    <BoxBatch positions={fixtures} size={[6.7,.15,.38]} color="#17120f"/>
+    <BoxBatch positions={strips} size={[5.8,.025,.105]} glow={ceilingGlow}/>
+    <CeilingLights/>
+    <ExhibitionLights selected={selected} phase={phase}/>
     <Block position={[0,2.3,ROOM_BACK_Z+.3]} size={[4.9,3.5,.12]} color="#201712"/>
     <Block position={[0,4.08,ROOM_BACK_Z+.45]} size={[5,.06,.16]} color="#d2a27e" metal={.6}/>
     <Html position={[0,2.35,ROOM_BACK_Z+.55]} transform distanceFactor={6} style={{pointerEvents:'none'}}><div className="gallery-end"><strong>MG.</strong><span>MY JOURNEY</span><p>Cada proyecto, un paso más en mi trayectoria.</p></div></Html>
@@ -352,7 +399,7 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     <group position={[0,1.05,ROOM_BACK_Z+1.15]} rotation={[.3,0,.18]}><mesh><torusGeometry args={[.56,.075,16,64]}/><meshStandardMaterial color="#c18d61" metalness={.85} roughness={.23}/></mesh><mesh rotation={[0,Math.PI/2,0]}><torusGeometry args={[.48,.05,12,48]}/><meshStandardMaterial color="#e0b28a" metalness={.8} roughness={.28}/></mesh></group>
     <pointLight position={[0,3.8,ROOM_BACK_Z+2.2]} color="#ffce99" intensity={12} distance={7}/>
     <ContactStrips/>
-    <ExhibitShadow enabled={quality==='ultra'||(!mobile&&quality==='high')}/>
+    {quality==='ultra'&&!mobile&&<ExhibitShadow enabled/>}
     <Reception progress={progress}/>
     {projects.map((p,i)=><Alcove key={'alcove-'+p.id} project={p} index={i}/>)}
     {projects.map((p,i)=><Suspense key={p.id} fallback={null}><Artwork project={p} index={i} focused={selected===i&&phase==='focused'} onSelect={()=>onSelect(i)}/></Suspense>)}
@@ -390,12 +437,13 @@ function AmbientSound(){
   return <button className="gallery-audio" aria-pressed={enabled} onClick={()=>void toggle()}>{enabled?'Sonido: sí':'Sonido: no'}</button>
 }
 function AdaptiveQuality({enabled,onChange}:{enabled:boolean;onChange:(n:number)=>void}){
-  const sample=useRef({time:0,frames:0,level:2})
+  const sample=useRef({time:0,frames:0,level:1,good:0})
   useFrame((_,dt)=>{
-    if(!enabled||dt>.25){sample.current.time=0;sample.current.frames=0;return}
+    if(!enabled||dt>1){sample.current.time=0;sample.current.frames=0;sample.current.good=0;return}
     const s=sample.current;s.time+=dt;s.frames++
-    if(s.time>=3){const fps=s.frames/s.time;const next=qualityStep(fps,s.level,window.innerWidth<700)
-      if(next!==s.level){s.level=next;onChange(next)}s.time=0;s.frames=0}
+    if(s.time>=1.5){const fps=s.frames/s.time;s.good=fps>57?s.good+1:0
+      const next=fps<45||s.good>=4?qualityStep(fps,s.level,window.innerWidth<700):s.level
+      if(next!==s.level){s.level=next;s.good=0;onChange(next)}s.time=0;s.frames=0}
   })
   return null
 }
@@ -406,7 +454,9 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
   const yaw=useRef(0)
   const drag=useRef<{x:number;y:number;start:number;moved:boolean}|null>(null)
   const ignoreClick=useRef(0)
-  const [adaptiveDpr,setAdaptiveDpr]=useState(2)
+  const [adaptiveDpr,setAdaptiveDpr]=useState(1)
+  const [screen,setScreen]=useState(()=>({width:window.innerWidth,height:window.innerHeight,native:window.devicePixelRatio||1}))
+  useEffect(()=>{const update=()=>setScreen({width:window.innerWidth,height:window.innerHeight,native:window.devicePixelRatio||1});window.addEventListener('resize',update);return()=>window.removeEventListener('resize',update)},[])
   const [visible,setVisible]=useState(true)
   const [atEnd,setAtEnd]=useState(false)
   const [nearestProject,setNearestProject]=useState<number|null>(null)
@@ -477,13 +527,13 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
     if(d.moved)yaw.current=Math.max(-.85,Math.min(.85,d.start-dx*.005))
   }
   function pointerEnd(){if(drag.current?.moved)ignoreClick.current=performance.now()+350;drag.current=null}
-  const dpr=quality==='medium'?1.25:quality==='high'?2:quality==='ultra'?(mobile?2.5:3):adaptiveDpr
-  const effects=visible&&phase==='walking'&&(quality==='high'||quality==='ultra'||(!mobile&&quality==='auto'&&adaptiveDpr>=2))
+  const dpr=renderDpr(quality,adaptiveDpr,screen.width,screen.height,screen.native)
+  const effects=visible&&phase==='walking'&&quality==='ultra'&&!mobile
 
   return <div className="gallery-shell">
     {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
-      <Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&phase!=='inside'?'always':'never'} shadows dpr={[1,dpr]} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:80}} fallback={<p>WebGL no disponible.</p>}>
-        <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects occlusion={quality==='ultra'&&!mobile}/>}</Suspense>
+      <Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&!activeProjectId&&phase!=='inside'?'always':'never'} shadows={quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:80}} fallback={<p>WebGL no disponible.</p>}>
+        <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} adaptiveDpr={adaptiveDpr} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects occlusion={false}/>}</Suspense>
       </Canvas>
       {!ready&&<div className="gallery-loading" role="status">Preparando la exposición…</div>}
       <div className="gallery-hud"><span>04 / THE EXHIBITION</span></div>
