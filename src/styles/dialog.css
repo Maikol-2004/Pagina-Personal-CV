@@ -377,3 +377,17 @@
 .dlg__scroll{min-height:0;overflow-x:hidden;scrollbar-gutter:stable}
 .dlg[data-project] .dlg__scroll{padding-top:82px}
 @media(max-width:600px){.dlg[data-project] .dlg__scroll{padding:66px 12px 56px}.dlg__close{top:10px;min-height:44px;padding:0 16px}}
+
+/* Project identity extends to the full viewport, without a boxed hero. */
+.dlg[data-project] .dlg__panel{background:var(--project-plane,#17120f)}
+.dlg[data-project="matchup"]{--project-plane:radial-gradient(ellipse at 75% 29%,#243918 0,transparent 45%),#080e0a}
+.dlg[data-project="ashesfire"]{--project-plane:radial-gradient(ellipse at 76% 31%,#3b3029 0,transparent 47%),#141b22}
+.dlg[data-project="my-journey"]{--project-plane:radial-gradient(ellipse at 74% 29%,#3a261d 0,transparent 48%),#18100e}
+.dlg[data-project="cv-editorial"]{--project-plane:#e9ddce;--tone:#81502d}
+.dlg[data-project="portfolio-narrativo"]{--project-plane:radial-gradient(ellipse at 72% 22%,#483132 0,transparent 48%),#211923}
+.dlg[data-project] .dlg__close{border:0;border-radius:0;background:transparent;color:#f6efe4;padding-left:0;text-shadow:0 1px 10px #0007}
+.dlg[data-project="cv-editorial"] .dlg__close{color:#382719;text-shadow:none}
+.dlg[data-project="cv-editorial"] .pd__links a{color:#30241c;background:transparent;border-color:#81502d}
+.dlg[data-project="cv-editorial"] .pd__links .muted{color:#5e4a3d}
+.dlg[data-project] .dlg__scroll{padding-top:66px}
+@media(max-width:600px){.dlg[data-project] .dlg__scroll{padding-top:59px;padding-inline:18px}}
