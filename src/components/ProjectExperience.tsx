@@ -107,8 +107,8 @@ function useUnfold(root:React.RefObject<HTMLDivElement|null>){
       for(const {source,target,surface} of positions){
         const p=Math.max(0,Math.min(1,(viewport.bottom-target.top)/(viewport.height*.54)))
         const ease=p*p*(3-2*p)
-        const scale=Math.max(.58,Math.min(1,source.width/Math.max(1,target.width)))
-        const shift=Math.max(-target.width*.25,Math.min(target.width*.25,source.left-target.left))
+        const scale=Math.max(.78,Math.min(1,source.width/Math.max(1,target.width)))
+        const shift=Math.max(-target.width*.16,Math.min(target.width*.16,source.left-target.left))
         surface.style.setProperty('--unfold-x',((1-ease)*shift).toFixed(2)+'px')
         surface.style.setProperty('--unfold-scale',(scale+(1-scale)*ease).toFixed(3))
         surface.style.setProperty('--unfold-detail',(.6+.4*ease).toFixed(3))
@@ -138,10 +138,11 @@ export function ProjectExperience({project}:{project:Project}){
     target?.querySelector<HTMLElement>('h3')?.focus({preventScroll:true})
   }
   return <div ref={root} className={'px px--'+project.id}>
-    <header className="px-hero px-overview dlg__in" aria-label="Proyecto de un vistazo">
+    <header className="px-hero px-overview px-freeform dlg__in" aria-label="Proyecto de un vistazo">
+      <div className="px-atmosphere" aria-hidden="true"><i/><i/><i/></div>
       <div className="px-copy px-overview-intro">
-        <span className="px-kicker">PROJECT / OVERVIEW</span>
-        <h2>{project.title}<span>.</span></h2>
+        <span className="px-kicker">EXPOSICIÓN DIGITAL / {project.context.split(" · ").at(-1)}</span>
+        <h2 className="px-open-title">{project.title}<span>.</span></h2>
         <p className="px-sub">{identity?.descriptor??project.accent}</p>
         <p className="px-overview-summary">{project.summary}</p>
         <div className="px-overview-meta"><span>{project.status}</span><span>{project.role}</span></div>
@@ -158,26 +159,26 @@ export function ProjectExperience({project}:{project:Project}){
         </button>)}</div>
       </div>
       <button className="px-overview-card px-overview-features" data-unfold-source="features" onClick={()=>jump('features')}>
-        <span className="px-card-label">01 / FUNCIONALIDADES <b>↘</b></span>
+        <span className="px-card-label"><i>01</i> / FUNCIONALIDADES <b>↘</b></span>
         <strong>{identity?.purpose??project.objectives[0]}</strong>
         <span className="px-feature-tags">{(identity?.features??project.features).map(f=><span key={f}>{f}</span>)}</span>
       </button>
       <button className="px-overview-card px-overview-stack" data-unfold-source="stack" onClick={()=>jump('stack')}>
-        <span className="px-card-label">02 / TECNOLOGÍAS <b>↘</b></span>
+        <span className="px-card-label"><i>02</i> / TECNOLOGÍAS <b>↘</b></span>
         <strong>Cómo está construido.</strong>
         <span className="px-feature-tags">{project.technologies.map(t=><span key={t}>{t}</span>)}</span>
       </button>
       <button className="px-overview-card px-overview-demo px-hero-action" data-unfold-source="demo" onClick={()=>jump('demo')}>
-        <span className="px-card-label">03 / INTERACTIVO <b>↘</b></span>
+        <span className="px-card-label"><i>03</i> / INTERACTIVO <b>↘</b></span>
         <strong>{identity?.demo??'Explora el proyecto'}</strong>
         <span>{identity?.demoHint??'Descubre la experiencia.'}</span>
         <span className="px-demo-cta">Explorar ahora →</span>
       </button>
-      <div className="px-overview-foot"><span>Capturas originales · {project.context}</span><span>Selecciona una tarjeta o desliza para ampliar ↓</span></div>
+      <div className="px-overview-foot"><span>Capturas originales · {project.context}</span><span>Explora un elemento o desliza para descubrir ↓</span></div>
     </header>
     <section className="px-unfold" data-unfold-target="screens">
       <div className="px-unfold-surface px-explore">
-        <header className="px-section-head"><span>VISTAS / {project.title}</span><h3 tabIndex={-1}>El proyecto en acción.</h3><p>Las mismas capturas de la portada, ahora a tamaño completo. No ejecutan la aplicación original.</p></header>
+        <header className="px-section-head"><span>VISTAS / {project.title}</span><h3 tabIndex={-1}>El proyecto en acción.</h3><p>Capturas originales, ahora en detalle. Esta presentación no ejecuta la aplicación.</p></header>
         <div className="px-tabs" role="group" aria-label="Escenas del proyecto">{shots.map((s,i)=><button key={s.src} aria-pressed={i===active} onClick={()=>setActive(i)}>{identity?.screenLabels[i]??s.title??s.alt}</button>)}</div>
         {current&&<figure className={'px-detail px-detail--'+current.kind+(current.src==='narrativo-phone'?' px-detail--phone':'')}><img key={current.src} src={url(current.src)} alt={current.alt} loading="lazy" decoding="async"/><figcaption>{current.alt}</figcaption></figure>}
         <DeviceCompare project={project}/>
