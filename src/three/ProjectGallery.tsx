@@ -1,7 +1,7 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html, MeshReflectorMaterial, useTexture, RoundedBox, Environment, Lightformer, Sparkles } from '@react-three/drei'
 import { Suspense, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Vector3, Color, Group, SpotLight, Object3D, BufferGeometry, Float32BufferAttribute, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
+import { Vector3, Color, TextureLoader, Group, SpotLight, Object3D, BufferGeometry, Float32BufferAttribute, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
 import { projects } from '../data/profile'
 import { PROJECT_LAYERS } from '../data/projectShots'
 import type { Project } from '../data/types'
@@ -66,6 +66,28 @@ function useArchitecturalMaterials(){
     stone.repeat.set(2,ROOM_LENGTH/3.5);stoneRelief.repeat.copy(stone.repeat)
     return {wood,stone,woodRelief,stoneRelief,wall:new MeshStandardMaterial({map:wood,bumpMap:woodRelief,bumpScale:.035,roughnessMap:woodRelief,roughness:.95,metalness:.03})}
   },[])
+}
+// Optional locally served photographic maps. Procedural materials remain available offline.
+function usePhotoMaps(asset:string,repeat:[number,number]){
+  const [maps,setMaps]=useState<{diff:import('three').Texture;normal:import('three').Texture;rough:import('three').Texture}|null>(null)
+  const gl=useThree(s=>s.gl)
+  const [rx,ry]=repeat
+  useEffect(()=>{
+    let cancelled=false
+    const loader=new TextureLoader()
+    const loaded:import('three').Texture[]=[]
+    const load=async (name:string,color:boolean)=>{
+      const t=await loader.loadAsync(import.meta.env.BASE_URL+'gallery-materials/'+asset+'-'+name+'.img')
+      if(cancelled){t.dispose();throw new Error('Cancelled')}
+      loaded.push(t);t.wrapS=t.wrapT=RepeatWrapping;t.repeat.set(rx,ry)
+      t.anisotropy=Math.min(8,gl.capabilities.getMaxAnisotropy())
+      if(color)t.colorSpace=SRGBColorSpace
+      return t
+    }
+    void Promise.all([load('diff',true),load('nor_gl',false),load('rough',false)]).then(([diff,normal,rough])=>{if(!cancelled)setMaps({diff,normal,rough})}).catch(()=>{})
+    return()=>{cancelled=true;loaded.forEach(t=>t.dispose())}
+  },[asset,rx,ry,gl])
+  return maps
 }
 function Sculpture({kind,accent}:{kind:string;accent:string}){
   const ref=useRef<Group>(null)
@@ -275,6 +297,12 @@ function ExhibitShadow({enabled}:{enabled:boolean}){
 }
 function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress: React.RefObject<number>;selected:number|null;phase:Phase;quality:Quality;yaw:React.RefObject<number>;onSelect:(i:number)=>void;onArrive:()=>void}) {
   const materials=useArchitecturalMaterials()
+  const woodPhoto=usePhotoMaps('dark_wood',[1,1])
+  const floorPhoto=usePhotoMaps('square_floor',[2,ROOM_LENGTH/3.5])
+  useEffect(()=>{
+    if(!woodPhoto)return
+    materials.wall.map=woodPhoto.diff;materials.wall.normalMap=woodPhoto.normal;materials.wall.bumpMap=null;materials.wall.roughnessMap=woodPhoto.rough;materials.wall.needsUpdate=true
+  },[materials,woodPhoto])
   const mobile=useThree(s=>s.size.width<700)
   useEffect(()=>()=>{materials.wood.dispose();materials.stone.dispose();materials.woodRelief.dispose();materials.stoneRelief.dispose();materials.wall.dispose()},[materials])
   return <>
@@ -283,7 +311,7 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     <ambientLight intensity={phase==='focused'?.18:.28}/>
     <Environment resolution={128}><Lightformer form="rect" intensity={3} color="#ffe0b8" position={[0,5,-10]} scale={[6,25,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={1.5} color="#c69a73" position={[4,2,-15]} scale={[30,4,1]} rotation={[0,-Math.PI/2,0]}/></Environment>
     <hemisphereLight args={["#ffe1bf","#38251b",phase==='focused'?.83:1.1]}/>
-    <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[7,ROOM_LENGTH]}/><MeshReflectorMaterial resolution={quality==='ultra'?1024:quality==='medium'?256:mobile?512:768} mirror={.22} mixBlur={.35} mixStrength={.48} blur={mobile?[40,18]:[90,35]} map={materials.stone} bumpMap={materials.stoneRelief} bumpScale={.022} roughnessMap={materials.stoneRelief} color="#9e8b79" metalness={.18} roughness={.46}/></mesh>
+    <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[7,ROOM_LENGTH]}/><MeshReflectorMaterial resolution={quality==='ultra'?1024:quality==='medium'?256:mobile?512:768} mirror={.22} mixBlur={.35} mixStrength={.48} blur={mobile?[40,18]:[90,35]} map={floorPhoto?.diff??materials.stone} normalMap={floorPhoto?.normal??null} bumpMap={floorPhoto?null:materials.stoneRelief} bumpScale={.022} roughnessMap={floorPhoto?.rough??materials.stoneRelief} color="#9e8b79" metalness={.18} roughness={.46}/></mesh>
     <Block position={[0,4.5,ROOM_CENTER]} size={[7,.3,ROOM_LENGTH]} color="#211813"/>
     <Block position={[0,2.2,ROOM_BACK_Z]} size={[7,4.5,.3]} color="#302219"/>
     {[-1,1].map(side=><group key={side}>
