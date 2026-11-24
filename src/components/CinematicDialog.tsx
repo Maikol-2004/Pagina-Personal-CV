@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { gsap } from '../lib/gsap'
-import { transitionShot, transitionStyles, validScreenRect, type RectLike } from '../lib/projectTransition'
+import { posterUrl, transitionStyles, validScreenRect, type RectLike } from '../lib/projectTransition'
 
 interface Props {
   /** Rectángulo del elemento pulsado: el diálogo "nace" desde él y regresa a él. */
@@ -29,21 +29,10 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
   const closing = useRef(false)
   const animation = useRef<ReturnType<typeof gsap.timeline> | null>(null)
   const watchdog=useRef<number|undefined>(undefined)
-  const firstShot = projectId ? transitionShot(projectId) : undefined
   const style = projectId ? transitionStyles[projectId] : undefined
   const bridge=useRef<HTMLDivElement>(null)
-  const shotUrl=firstShot?import.meta.env.BASE_URL+'projects/'+firstShot.src+'.webp':undefined
-  const heroRect=useCallback(()=>{
-    const images=Array.from(panel.current?.querySelectorAll<HTMLImageElement>('.px-visual img')??[])
-    const image=images.find(img=>img.getAttribute('src')===shotUrl)
-    const box=image?.getBoundingClientRect()
-    if(!image||!box)return null
-    // The screenshot is contained inside its preview. Match the actual image, not the letterbox.
-    const scale=image.naturalWidth&&image.naturalHeight?Math.min(box.width/image.naturalWidth,box.height/image.naturalHeight):0
-    const w=scale?image.naturalWidth*scale:box.width,h=scale?image.naturalHeight*scale:box.height
-    const rect=new DOMRect(box.left+(box.width-w)/2,box.top+(box.height-h)/2,w,h)
-    return validScreenRect(rect,window.innerWidth,window.innerHeight)?rect:validScreenRect(box,window.innerWidth,window.innerHeight)?box:null
-  },[shotUrl])
+  const shotUrl=projectId?posterUrl(projectId):undefined
+  const isPosterOrigin=!!origin&&origin.width>160&&origin.height>140
   const opener = useRef<Element | null>(
     typeof document !== 'undefined' ? document.activeElement : null,
   )
@@ -64,17 +53,17 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
       const finish=()=>{window.clearTimeout(watchdog.current);if(!closing.current)host.dataset.transition='ready'}
       const tl=gsap.timeline({onComplete:finish})
       animation.current=tl
-      const dest=heroRect()
       const proxy=bridge.current
-      const useBridge=!!proxy&&!!dest&&validScreenRect(origin,window.innerWidth,window.innerHeight)
+      const useBridge=!!proxy&&isPosterOrigin&&validScreenRect(origin,window.innerWidth,window.innerHeight)
       const accent=host.querySelector('.dlg__portal')
       const content=host.querySelectorAll(projectId?'.px-copy > :not(.px-open-title), .px-overview-card, .px-overview-foot':'.dlg__in')
       tl.fromTo('.dlg__veil',{opacity:0},{opacity:1,duration:duration*.6,ease:'power2.out'},0)
       tl.fromTo(node,{clipPath:insetFrom(origin)},{clipPath:'inset(0px 0px 0px 0px round 0px)',duration:duration,ease:'power3.inOut'},0)
-      if(useBridge&&origin&&dest&&proxy){
-        gsap.set(proxy,{left:origin.left,top:origin.top,width:origin.width,height:origin.height,x:0,y:0,scaleX:1,scaleY:1,opacity:1,transformOrigin:'top left'})
-        tl.to(proxy,{x:dest.left-origin.left,y:dest.top-origin.top,scaleX:dest.width/origin.width,scaleY:dest.height/origin.height,duration:duration*.83,ease:'power3.inOut'},0)
-          .to(proxy,{opacity:0,duration:duration*.22,ease:'power1.out'},duration*.78)
+      if(useBridge&&origin&&proxy){
+        gsap.set(proxy,{left:origin.left,top:origin.top,width:origin.width,height:origin.height,x:0,y:0,scaleX:1,scaleY:1,opacity:1,transformOrigin:'center center'})
+        // The conceptual cover is not the same image as the application screenshots.
+        // Expand and dissolve it into the full project canvas rather than morphing different images.
+        tl.to(proxy,{scale:1.13,opacity:0,duration:duration*.75,ease:'power2.inOut'},.02)
       }
       if(accent&&style)tl.fromTo(accent,{opacity:0},{opacity:.65,duration:duration*.25,ease:'power2.out'},.04).to(accent,{opacity:0,duration:duration*.5,ease:'power2.in'},duration*.31)
       const entry=style?.motion==='sprint'?{x:-36,y:10}:style?.motion==='scan'?{x:22,y:0}:style?.motion==='orbit'?{y:22,scale:.97}:style?.motion==='chapter'?{x:-20,y:0}:{y:18}
@@ -97,7 +86,7 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
       watchdog.current=window.setTimeout(()=>{if(!closing.current){tl.progress(1);finish()}},1800)
     },host)
     return()=>{window.clearTimeout(watchdog.current);animation.current?.kill();ctx.revert();document.documentElement.style.overflow=previousOverflow}
-  },[origin,projectId,style,heroRect])
+  },[origin,projectId,style,isPosterOrigin])
 
   const close=useCallback(()=>{
     if(closing.current)return
@@ -121,21 +110,16 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
     const tl=gsap.timeline({onComplete:done})
     animation.current=tl
     watchdog.current=window.setTimeout(done,1800)
-    const proxy=bridge.current,dest=heroRect()
-    // If the visitor has scrolled away from the hero, avoid a phantom screenshot jump.
-    if(proxy&&origin&&dest&&validScreenRect(origin,window.innerWidth,window.innerHeight)){
-      const current=proxy.getBoundingClientRect()
-      const shown=Number(gsap.getProperty(proxy,'opacity'))>.15
-      const start:RectLike=shown?current:dest
-      gsap.set(proxy,{left:start.left,top:start.top,width:start.width,height:start.height,x:0,y:0,scaleX:1,scaleY:1,transformOrigin:'top left'})
-      tl.to(proxy,{opacity:1,duration:.12},0)
-        .to(proxy,{x:origin.left-start.left,y:origin.top-start.top,scaleX:origin.width/start.width,scaleY:origin.height/start.height,duration:duration*.8,ease:'power3.inOut'},0)
-        .to(proxy,{opacity:0,duration:.16},duration*.78)
+    const proxy=bridge.current
+    if(proxy&&origin&&isPosterOrigin&&validScreenRect(origin,window.innerWidth,window.innerHeight)){
+      const start:RectLike=origin
+      gsap.set(proxy,{left:start.left,top:start.top,width:start.width,height:start.height,x:0,y:0,scale:1,opacity:0,transformOrigin:'center center'})
+      tl.fromTo(proxy,{opacity:0,scale:1.08},{opacity:1,scale:1,duration:duration*.38,ease:'power2.out'},duration*.44)
     }else if(proxy)tl.to(proxy,{opacity:0,duration:.16},0)
     tl.to(panel.current,{clipPath:insetFrom(origin),duration,ease:'power3.inOut'},0)
       .to(host.querySelector('.dlg__veil'),{opacity:0,duration:duration*.65},duration*.3)
       .to(host.querySelectorAll(projectId?'.px-copy > *, .px-overview-card, .px-overview-screens, .px-overview-foot':'.dlg__in'),{opacity:0,duration:.25,ease:'power2.in'},0)
-  },[onClose,origin,projectId,style,heroRect])
+  },[onClose,origin,projectId,style,isPosterOrigin])
 
   useEffect(() => {
     root.current?.querySelector<HTMLElement>('[data-autofocus]')?.focus({ preventScroll: true })
