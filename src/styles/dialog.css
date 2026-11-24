@@ -349,3 +349,11 @@
     justify-content: flex-start;
   }
 }
+
+.dlg__portal{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 35%,var(--tone) 100%);mix-blend-mode:screen}
+.dlg[data-project="matchup"] .dlg__portal{background:linear-gradient(115deg,transparent 25%,#baf34b88 50%,transparent 75%)}
+.dlg[data-project="ashesfire"] .dlg__portal{background:repeating-linear-gradient(90deg,transparent 0 12%,#ffad6033 12% 13%)}
+.dlg[data-project="my-journey"] .dlg__portal{background:radial-gradient(ellipse,transparent 25%,#d2a27e77 43%,transparent 55%,#d2a27e44 75%,transparent 85%)}
+.dlg[data-project="cv-editorial"] .dlg__portal{background:radial-gradient(circle,#f6d6ae 0, #a3694266 30%,transparent 65%)}
+.dlg[data-project="portfolio-narrativo"] .dlg__portal{background:linear-gradient(90deg,#e7c3a355,transparent 48%,#e7c3a355 50%,transparent 52%,#e7c3a355)}
+@media(prefers-reduced-motion:reduce){.dlg__portal{display:none}}
