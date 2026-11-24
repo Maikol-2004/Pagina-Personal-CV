@@ -1,12 +1,13 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html, MeshReflectorMaterial, useTexture, RoundedBox, Environment, Lightformer, Sparkles } from '@react-three/drei'
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Vector3, Color, Matrix4, InstancedMesh, TextureLoader, Group, PointLight, SpotLight, Object3D, BufferGeometry, Float32BufferAttribute, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
+import { Vector3, Color, Matrix4, Mesh, InstancedMesh, TextureLoader, Group, PointLight, SpotLight, Object3D, BufferGeometry, Float32BufferAttribute, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
 import { projects } from '../data/profile'
 import { PROJECT_LAYERS } from '../data/projectShots'
 import type { Project } from '../data/types'
 import { GalleryEffects } from './GalleryEffects'
 import { CAMERA_START_Z, CAMERA_LENGTH as length, projectZ, nearestProject as findNearest, scrollProgress, focusFov, nextSelection, qualityStep, renderDpr, reflectionSize, ceilingIndices, type GalleryPhase as Phase } from '../lib/galleryLogic'
+import { transitionShot, cameraEase, fitScreenDistance, validScreenRect } from '../lib/projectTransition'
 import './projectGallery.css'
 
 type Props = { onOpen: (p: Project, rect: DOMRect | null) => void; activeProjectId?: string }
@@ -218,7 +219,7 @@ function Installation({kind,accent}:{kind:string;accent:string}){
     </group>}
   </group>
 }
-function Artwork({ project, index, focused, onSelect }: { project: Project; index: number; focused:boolean; onSelect: () => void }) {
+function Artwork({ project, index, focused, entering, onSelect }: { project: Project; index: number; focused:boolean; entering:boolean; onSelect: () => void }) {
   const side = index % 2 ? 1 : -1
   const z = projectZ(index)
   const layers = useMemo(()=>PROJECT_LAYERS[project.id].filter(l => !l.gallery),[project.id])
@@ -241,7 +242,7 @@ function Artwork({ project, index, focused, onSelect }: { project: Project; inde
   const accent=project.id==='matchup'?'#a8ed46':project.tone
   const emission=useMemo(()=>new Color(accent).multiplyScalar(3.2),[accent])
   useFrame(({clock,camera},dt)=>{
-    if(!display.current)return
+    if(!display.current||entering)return
     const proximity=Math.max(0,1-Math.abs(camera.position.z-z)/9)
     const ease=1-Math.exp(-dt*4)
     const target=Math.sin(clock.elapsedTime*1.2)*(focused?.025:.06)*proximity
@@ -269,7 +270,7 @@ function Artwork({ project, index, focused, onSelect }: { project: Project; inde
       const y=project.id==='matchup'?0:i===0?0:i===1?.51:-.51
       return <group key={layers[i].src} position={[x,y,i===0?.27:.17]} rotation={[0,project.id==='matchup'?(i-1)*-.12:0,0]}>
         <RoundedBox args={[width+.075,height+.075,.095]} radius={.025} smoothness={3}><meshStandardMaterial color={project.id==='matchup'?'#111713':'#17120f'} metalness={.5} roughness={.3}/></RoundedBox>
-        <mesh position={[0,0,.052]}><planeGeometry args={[width,height]}/><meshBasicMaterial map={t} toneMapped={false}/></mesh>
+        <mesh name={layers[i].src===transitionShot(project.id)?.src?'transition-screen-'+project.id:undefined} position={[0,0,.052]}><planeGeometry args={[width,height]}/><meshBasicMaterial map={t} toneMapped={false}/></mesh>
       </group>
     })}
     </group>
@@ -285,34 +286,71 @@ function Artwork({ project, index, focused, onSelect }: { project: Project; inde
     </Html>
   </group>
 }
-function Camera({ progress, selected, phase, yaw, onArrive }: { progress: React.RefObject<number>; selected: number|null; phase:Phase; yaw:React.RefObject<number>; onArrive: () => void }) {
-  const {camera,size}=useThree()
+/** Project the actual screenshot plane into browser coordinates for a seamless handoff. */
+function screenRect(mesh:Mesh,camera:PerspectiveCamera,canvas:HTMLCanvasElement){
+  mesh.geometry.computeBoundingBox()
+  const bounds=mesh.geometry.boundingBox
+  if(!bounds)return null
+  mesh.updateWorldMatrix(true,false);camera.updateMatrixWorld()
+  const viewport=canvas.getBoundingClientRect()
+  const corners=[new Vector3(bounds.min.x,bounds.min.y,0),new Vector3(bounds.max.x,bounds.min.y,0),new Vector3(bounds.min.x,bounds.max.y,0),new Vector3(bounds.max.x,bounds.max.y,0)].map(v=>mesh.localToWorld(v).project(camera))
+  const xs=corners.map(v=>viewport.left+(v.x+1)*viewport.width/2)
+  const ys=corners.map(v=>viewport.top+(1-v.y)*viewport.height/2)
+  const rect=new DOMRect(Math.min(...xs),Math.min(...ys),Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))
+  return validScreenRect(rect,window.innerWidth,window.innerHeight)?rect:null
+}
+function Camera({ progress, selected, phase, yaw, onArrive }: { progress: React.RefObject<number>; selected: number|null; phase:Phase; yaw:React.RefObject<number>; onArrive: (rect?:DOMRect|null) => void }) {
+  const {camera,size,scene,gl}=useThree()
   const look=useRef(new Vector3(0,1.75,CAMERA_START_Z-10))
   const targetPosition=useMemo(()=>new Vector3(),[])
   const targetLook=useMemo(()=>new Vector3(),[])
   const desiredRotation=useMemo(()=>new Quaternion(),[])
   const aimCamera=useMemo(()=>new PerspectiveCamera(),[])
+  const normal=useMemo(()=>new Vector3(),[])
+  const screenRotation=useMemo(()=>new Quaternion(),[])
+  const move=useRef({phase:'' as string,selected:null as number|null,elapsed:0,start:new Vector3(),rotation:new Quaternion(),fov:65})
   const notified=useRef<Phase|null>(null)
-  useEffect(()=>{notified.current=null},[phase,selected])
   useFrame((_,dt)=>{
+    if(!(camera instanceof PerspectiveCamera))return
     const z=CAMERA_START_Z-progress.current*length
     const side=selected!==null?(selected%2?1:-1):0
     const focus=selected!==null&&phase!=='walking'
     const close=phase==='entering'||phase==='inside'
-    const distance=close?1.02:5.8
-    const p=targetPosition.set(focus?side*(exhibitX-distance):0,focus?2.16:1.75+Math.sin(progress.current*95)*.018,focus?projectZ(selected!):z)
+    const aspect=size.width/Math.max(1,size.height)
+    let fov=close?52:focus?focusFov(aspect):size.width<700?78:65
+    const p=targetPosition.set(focus?side*(exhibitX-(close?1.5:5.8)):0,focus?2.16:1.75+Math.sin(progress.current*95)*.018,focus?projectZ(selected!):z)
     const l=targetLook.set(focus?side*exhibitX:Math.sin(yaw.current)*10,focus?2.16:1.75,focus?p.z:z-Math.cos(yaw.current)*10)
-    const a=1-Math.exp(-Math.min(dt,.10)*(close?3.5:focus?4:5))
-    camera.position.lerp(p,a);look.current.lerp(l,a)
-    aimCamera.position.copy(p);aimCamera.lookAt(l);desiredRotation.copy(aimCamera.quaternion);camera.quaternion.slerp(desiredRotation,a)
-    if(camera instanceof PerspectiveCamera){
-      const aspect=size.width/Math.max(1,size.height)
-      const fov=close?48:focus?focusFov(aspect):size.width<700?78:65
+    const screen=close&&selected!==null?scene.getObjectByName('transition-screen-'+projects[selected].id):null
+    if(screen instanceof Mesh){
+      screen.updateWorldMatrix(true,false)
+      screen.getWorldPosition(l);screen.getWorldQuaternion(screenRotation)
+      normal.set(0,0,1).applyQuaternion(screenRotation)
+      if(!screen.geometry.boundingBox)screen.geometry.computeBoundingBox()
+      const bounds=screen.geometry.boundingBox
+      const distance=bounds?fitScreenDistance(bounds.max.x-bounds.min.x,bounds.max.y-bounds.min.y,aspect,fov):1.5
+      p.copy(l).addScaledVector(normal,distance)
+    }
+    aimCamera.position.copy(p);aimCamera.lookAt(l);desiredRotation.copy(aimCamera.quaternion)
+    const m=move.current
+    if(m.phase!==phase||m.selected!==selected){
+      m.phase=phase;m.selected=selected;m.elapsed=0;m.start.copy(camera.position);m.rotation.copy(camera.quaternion);m.fov=camera.fov;notified.current=null
+    }
+    if(phase==='turning'||phase==='entering'){
+      m.elapsed+=Math.min(dt,.12)
+      const duration=phase==='turning'?Math.min(1.35,.75+m.start.distanceTo(p)*.035):.82
+      const t=Math.min(1,m.elapsed/duration),e=cameraEase(t)
+      camera.position.lerpVectors(m.start,p,e);camera.quaternion.copy(m.rotation).slerp(desiredRotation,e)
+      camera.fov=m.fov+(fov-m.fov)*e;camera.updateProjectionMatrix()
+      if(t===1&&notified.current!==phase){
+        notified.current=phase
+        onArrive(phase==='entering'&&screen instanceof Mesh?screenRect(screen,camera,gl.domElement):null)
+      }
+    }else{
+      const a=1-Math.exp(-Math.min(dt,.1)*(focus?5:6))
+      camera.position.lerp(p,a);camera.quaternion.slerp(desiredRotation,a)
       if(Math.abs(camera.fov-fov)>.05){camera.fov+=(fov-camera.fov)*a;camera.updateProjectionMatrix()}
     }
-    if((phase==='turning'||phase==='entering')&&notified.current!==phase&&camera.position.distanceTo(p)<.06&&look.current.distanceTo(l)<.06&&camera.quaternion.angleTo(desiredRotation)<.025){
-      notified.current=phase;onArrive()
-    }
+    look.current.copy(l)
   })
   return null
 }
@@ -335,7 +373,7 @@ function ExhibitShadow({enabled}:{enabled:boolean}){
   })
   return <><object3D ref={target}/><spotLight ref={lamp} color="#ffe0b8" intensity={0} angle={.62} penumbra={.85} distance={7} castShadow shadow-autoUpdate={false} shadow-mapSize-width={768} shadow-mapSize-height={768} shadow-bias={-.0003} shadow-normalBias={.025}/></>
 }
-function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive}: {progress: React.RefObject<number>;selected:number|null;phase:Phase;quality:Quality;adaptiveDpr:number;yaw:React.RefObject<number>;onSelect:(i:number)=>void;onArrive:()=>void}) {
+function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive}: {progress: React.RefObject<number>;selected:number|null;phase:Phase;quality:Quality;adaptiveDpr:number;yaw:React.RefObject<number>;onSelect:(i:number)=>void;onArrive:(rect?:DOMRect|null)=>void}) {
   const materials=useArchitecturalMaterials()
   const woodPhoto=usePhotoMaps('dark_wood',[1,1])
   const ceilingGlow=useMemo(()=>new Color('#f4dfc5').multiplyScalar(2.1),[])
@@ -405,7 +443,7 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
     {quality==='ultra'&&!mobile&&<ExhibitShadow enabled/>}
     <Reception progress={progress}/>
     {projects.map((p,i)=><Alcove key={'alcove-'+p.id} project={p} index={i}/>)}
-    {projects.map((p,i)=><Suspense key={p.id} fallback={null}><Artwork project={p} index={i} focused={selected===i&&phase==='focused'} onSelect={()=>onSelect(i)}/></Suspense>)}
+    {projects.map((p,i)=><Suspense key={p.id} fallback={null}><Artwork project={p} index={i} focused={selected===i&&phase==='focused'} entering={selected===i&&(phase==='entering'||phase==='inside')} onSelect={()=>onSelect(i)}/></Suspense>)}
     <Camera progress={progress} selected={selected} phase={phase} yaw={yaw} onArrive={onArrive}/>
   </>
 }
@@ -506,17 +544,17 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
     if(performance.now()<ignoreClick.current)return
     yaw.current=0
     const next=nextSelection(phase,selected,i)
-    if(next==='turning'&&phase==='walking'){savedScroll.current=window.scrollY;setSelected(i)}
+    if(next==='turning'&&phase==='walking'){savedScroll.current=window.scrollY;setSelected(i);const shot=transitionShot(projects[i].id);if(shot){const img=new Image();img.src=url(shot.src);void img.decode().catch(()=>{})}}
     if(next!==phase)setPhase(next)
   }
   function resume(){yaw.current=0;setSelected(null);setPhase('walking')}
-  function arrive(){
+  function arrive(screenOrigin?:DOMRect|null){
     if(selected===null)return
     if(phase==='turning'){setPhase('focused');return}
     if(phase!=='entering')return
     const r=viewport.current?.getBoundingClientRect()
     setPhase('inside')
-    onOpen(projects[selected],r?new DOMRect(r.x+r.width*.04,r.y+r.height*.06,r.width*.92,r.height*.88):null)
+    onOpen(projects[selected],screenOrigin??(r?new DOMRect(r.x+r.width*.1,r.y+r.height*.12,r.width*.8,r.height*.76):null))
   }
   function pointerDown(e:ReactPointerEvent<HTMLDivElement>){
     if(phase!=='walking'||!(e.target instanceof HTMLCanvasElement))return
