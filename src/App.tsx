@@ -45,7 +45,7 @@ export default function App() {
         <About />
         <Timeline onOpen={openStage} />
         <ConstellationSection onOpenStage={openStage} />
-        <Projects onOpen={openProject} />
+        <Projects onOpen={openProject} activeProjectId={dlg?.kind === 'project' ? dlg.data.id : undefined} />
         <Skills />
         <Contact />
       </main>
