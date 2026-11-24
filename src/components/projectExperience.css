@@ -55,3 +55,12 @@
 @keyframes px-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}@keyframes px-pulse{0%,100%{scale:.96;opacity:.65}50%{scale:1.04;opacity:1}}@keyframes px-enter{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}
 @media(max-width:760px){.px-hero{grid-template-columns:1fr;min-height:auto;padding:25px 18px;gap:24px}.px-copy h2{font-size:clamp(2.3rem,10vw,4rem)}.px-visual,.px--my-journey .px-visual{min-height:220px}.px--matchup .px-visual{min-height:250px}.px-screen{transform:none}.px-metrics{grid-template-columns:1fr}.px-detail img{max-height:65svh}.px-tabs button{min-height:42px}.px-chapters button{min-width:85px}}
 @media(prefers-reduced-motion:reduce){.px *{animation:none!important;transition:none!important}}
+
+.px-demo{display:grid;gap:18px;padding:clamp(20px,4vw,48px);background:var(--px-bg);border:1px solid color-mix(in srgb,var(--px-accent) 35%,transparent);border-radius:8px}
+.px-demo h3{font-size:clamp(1.6rem,4vw,3rem);line-height:1.1}.px-demo>p{font-size:.9rem;opacity:.86}
+.demo-match{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:16px;padding:18px;border:1px solid #baf34b55;background:#19271a;border-radius:10px}.demo-match h4{font-size:1.15rem;margin-bottom:8px}.demo-match p{font-size:.8rem}.demo-ball{font-size:2.5rem}
+.demo-track{height:8px;background:#ffffff15;border-radius:20px;overflow:hidden;margin-top:12px}.demo-track i{display:block;height:100%;background:var(--px-accent);transition:width .3s ease;border-radius:20px}
+.demo-action,.demo-nav button{background:var(--px-accent);color:var(--px-bg);padding:13px 20px;border-radius:6px;font-weight:650;cursor:pointer}.demo-action{max-width:460px;width:100%}
+.demo-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.demo-fields label{display:grid;gap:12px;padding:15px;background:#ffffff06;border:1px solid #ffffff18}.demo-fields label span{display:flex;justify-content:space-between;gap:8px}.demo-fields input{width:100%;accent-color:var(--px-accent)}
+.demo-nav{display:flex;justify-content:space-between;align-items:center;gap:8px}.demo-nav button:disabled{opacity:.35;cursor:default}.demo-editorial{margin:0;text-align:center}.demo-editorial img{display:block;max-width:100%;max-height:65svh;margin:0 auto;border:1px solid #ffffff22;border-radius:5px;animation:px-enter .5s ease both}.demo-editorial figcaption{font-size:.85rem;padding-top:12px}
+@media(max-width:600px){.demo-fields{grid-template-columns:1fr}.demo-nav button{padding:10px;font-size:.78rem}}
