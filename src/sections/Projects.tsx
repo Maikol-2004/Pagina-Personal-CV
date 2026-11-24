@@ -1,12 +1,13 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense } from 'react'
 import { projects } from '../data/profile'
-import { PROJECT_LAYERS } from '../data/projectShots'
+import { ProjectExperience } from '../components/ProjectExperience'
 import type { Project } from '../data/types'
 import { SectionLabel } from '../components/SectionLabel'
 const ProjectGallery = lazy(() => import('../three/ProjectGallery'))
 
 interface Props {
   onOpen: (p: Project, rect: DOMRect | null) => void
+  activeProjectId?: string
 }
 
 export const shotUrl = (name: string) => `${import.meta.env.BASE_URL}projects/${name}.webp`
@@ -22,7 +23,7 @@ const Out = () => (
  * pantallas reales (ventanas, móvil, tarjetas) al otro. Las capas se mueven con el cursor a distinta profundidad
  * y se recomponen con una entrada escalonada al cambiar de proyecto.
  */
-export function Projects({ onOpen }: Props) {
+export function Projects({ onOpen, activeProjectId }: Props) {
   return <section className="section projects" id="proyectos" aria-labelledby="pr-title">
     <div className="container">
       <SectionLabel n="04" left="Proyectos" right="Lo que construyo" />
@@ -32,7 +33,7 @@ export function Projects({ onOpen }: Props) {
       </div>
     </div>
     <Suspense fallback={<div className="container">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title}</button>)}</div>}>
-      <ProjectGallery onOpen={onOpen}/>
+      <ProjectGallery onOpen={onOpen} activeProjectId={activeProjectId}/>
     </Suspense>
   </section>
 }
@@ -50,38 +51,10 @@ const Block = ({ title, items }: { title: string; items: string[] }) => (
 
 /** Ficha completa de un proyecto (diálogo cinematográfico) con galería de imágenes reales. */
 export function ProjectDetail({ project }: { project: Project }) {
-  const shots = PROJECT_LAYERS[project.id] ?? []
-  const [i, setI] = useState(0)
-  const cur = shots[i]
   return (
     <div className="pd">
-      <div className="pd__top">
-        <p className="eyebrow dlg__in" style={{ color: 'var(--copper)' }}>
-          {project.context}
-        </p>
-        <h2 className="dlg__title dlg__in">
-          {project.title}
-          <br />
-          <em>{project.accent}</em>
-        </h2>
-        <p className="dlg__text dlg__in">{project.summary}</p>
-      </div>
-
-      {cur && (
-        <div className="pd__gallery dlg__in">
-          <figure className={`pd__frame pd__frame--${cur.kind}`}>
-            <img key={cur.src} src={shotUrl(cur.src)} alt={cur.alt} />
-          </figure>
-          <div className="pd__thumbs" role="group" aria-label="Imágenes del proyecto">
-            {shots.map((s, k) => (
-              <button key={s.src} aria-pressed={k === i} onClick={() => setI(k)} aria-label={s.alt}>
-                <img src={shotUrl(s.src)} alt="" />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
+      <ProjectExperience key={project.id} project={project}/>
+      <p className="eyebrow dlg__in">{project.context}</p>
       <dl className="pd__facts dlg__in">
         <div>
           <dt className="eyebrow">Rol</dt>
@@ -121,7 +94,7 @@ export function ProjectDetail({ project }: { project: Project }) {
             {l.label} <Out />
           </a>
         ))}
-        {project.links.length === 0 && <p className="muted">Repositorio privado.</p>}
+        {project.links.length === 0 && <p className="muted">Sin enlace público en esta ficha.</p>}
       </div>
     </div>
   )
