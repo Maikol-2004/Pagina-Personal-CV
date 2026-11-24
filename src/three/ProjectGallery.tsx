@@ -137,7 +137,7 @@ function Room({progress,selected,onSelect,onArrive}: {progress: React.RefObject<
       <mesh position={[side*3.26,4.02,ROOM_CENTER]}><boxGeometry args={[.035,.045 ,ROOM_LENGTH-1]}/><meshBasicMaterial color="#ffdbac" toneMapped={false}/></mesh>
       <mesh position={[side*3.25,.31,ROOM_CENTER]}><boxGeometry args={[.025,.025 ,ROOM_LENGTH-1]}/><meshBasicMaterial color="#d3a477" toneMapped={false}/></mesh>
     </group>)}
-    {Array.from({length:9},(_,i)=><group key={'portal'+i} position={[0,0,10-i*8]}>
+    {Array.from({length:8},(_,i)=><group key={'portal'+i} position={[0,0,6-i*8]}>
       {[-1,1].map(side=><group key={side}>
         <Block position={[side*3.13,2.2,0]} size={[.45,4.4,.52]} color="#241a14"/>
         <Block position={[side*2.89,2.2,0]} size={[.025,4.15,.38]} color="#b98a63" metal={.7}/>
