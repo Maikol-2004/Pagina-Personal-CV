@@ -101,6 +101,7 @@ function useUnfold(root:React.RefObject<HTMLDivElement|null>){
     function update(){
       raf=0
       const viewport=scroll!.getBoundingClientRect()
+      if(viewport.height<=0)return
       // Read all positions before applying transforms, to avoid repeated layout recalculation.
       const positions=pairs.map(({source,target,surface})=>({source:source.getBoundingClientRect(),target:target.getBoundingClientRect(),surface}))
       for(const {source,target,surface} of positions){
@@ -111,12 +112,13 @@ function useUnfold(root:React.RefObject<HTMLDivElement|null>){
         surface.style.setProperty('--unfold-x',((1-ease)*shift).toFixed(2)+'px')
         surface.style.setProperty('--unfold-scale',(scale+(1-scale)*ease).toFixed(3))
         surface.style.setProperty('--unfold-detail',(.6+.4*ease).toFixed(3))
+        surface.style.setProperty('--unfold-y',((1-ease)*24).toFixed(2)+'px')
       }
     }
     const tick=()=>{if(!raf)raf=requestAnimationFrame(update)}
     const observer=new ResizeObserver(tick);observer.observe(el);observer.observe(scroll)
     scroll.addEventListener('scroll',tick,{passive:true});tick()
-    return()=>{observer.disconnect();scroll.removeEventListener('scroll',tick);cancelAnimationFrame(raf);for(const {surface} of pairs){surface.style.removeProperty('--unfold-x');surface.style.removeProperty('--unfold-scale');surface.style.removeProperty('--unfold-detail')}}
+    return()=>{observer.disconnect();scroll.removeEventListener('scroll',tick);cancelAnimationFrame(raf);for(const {surface} of pairs){surface.style.removeProperty('--unfold-x');surface.style.removeProperty('--unfold-scale');surface.style.removeProperty('--unfold-detail');surface.style.removeProperty('--unfold-y')}}
   },[root])
 }
 
@@ -143,6 +145,7 @@ export function ProjectExperience({project}:{project:Project}){
         <p className="px-sub">{identity?.descriptor??project.accent}</p>
         <p className="px-overview-summary">{project.summary}</p>
         <div className="px-overview-meta"><span>{project.status}</span><span>{project.role}</span></div>
+        {project.links.length>0&&<div className="px-overview-links">{project.links.map(link=><a key={link.href} href={link.href} target="_blank" rel="noreferrer">{link.label} ↗</a>)}</div>}
       </div>
       <div className="px-visual px-overview-screens" data-unfold-source="screens">
         {lead&&<button className="px-preview px-preview-main" onClick={()=>jump('screens',shots.indexOf(lead))} aria-label={'Ampliar '+lead.alt}>
