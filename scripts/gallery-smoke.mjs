@@ -117,7 +117,10 @@ try{
     for(const id of ['ashesfire','matchup','my-journey','cv-editorial','portfolio-narrativo']){
       const response=await page.request.get(base+'gallery-posters/editorial/'+id+'.svg')
       assert.ok(response.ok(),'Missing poster '+id)
-      assert.match(await response.text(),/viewBox="0 0 1400 1120"/)
+      const poster=await response.text()
+      assert.match(poster,/viewBox="0 0 1400 1120"/)
+      assert.match(poster,/data:image\/webp;base64,/)
+      assert.ok(!poster.includes('images.unsplash.com'))
     }
     await walk(0)
     await page.locator('.gallery-viewport canvas').waitFor()

@@ -1,30 +1,29 @@
-// Compose self-contained editorial posters using licensed photography.
-import {mkdir, readFile, writeFile, access} from 'node:fs/promises'
+// Local editorial covers, derived from actual project captures. Optional original art overrides.
+import {mkdir, readFile, writeFile} from 'node:fs/promises'
 const root=new URL('../public/gallery-posters/',import.meta.url)
 const dir=new URL('editorial/',root)
+const projectDir=new URL('../public/projects/',import.meta.url)
 await mkdir(dir,{recursive:true})
 const entries=[
- ['ashesfire','AshesFire','Gestión de proyectos · Costes · Rentabilidad','SOFTWARE DE GESTIÓN','1772001936267-b6058748eff4','Fer Troulik','lIipHR8mi3o'],
- ['matchup','MatchUp','Organiza · Comparte · Juega','EXPERIENCIA DEPORTIVA','1676746424139-77f8bd8922a8','Chris Kursikowski','5IS7UghgoMA'],
- ['my-journey','My Journey','Trayectoria profesional · Web interactiva','PORTAFOLIO INMERSIVO','1754762646500-d741ed975cd1','Marek Piwnicki','hycORWHgfo4'],
- ['cv-editorial','CV web','Diseño editorial · Identidad profesional','CURRÍCULUM INTERACTIVO','1752223638233-4c9545333f89','Dhony Koswara','btVTuAIhvk8'],
- ['portfolio-narrativo','Portfolio narrativo','Una trayectoria contada en capítulos','NARRATIVA DIGITAL','1760840415585-ae89d94bb636','byVlado','k3tHnRwtTso'],
+ ['ashesfire','AshesFire','Gestión de proyectos · Costes · Rentabilidad','SOFTWARE DE GESTIÓN','#d0a07a','ashesfire-costs','ashesfire-list'],
+ ['matchup','MatchUp','Organiza · Comparte · Juega','EXPERIENCIA DEPORTIVA','#baf34b','matchup-inicio','matchup-perfil'],
+ ['my-journey','My Journey','Trayectoria profesional · Web interactiva','PORTAFOLIO INMERSIVO','#d2a27e','journey-constel-focus','journey-hero'],
+ ['cv-editorial','CV web','Diseño editorial · Identidad profesional','CURRÍCULUM INTERACTIVO','#d2a27e','cv-hero','cv-exp'],
+ ['portfolio-narrativo','Portfolio narrativo','Una trayectoria contada en capítulos','NARRATIVA DIGITAL','#e7c3a3','narrativo-timeline','narrativo-detail'],
 ]
-await Promise.all(entries.map(async ([id,title,subtitle,category,photo,author,source],index)=>{
- const target=new URL(id+'.svg',dir)
- try{await access(target);if((await readFile(target,'utf8')).includes('data:image/jpeg;base64,'))return}catch{}
- try{
-  const response=await fetch('https://images.unsplash.com/photo-'+photo+'?fit=crop&w=1400&h=1120&q=82&fm=jpg',{signal:AbortSignal.timeout(10000)})
-  if(!response.ok||!response.headers.get('content-type')?.startsWith('image/'))throw Error('Image unavailable')
-  const bytes=Buffer.from(await response.arrayBuffer())
-  if(bytes.length>1500000||bytes[0]!==255||bytes[1]!==216)throw Error('Invalid JPEG')
-  const picture=bytes.toString('base64')
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1120" viewBox="0 0 1400 1120"><title>${title} — portada conceptual</title><desc>Fotografía de ${author}, Unsplash: https://unsplash.com/photos/${source}. Composición editorial, no captura de la aplicación.</desc><defs><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#090909" stop-opacity=".64"/><stop offset=".22" stop-color="#090909" stop-opacity=".03"/><stop offset=".45" stop-color="#090909" stop-opacity=".1"/><stop offset=".75" stop-color="#090909" stop-opacity=".88"/><stop offset="1" stop-color="#090909"/></linearGradient></defs><rect width="1400" height="1120" fill="#090909"/><image href="data:image/jpeg;base64,${picture}" width="1400" height="1120" preserveAspectRatio="xMidYMid slice"/><rect width="1400" height="1120" fill="url(#shade)"/><g fill="#f7efe5" font-family="Arial,sans-serif"><text x="72" y="78" font-size="22" letter-spacing="4">${category}</text><text x="1328" y="78" font-size="23" text-anchor="end">0${index+1} / 05</text><path d="M72 720H145" stroke="#d6b08a" stroke-width="3"/><text x="68" y="847" font-family="Georgia,serif" font-size="${id==='portfolio-narrativo'?92:120}" letter-spacing="-2">${title}</text><text x="74" y="912" font-size="27">${subtitle}</text><path d="M74 962H1326" stroke="#dbc4a8" stroke-opacity=".45"/><text x="74" y="1024" font-size="22" letter-spacing="4" fill="#e7c6a1">EXPLORAR PROYECTO</text><text x="1326" y="1024" font-size="35" text-anchor="end" fill="#e7c6a1">↗</text></g></svg>`
+const data=async(name)=>'data:image/webp;base64,'+(await readFile(new URL(name+'.webp',projectDir))).toString('base64')
+await Promise.all(entries.map(async ([id,title,subtitle,category,accent,main,secondary],index)=>{
+  const target=new URL(id+'.svg',dir)
+  let artwork
+  try{artwork='data:image/webp;base64,'+(await readFile(new URL('artwork/'+id+'.webp',root))).toString('base64')}catch{}
+  const primary=await data(main),second=await data(secondary)
+  const mobile=id==='matchup'
+  const visual=artwork
+    ? `<image href="${artwork}" width="1400" height="790" preserveAspectRatio="xMidYMid slice"/><rect y="0" width="1400" height="790" fill="url(#artshade)"/>`
+    : mobile
+      ? `<g transform="translate(480 85) rotate(-8 150 290)"><rect width="306" height="590" rx="42" fill="#101315" stroke="${accent}" stroke-opacity=".6" stroke-width="3"/><image href="${second}" x="10" y="10" width="286" height="570" preserveAspectRatio="xMidYMid meet"/></g><g transform="translate(790 58) rotate(9 150 300)"><rect width="326" height="640" rx="45" fill="#101315" stroke="#b8b9af" stroke-width="3"/><image href="${primary}" x="10" y="10" width="306" height="620" preserveAspectRatio="xMidYMid meet"/></g>`
+      : `<g transform="translate(220 125) rotate(-6 485 270)"><rect width="1010" height="555" rx="15" fill="#17191c" stroke="${accent}" stroke-opacity=".7" stroke-width="2"/><image href="${primary}" x="12" y="12" width="986" height="531" preserveAspectRatio="xMidYMid meet"/></g><g transform="translate(835 383) rotate(5 210 120)"><rect width="445" height="270" rx="9" fill="#16171a" stroke="#ac9177" stroke-width="2"/><image href="${second}" x="8" y="8" width="429" height="254" preserveAspectRatio="xMidYMid meet"/></g>`
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1120" viewBox="0 0 1400 1120"><title>${title} — exposición digital</title><desc>${artwork?'Ilustración conceptual generada; no representa una captura ni datos reales.':'Composición editorial con capturas originales del proyecto.'}</desc><defs><radialGradient id="back" cx=".67" cy=".28" r=".8"><stop stop-color="${accent}" stop-opacity=".22"/><stop offset="1" stop-color="#101012"/></radialGradient><linearGradient id="artshade" x2="0" y2="1"><stop stop-color="#08090a" stop-opacity=".55"/><stop offset=".2" stop-color="#08090a" stop-opacity=".04"/><stop offset=".68" stop-color="#08090a" stop-opacity="0"/><stop offset="1" stop-color="#08090a"/></linearGradient><linearGradient id="fade" x2="0" y2="1"><stop stop-color="#08090a" stop-opacity="0"/><stop offset=".53" stop-color="#08090a" stop-opacity="0"/><stop offset=".74" stop-color="#08090a" stop-opacity=".96"/><stop offset="1" stop-color="#08090a"/></linearGradient></defs><rect width="1400" height="1120" fill="#101012"/><rect width="1400" height="1120" fill="url(#back)"/>${visual}<rect width="1400" height="1120" fill="url(#fade)"/><g fill="#f7efe5" font-family="Arial,sans-serif"><text x="72" y="78" font-size="22" letter-spacing="4">${category}</text><path d="M72 720H145" stroke="${accent}" stroke-width="3"/><text x="68" y="847" font-family="Georgia,serif" font-size="${id==='portfolio-narrativo'?92:120}" letter-spacing="-2">${title}</text><text x="74" y="912" font-size="27">${subtitle}</text><path d="M74 962H1326" stroke="#dbc4a8" stroke-opacity=".45"/><text x="74" y="1024" font-size="22" letter-spacing="4" fill="${accent}">EXPLORAR PROYECTO</text><text x="1326" y="1024" font-size="35" text-anchor="end" fill="${accent}">↗</text></g></svg>`
   await writeFile(target,svg)
-  console.log('Editorial poster:',id)
- }catch(error){
-  // Keep the site available offline. Retry photographs on the next startup.
-  console.warn('Using original cover for',id,String(error))
-  await writeFile(target,await readFile(new URL(id+'.svg',root)))
- }
+  console.log('Editorial poster:',id,artwork?'concept art':'real project captures')
 }))
