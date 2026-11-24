@@ -185,7 +185,7 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     <ambientLight intensity={.28}/>
     <Environment resolution={128}><Lightformer form="rect" intensity={3} color="#ffe0b8" position={[0,5,-10]} scale={[6,25,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={1.5} color="#c69a73" position={[4,2,-15]} scale={[30,4,1]} rotation={[0,-Math.PI/2,0]}/></Environment>
     <hemisphereLight args={["#ffe1bf","#38251b",1.1]}/>
-    <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[7,ROOM_LENGTH]}/><MeshReflectorMaterial resolution={quality==='ultra'?1024:quality==='medium'?256:mobile?512:768} mirror={.22} mixBlur={.35} mixStrength={.48} blur={mobile?[40,18]:[90,35]} map={materials.stone} color="#9e8b79" metalness={.18} roughness={.46}/></mesh>
+    <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[7,ROOM_LENGTH]}/><MeshReflectorMaterial resolution={quality==='ultra'?1024:quality==='medium'?256:mobile?512:768} mirror={.22} mixBlur={.35} mixStrength={.48} blur={mobile?[40,18]:[90,35]} map={materials.stone} bumpMap={materials.stone} bumpScale={.015} color="#9e8b79" metalness={.18} roughness={.46}/></mesh>
     <Block position={[0,4.5,ROOM_CENTER]} size={[7,.3,ROOM_LENGTH]} color="#211813"/>
     <Block position={[0,2.2,ROOM_BACK_Z]} size={[7,4.5,.3]} color="#302219"/>
     {[-1,1].map(side=><group key={side}>
@@ -223,6 +223,36 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     {projects.map((p,i)=><Artwork key={p.id} project={p} index={i} onSelect={()=>onSelect(i)}/>)}
     <Camera progress={progress} selected={selected} phase={phase} yaw={yaw} onArrive={onArrive}/>
   </>
+}
+function AmbientSound(){
+  const [enabled,setEnabled]=useState(false)
+  const audio=useRef<{ctx:AudioContext;gain:GainNode}|null>(null)
+  useEffect(()=>()=>{void audio.current?.ctx.close()},[])
+  useEffect(()=>{
+    const root=document.querySelector('.gallery-viewport');if(!root)return
+    const observer=new IntersectionObserver(([entry])=>{const a=audio.current;if(a)a.gain.gain.setTargetAtTime(entry.isIntersecting && enabled ? .035 : 0,a.ctx.currentTime,.25)},{threshold:.2})
+    observer.observe(root);return()=>observer.disconnect()
+  },[enabled])
+  async function toggle(){
+    try{
+      if(!audio.current){
+        const ctx=new AudioContext(),gain=ctx.createGain()
+        gain.gain.value=0;gain.connect(ctx.destination)
+        for(const hz of [55,82.41,110]){
+          const osc=ctx.createOscillator(),level=ctx.createGain()
+          osc.type='sine';osc.frequency.value=hz;level.gain.value=.22
+          osc.connect(level);level.connect(gain);osc.start()
+        }
+        audio.current={ctx,gain}
+      }
+      const {ctx,gain}=audio.current
+      await ctx.resume()
+      const next=!enabled
+      gain.gain.setTargetAtTime(next ? .035 : 0,ctx.currentTime,.25)
+      setEnabled(next)
+    }catch{setEnabled(false)}
+  }
+  return <button className="gallery-audio" aria-pressed={enabled} onClick={()=>void toggle()}>{enabled?'Sonido: sí':'Sonido: no'}</button>
 }
 function AdaptiveQuality({enabled,onChange}:{enabled:boolean;onChange:(n:number)=>void}){
   const sample=useRef({time:0,frames:0,level:2})
@@ -304,7 +334,7 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
         <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/></Suspense>
       </Canvas>
       <div className="gallery-hud"><span>04 / THE EXHIBITION</span><span>{percent}%</span></div>
-      <div className="gallery-quality"><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>
+      <div className="gallery-quality"><AmbientSound/><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>
       <div className="gallery-instruction">{phase==='turning'?'Girando hacia la exposición…':phase==='focused'?'Toca otra vez para entrar · Desliza para continuar':phase==='entering'||phase==='inside'?'Entrando en la experiencia…':nearestProject===null?'Desliza hacia arriba para caminar · A los lados para mirar':'Toca una exposición para observarla'}</div>
       {phase==='focused'&&selected!==null&&<div className="gallery-focus"><strong>{projects[selected].title}</strong><button onClick={()=>select(selected)}>Entrar al proyecto ↗</button><button onClick={resume}>Continuar recorrido →</button></div>}
       {phase==='walking'&&nearestProject!==null&&<div className="gallery-near"><button onClick={()=>select(nearestProject)}>Observar {projects[nearestProject].title} ↗</button></div>}
