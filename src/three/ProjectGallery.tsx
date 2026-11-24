@@ -16,7 +16,7 @@ const ROOM_BACK_Z = -57
 const ROOM_LENGTH = ROOM_FRONT_Z - ROOM_BACK_Z
 const ROOM_CENTER = (ROOM_FRONT_Z + ROOM_BACK_Z) / 2
 const exhibitX = 3.275
-const alcoveHalf = 2.85
+const alcoveHalf = 2.68
 const alcoves = (side:number) => projects.map((_,i)=>i).filter(i=>(i%2?1:-1)===side).map(projectZ)
 const wallSegments = (side:number) => {
   let cursor=ROOM_FRONT_Z
@@ -93,12 +93,14 @@ function useArchitecturalMaterials(){
     const rgb=cc.createImageData(n,n),relief=hc.createImageData(n,n),brushed=mc.createImageData(n,n)
     const fract=(x:number)=>x-Math.floor(x)
     const hash=(x:number,y:number)=>fract(Math.sin(x*127.1+y*311.7)*43758.5453123)
+    const grids=new Map([5,17,67].map(period=>[period,Float32Array.from({length:period*period},(_,i)=>hash(i%period,Math.floor(i/period)))]))
     const noise=(x:number,y:number,period:number)=>{
       const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy
       const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy)
       const wrap=(k:number)=>(k%period+period)%period
-      const a=hash(wrap(ix),wrap(iy)),b=hash(wrap(ix+1),wrap(iy))
-      const d=hash(wrap(ix),wrap(iy+1)),e=hash(wrap(ix+1),wrap(iy+1))
+      const grid=grids.get(period)!
+      const a=grid[wrap(iy)*period+wrap(ix)],b=grid[wrap(iy)*period+wrap(ix+1)]
+      const d=grid[wrap(iy+1)*period+wrap(ix)],e=grid[wrap(iy+1)*period+wrap(ix+1)]
       return (a+(b-a)*u)*(1-v)+(d+(e-d)*u)*v
     }
     for(let y=0;y<n;y++)for(let x=0;x<n;x++){
@@ -107,11 +109,11 @@ function useArchitecturalMaterials(){
       const vein=Math.pow(Math.max(0,1-Math.abs(Math.sin((u*5+v*3+broad*.8)*Math.PI))*7),2)
       const h=.44*broad+.25*medium+.19*fine+.12*grit
       const k=(h-.5)*47+vein*7
-      rgb.data.set([80+k,77+k,72+k,255],i)
+      rgb.data[i]=80+k;rgb.data[i+1]=77+k;rgb.data[i+2]=72+k;rgb.data[i+3]=255
       const reliefValue=55+h*145-vein*15
-      relief.data.set([reliefValue,reliefValue,reliefValue,255],i)
+      relief.data[i]=relief.data[i+1]=relief.data[i+2]=reliefValue;relief.data[i+3]=255
       const brushing=(hash(x,0)-.5)*23+(hash(x,y)-.5)*5
-      brushed.data.set([157+brushing,136+brushing,111+brushing,255],i)
+      brushed.data[i]=157+brushing;brushed.data[i+1]=136+brushing;brushed.data[i+2]=111+brushing;brushed.data[i+3]=255
     }
     cc.putImageData(rgb,0,0);hc.putImageData(relief,0,0);mc.putImageData(brushed,0,0)
     const tex=(c:HTMLCanvasElement,isColor:boolean)=>{
@@ -269,17 +271,17 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
     const flutes: [number,number,number][]=[]
     for(const side of [-1,1])for(const z of [6,-2,-10,-18,-26,-34,-42,-50]){
       if(alcoves(side).some(a=>Math.abs(a-z)<3.05))continue
-      for(let j=0;j<7;j++)flutes.push([side*3.13,2.28,z+(j-3)*.12])
+      for(let j=0;j<5;j++)flutes.push([side*2.82,2.28,z+(j-2)*.12])
     }
     return {panels,flutes,
       pillars:positions((s,z)=>[s*3.14,2.25,z]),
       pillarInset:positions((s,z)=>[s*2.94,2.25,z]),
-      pillarEdges:positions((s,z)=>[s*2.91,2.25,z+.31]),
-      pillarLights:positions((s,z)=>[s*2.887,2.25,z-.30]),
+      pillarEdges:positions((s,z)=>[s*2.83,2.25,z+.35]),
+      pillarLights:positions((s,z)=>[s*2.81,2.25,z-.35]),
       crossbeams:Array.from({length:8},(_,i):[number,number,number]=>[0,4.13,6-i*8]),
       crossTrim:Array.from({length:8},(_,i):[number,number,number]=>[0,3.965,6-i*8]),
       coves:[[-2.67,4.13,ROOM_CENTER],[2.67,4.13,ROOM_CENTER]] as [number,number,number][],
-      coveLights:[[-2.50,4.04,ROOM_CENTER],[2.50,4.04,ROOM_CENTER]] as [number,number,number][],
+      coveLights:[[-2.50,3.975,ROOM_CENTER],[2.50,3.975,ROOM_CENTER]] as [number,number,number][],
       fixtures:ceilingPositions.map(([x,y,z]):[number,number,number]=>[x,y+.04,z]),
       strips:ceilingPositions.map(([x,y,z]):[number,number,number]=>[x,y-.067,z])
     }
