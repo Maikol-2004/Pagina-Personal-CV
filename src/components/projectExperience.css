@@ -231,3 +231,128 @@
 @media(max-width:900px){.px-unfold-surface{transform:translate(calc(var(--unfold-x,0px)*.3),var(--unfold-y,0px)) scale(max(.88,var(--unfold-scale,1)))}}
 .px-unfold-surface:focus-within{transform:none}
 @media(prefers-reduced-motion:reduce){.px-unfold-surface{transform:none!important}}
+
+/* V12.1 — Open compositions. The canvas is the page, not a card container. */
+.px{--px-line:color-mix(in srgb,var(--px-accent) 25%,transparent);gap:clamp(48px,8vw,116px)}
+.px-overview.px-freeform{border:0;border-radius:0;background:none;overflow:visible;isolation:isolate;position:relative;padding:clamp(18px,3vw,42px) 0;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:clamp(12px,2vw,28px);row-gap:clamp(15px,2.3vw,32px);align-items:center;min-height:calc(100svh - 120px)}
+.px-freeform .px-atmosphere{position:absolute;inset:0;pointer-events:none;z-index:-1;overflow:clip}
+.px-atmosphere i{position:absolute;display:block;pointer-events:none}
+.px-freeform .px-overview-intro{grid-column:1/6;grid-row:1;padding:0;align-self:center;gap:clamp(9px,1.2vw,17px);background:none;border:0;z-index:3}
+.px-freeform .px-open-title{font-size:clamp(3.3rem,7vw,7.2rem);line-height:.9;letter-spacing:-.065em;max-width:none}
+.px-freeform .px-overview-summary{font-size:clamp(.88rem,1.2vw,1.04rem);max-width:46ch;opacity:.88}
+.px-freeform .px-overview-meta{gap:7px 14px}
+.px-freeform .px-overview-meta span{padding:0;border:0;border-radius:0}
+.px-freeform .px-overview-meta span+span:before{content:"·";margin-right:12px;opacity:.6}
+.px-freeform .px-overview-screens{grid-column:6/13;grid-row:1;position:relative;display:block;min-height:clamp(260px,30vw,400px);max-height:none;isolation:isolate;perspective:none}
+.px-freeform .px-preview,.px-freeform .px-preview:hover{position:relative;border:0;border-radius:0;padding:0;background:none;box-shadow:none;display:flex;align-items:stretch;justify-content:flex-start;gap:8px;transform:none;min-width:0}
+.px-freeform .px-preview img{height:auto;max-height:100%;width:100%;object-fit:contain;border-radius:3px;filter:drop-shadow(0 16px 25px #0006);transition:filter .25s,scale .3s}
+.px-freeform .px-preview:hover img{scale:1.025;filter:drop-shadow(0 18px 30px #0009)}
+.px-freeform .px-preview-main{position:absolute;left:0;top:12%;width:76%;z-index:3}
+.px-freeform .px-preview-main img{height:clamp(170px,23vw,310px);max-height:none;object-position:left center}
+.px-freeform .px-preview-side{position:absolute;inset:0;display:block;pointer-events:none}
+.px-freeform .px-preview-side .px-preview{position:absolute;right:0;width:39%;pointer-events:auto;z-index:4}
+.px-freeform .px-preview-side .px-preview:first-child{top:0}
+.px-freeform .px-preview-side .px-preview:last-child{bottom:0;width:34%}
+.px-freeform .px-preview-side img{height:clamp(75px,10vw,145px)}
+.px-freeform .px-preview span{font-size:.71rem;letter-spacing:.03em;display:flex;gap:8px;color:var(--px-ink);opacity:.9;justify-content:flex-start;text-align:left}
+.px-freeform .px-preview span b{color:var(--px-accent)}
+.px-freeform .px-overview-card,.px-freeform .px-overview-card.px-hero-action{position:relative;border:0;border-radius:0;background:none;box-shadow:none;padding:12px 0;min-width:0;gap:8px;align-self:start;justify-content:flex-start;color:var(--px-ink);font-weight:400;transform:none}
+.px-freeform .px-overview-card:hover{transform:none;background:none}
+.px-freeform .px-overview-card:after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--px-accent);transform:scaleX(.08);transform-origin:left;opacity:.6;transition:transform .3s}
+.px-freeform .px-overview-card:hover:after,.px-freeform .px-overview-card:focus-visible:after{transform:scaleX(1)}
+.px-freeform .px-card-label{display:flex;align-items:center;justify-content:flex-start;gap:7px;font-size:.66rem;letter-spacing:.16em;color:var(--px-accent)}
+.px-freeform .px-card-label i{font:italic 1.25rem Georgia,serif;letter-spacing:0}
+.px-freeform .px-card-label b{margin-left:auto}
+.px-freeform .px-overview-card strong{font-size:clamp(.98rem,1.6vw,1.35rem);font-weight:500;line-height:1.25}
+.px-freeform .px-feature-tags{gap:6px 12px}
+.px-freeform .px-feature-tags span{border:0;border-radius:0;background:none;padding:0;font-size:.77rem;line-height:1.4;opacity:.85}
+.px-freeform .px-feature-tags span:before{content:"·";color:var(--px-accent);margin-right:6px}
+.px-freeform .px-overview-features{grid-column:1/6;grid-row:2}
+.px-freeform .px-overview-stack{grid-column:6/10;grid-row:2}
+.px-freeform .px-overview-demo{grid-column:10/13;grid-row:2}
+.px-freeform .px-overview-demo .px-demo-cta{font-size:.83rem;color:var(--px-accent);font-weight:600}
+.px-freeform .px-overview-foot{grid-row:3;grid-column:1/-1;border-top:1px solid var(--px-line);padding-top:12px}
+.px-unfold .px-unfold-surface,.px-unfold .px-comparison{padding:0;background:none;border:0;border-radius:0}
+.px-unfold .px-section-head{border-bottom:1px solid var(--px-line);padding-bottom:18px}
+.px-unfold .px-section-head h3{font-size:clamp(2rem,4.5vw,4.5rem);line-height:1.05;letter-spacing:-.045em}
+.px-unfold .px-objective{background:none;padding-left:18px}
+.px-unfold .px-expanded-features article{background:none;border:0;border-top:1px solid var(--px-line);border-radius:0;padding:18px 0;gap:8px}
+.px-unfold .px-stack-expanded span{background:none;border:0;padding:8px 14px 8px 0;font-weight:550}
+.px-unfold .px-stack-expanded span:after{content:" /";color:var(--px-line);margin-left:8px}
+.px-unfold .px-stack-expanded span:last-child:after{content:none}
+.px-unfold.px-primary-experience{padding:0;background:none;border:0}
+.px-unfold .px-demo{border:0;background:none;padding:0}
+.px-unfold .px-detail img,.px-unfold .px-compare-devices img{border:0;border-radius:3px}
+.px-back-overview{background:none;border:0;border-bottom:1px solid var(--px-line);border-radius:0}
+/* Five different stage compositions. */
+.px--matchup .px-freeform .px-open-title{font-size:clamp(3.2rem,7.8vw,8.3rem);color:#baf34b}
+.px--matchup .px-atmosphere i:nth-child(1){width:80%;height:76%;top:0;right:0;background:repeating-linear-gradient(118deg,transparent 0 72px,#baf34b0c 73px 74px,transparent 75px 125px);clip-path:polygon(35% 0,100% 0,100% 100%,0 100%)}
+.px--matchup .px-atmosphere i:nth-child(2){height:1px;width:80%;top:42%;right:0;background:#baf34b35;transform:rotate(-18deg)}
+.px--matchup .px-freeform .px-overview-screens{min-height:clamp(270px,29vw,390px)}
+.px--matchup .px-freeform .px-preview-main{width:36%;left:33%;top:2%;z-index:4}
+.px--matchup .px-freeform .px-preview-main img{height:clamp(210px,27vw,345px);object-position:center}
+.px--matchup .px-freeform .px-preview-side .px-preview:first-child{width:32%;left:2%;right:auto;top:15%;rotate:-8deg}
+.px--matchup .px-freeform .px-preview-side .px-preview:last-child{width:32%;right:0;bottom:auto;top:20%;rotate:8deg}
+.px--matchup .px-freeform .px-preview-side img{height:clamp(155px,21vw,270px)}
+.px--matchup .px-freeform .px-preview span{justify-content:center}
+.px--ashesfire .px-freeform .px-overview-intro{grid-column:1/5}
+.px--ashesfire .px-freeform .px-overview-screens{grid-column:5/13}
+.px--ashesfire .px-atmosphere i:first-child{inset:0;background:linear-gradient(90deg,#ffad6009 1px,transparent 1px),linear-gradient(#ffad6009 1px,transparent 1px);background-size:40px 40px;mask-image:linear-gradient(90deg,transparent,#000)}
+.px--ashesfire .px-freeform .px-preview-main{width:78%;top:4%}
+.px--ashesfire .px-freeform .px-preview-side .px-preview:first-child{width:37%;top:0}
+.px--ashesfire .px-freeform .px-preview-side .px-preview:last-child{width:44%;bottom:0}
+.px--my-journey .px-atmosphere i:first-child,.px--my-journey .px-atmosphere i:nth-child(2){width:56%;aspect-ratio:1;right:-3%;top:-15%;border:1px solid #d2a27e25;border-radius:50%;transform:rotate(-23deg) scaleY(.65)}
+.px--my-journey .px-atmosphere i:nth-child(2){transform:rotate(32deg) scaleY(.7)}
+.px--my-journey .px-freeform .px-preview-main{width:79%;left:4%;top:9%}
+.px--my-journey .px-freeform .px-preview-side .px-preview:first-child{top:0;right:0;width:34%}
+.px--my-journey .px-freeform .px-preview-side .px-preview:last-child{bottom:0;right:1%;width:29%}
+.px--my-journey .px-freeform .px-preview-side .px-preview:last-child img{height:clamp(110px,17vw,215px)}
+.px--cv-editorial{--px-accent:#81502d;--px-bg:#e9ddce;--px-ink:#2a2019}
+.px--cv-editorial .px-freeform .px-open-title{font-size:clamp(4rem,8.2vw,8rem);font-weight:400}
+.px--cv-editorial .px-freeform .px-overview-intro{grid-column:1/5}
+.px--cv-editorial .px-freeform .px-overview-screens{grid-column:5/13}
+.px--cv-editorial .px-atmosphere i:first-child{width:37%;aspect-ratio:1;border-radius:50%;right:11%;top:-10%;background:radial-gradient(circle at 28% 24%,#f9d7af,#c18c61 24%,#86553a 55%,#382619 85%);opacity:.28}
+.px--cv-editorial .px-freeform .px-preview-main{width:78%;top:13%;left:0}
+.px--cv-editorial .px-freeform .px-preview-side .px-preview:last-child{width:25%;bottom:0}
+.px--cv-editorial .px-freeform .px-preview-side .px-preview:last-child img{height:clamp(100px,16vw,205px)}
+.px--cv-editorial .px-unfold .px-demo{color:var(--px-ink)}
+.px--portfolio-narrativo .px-freeform .px-overview-intro{grid-column:1/6}
+.px--portfolio-narrativo .px-atmosphere i:first-child{height:100%;width:1px;background:#e7c3a333;left:45%;top:0}
+.px--portfolio-narrativo .px-atmosphere i:nth-child(2){height:1px;width:45%;background:#e7c3a333;left:45%;top:56%}
+.px--portfolio-narrativo .px-freeform .px-overview-screens:before{display:none}
+.px--portfolio-narrativo .px-freeform .px-preview-main{width:72%;top:5%;left:0}
+.px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:first-child{width:47%;top:34%;right:0}
+.px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:last-child{width:25%;bottom:-1%;right:13%}
+.px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:last-child img{height:clamp(105px,15vw,195px)}
+@media(max-width:900px){
+ .px-overview.px-freeform{min-height:0;grid-template-columns:repeat(6,minmax(0,1fr));padding:14px 0;gap:14px}
+ .px-freeform .px-overview-intro,.px--ashesfire .px-freeform .px-overview-intro,.px--cv-editorial .px-freeform .px-overview-intro,.px--portfolio-narrativo .px-freeform .px-overview-intro{grid-column:1/-1;grid-row:1}
+ .px-freeform .px-open-title,.px--matchup .px-freeform .px-open-title,.px--cv-editorial .px-freeform .px-open-title{font-size:clamp(2.7rem,10vw,5rem)}
+ .px-freeform .px-overview-screens,.px--ashesfire .px-freeform .px-overview-screens,.px--cv-editorial .px-freeform .px-overview-screens,.px--matchup .px-freeform .px-overview-screens{grid-column:1/-1;grid-row:2;min-height:clamp(185px,36vw,300px)}
+ .px-freeform .px-overview-screens .px-preview-main img{height:clamp(112px,28vw,220px)}
+ .px-freeform .px-overview-screens .px-preview-side img{height:clamp(53px,13vw,100px)}
+ .px--matchup .px-freeform .px-overview-screens .px-preview-main img{height:clamp(150px,35vw,260px)}
+ .px--matchup .px-freeform .px-overview-screens .px-preview-side img{height:clamp(118px,28vw,210px)}
+ .px-freeform .px-overview-features{grid-column:1/4;grid-row:3}
+ .px-freeform .px-overview-stack{grid-column:4/7;grid-row:3}
+ .px-freeform .px-overview-demo{grid-column:1/-1;grid-row:4}
+ .px-freeform .px-overview-foot{grid-row:5;grid-column:1/-1}
+ .px-freeform .px-overview-card.px-hero-action{display:flex}
+ .px-freeform .px-overview-demo .px-demo-cta{max-width:none;text-align:left}
+ .px-freeform .px-feature-tags span{font-size:.72rem}
+ .px-freeform .px-preview span{font-size:.65rem}
+ .px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:last-child{right:5%}
+}
+@media(max-width:480px){
+ .px-overview.px-freeform{gap:9px;padding-top:6px}
+ .px-freeform .px-overview-intro{gap:8px}
+ .px-freeform .px-overview-summary{font-size:.83rem}
+ .px-freeform .px-overview-card,.px-freeform .px-overview-card.px-hero-action{gap:6px;padding:8px 0}
+ .px-freeform .px-card-label{font-size:.57rem;letter-spacing:.06em}
+ .px-freeform .px-card-label i{font-size:1rem}
+ .px-freeform .px-overview-card strong{font-size:.88rem}
+ .px-freeform .px-feature-tags{gap:3px 7px}
+ .px-freeform .px-feature-tags span{font-size:.68rem}
+ .px-freeform .px-overview-meta,.px-freeform .px-overview-links a{font-size:.67rem}
+}
+@media(prefers-reduced-motion:reduce){.px-freeform .px-preview img,.px-freeform .px-overview-card:after{transition:none}.px-freeform .px-preview:hover img{scale:1}}
