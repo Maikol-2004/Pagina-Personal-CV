@@ -350,20 +350,24 @@
   }
 }
 
-.dlg__portal{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 35%,var(--tone) 100%);mix-blend-mode:screen}
-.dlg[data-project="matchup"] .dlg__portal{background:linear-gradient(115deg,transparent 25%,#baf34b88 50%,transparent 75%)}
-.dlg[data-project="ashesfire"] .dlg__portal{background:repeating-linear-gradient(90deg,transparent 0 12%,#ffad6033 12% 13%)}
-.dlg[data-project="my-journey"] .dlg__portal{background:radial-gradient(ellipse,transparent 25%,#d2a27e77 43%,transparent 55%,#d2a27e44 75%,transparent 85%)}
-.dlg[data-project="cv-editorial"] .dlg__portal{background:radial-gradient(circle,#f6d6ae 0, #a3694266 30%,transparent 65%)}
-.dlg[data-project="portfolio-narrativo"] .dlg__portal{background:linear-gradient(90deg,#e7c3a355,transparent 48%,#e7c3a355 50%,transparent 52%,#e7c3a355)}
-@media(prefers-reduced-motion:reduce){.dlg__portal{display:none}}
-
-/* The source screenshot bridges the physical display and the product page. */
-.dlg__bridge{position:absolute;inset:0;z-index:4;display:grid;place-items:center;opacity:0;pointer-events:none;overflow:hidden}
-.dlg__bridge img{display:block;max-width:85vw;max-height:76svh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 0 60px color-mix(in srgb,var(--tone) 35%,transparent)}
-.dlg__particles{position:absolute;inset:0;pointer-events:none}
-.dlg__particle{position:absolute;display:block;border-radius:50%;background:var(--tone);box-shadow:0 0 12px var(--tone);opacity:0}
-.dlg[data-project="matchup"] .dlg__particle{background:#baf34b;border-radius:1px;box-shadow:0 0 10px #baf34b}
-.dlg[data-project="ashesfire"] .dlg__particle{border-radius:0;background:#ffad60}
-.dlg[data-project="portfolio-narrativo"] .dlg__particle{border-radius:1px;transform:rotate(45deg)}
-@media(prefers-reduced-motion:reduce){.dlg__bridge{display:none}}
+/* Lightweight project-specific motion signatures. The real screenshot is the visual bridge. */
+.dlg__portal{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;overflow:hidden;display:grid;place-items:center;isolation:isolate}
+.dlg__motion-mark{position:absolute;inset:0;opacity:.7}
+.dlg__motion-title{position:absolute;left:clamp(20px,5vw,80px);bottom:clamp(24px,7vh,90px);font-size:clamp(.65rem,1.3vw,1rem);font-weight:600;letter-spacing:.23em;color:var(--tone);text-shadow:0 1px 14px #000}
+.dlg[data-motion="sprint"] .dlg__motion-mark{background:linear-gradient(115deg,transparent 32%,#baf34b44 48%,#baf34b88 49%,transparent 51%);animation:dlg-sprint .8s cubic-bezier(.2,.7,.3,1) both}
+.dlg[data-motion="scan"] .dlg__motion-mark{background:linear-gradient(90deg,transparent 42%,#ffad6044 49%,#ffad60 50%,transparent 51%);animation:dlg-scan .85s ease-out both}
+.dlg[data-motion="orbit"] .dlg__motion-mark{inset:10% auto;width:min(85vw,75vh);aspect-ratio:1;border:1px solid #d2a27e77;border-radius:50%;box-shadow:0 0 30px #d2a27e33,inset 0 0 45px #d2a27e22;animation:dlg-orbit .95s ease-out both}
+.dlg[data-motion="editorial"] .dlg__motion-mark{background:linear-gradient(90deg,#e9b99233 0 50%,transparent 50%);transform-origin:left center;animation:dlg-page .86s ease-out both}
+.dlg[data-motion="chapter"] .dlg__motion-mark{background:linear-gradient(90deg,transparent 49.8%,#e7c3a388 50%,transparent 50.2%);animation:dlg-chapter .9s ease-out both}
+@keyframes dlg-sprint{from{transform:translateX(-70%)}to{transform:translateX(70%)}}
+@keyframes dlg-scan{from{transform:translateX(-55%)}to{transform:translateX(55%)}}
+@keyframes dlg-orbit{from{transform:scale(.5);opacity:.2}to{transform:scale(1.3);opacity:.75}}
+@keyframes dlg-page{from{transform:scaleX(0)}to{transform:scaleX(2)}}
+@keyframes dlg-chapter{from{transform:scaleY(0);opacity:.2}to{transform:scaleY(1);opacity:.8}}
+.dlg__bridge{position:absolute;left:0;top:0;width:1px;height:1px;z-index:4;opacity:0;pointer-events:none;overflow:hidden;border-radius:4px}
+.dlg__bridge img{display:block;width:100%;height:100%;object-fit:fill}
+.dlg[data-transition="opening"] .dlg__bridge,.dlg[data-transition="closing"] .dlg__bridge{will-change:transform,opacity}
+.dlg[data-transition="ready"] .dlg__bridge{visibility:hidden;will-change:auto}
+.dlg[data-transition="opening"] .dlg__scroll,.dlg[data-transition="closing"] .dlg__scroll{overflow-y:hidden}
+.dlg__close{z-index:5}
+@media(prefers-reduced-motion:reduce){.dlg__portal,.dlg__bridge{display:none}.dlg__motion-mark{animation:none}}
