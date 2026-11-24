@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { PROJECT_LAYERS } from '../data/projectShots'
+import { projectCosts } from '../lib/galleryLogic'
 import type { Project } from '../data/types'
 import './projectExperience.css'
 
 const url=(name:string)=>import.meta.env.BASE_URL+'projects/'+name+'.webp'
 
 const themes:Record<string,{label:string;headline:string;sub:string;tabs:string[]}>={
-  matchup:{label:'01 / MOBILE EXPERIENCE',headline:'El partido empieza aquí.',sub:'Organiza. Comparte. Juega.',tabs:['Bienvenida','Explorar partidos','Perfil','Inicio']},
-  ashesfire:{label:'02 / OPERATIONS CENTER',headline:'Del trabajo diario a la rentabilidad.',sub:'Gestión · Seguimiento · Control',tabs:['Proyectos','Menú principal','Costes']},
+  matchup:{label:'02 / MOBILE EXPERIENCE',headline:'El partido empieza aquí.',sub:'Organiza. Comparte. Juega.',tabs:['Bienvenida','Explorar partidos','Perfil','Inicio']},
+  ashesfire:{label:'01 / OPERATIONS CENTER',headline:'Del trabajo diario a la rentabilidad.',sub:'Gestión · Seguimiento · Control',tabs:['Proyectos','Menú principal','Costes']},
   'my-journey':{label:'03 / DIGITAL UNIVERSE',headline:'Una trayectoria conectada.',sub:'Cada nodo cuenta una historia.',tabs:['Portada','Constelación','Cronología móvil']},
   'cv-editorial':{label:'04 / DIGITAL EDITORIAL',headline:'Una identidad en cada detalle.',sub:'Tipografía, composición y movimiento.',tabs:['Portada','Trayectoria','Móvil']},
   'portfolio-narrativo':{label:'05 / INTERACTIVE STORY',headline:'Una carrera, muchos capítulos.',sub:'Una historia profesional que se descubre.',tabs:['Cronología','Detalle','Móvil']},
@@ -54,13 +55,13 @@ function CostsDemo(){
   const scenarios=[{name:'Proyecto A',hours:24,rate:35,expenses:220,revenue:1800},{name:'Proyecto B',hours:48,rate:42,expenses:480,revenue:3200},{name:'Proyecto C',hours:12,rate:30,expenses:150,revenue:800}]
   const [scenario,setScenario]=useState(0)
   const [hours,setHours]=useState(24),[rate,setRate]=useState(35),[expenses,setExpenses]=useState(220),[revenue,setRevenue]=useState(1800)
-  const cost=hours*rate+expenses,profit=revenue-cost
+  const {cost,profit,margin}=projectCosts(hours,rate,expenses,revenue)
   const euro=(n:number)=>n.toLocaleString('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0})
   return <section className="px-demo">
     <span className="px-kicker">DEMO / ASHESFIRE</span><h3>Simulador de rentabilidad</h3><p>Datos ficticios y cálculo simplificado, sin conexión a la aplicación original.</p>
     <div className="px-tabs">{scenarios.map((s,i)=><button key={s.name} aria-pressed={scenario===i} onClick={()=>{setScenario(i);setHours(s.hours);setRate(s.rate);setExpenses(s.expenses);setRevenue(s.revenue)}}>{s.name}</button>)}</div>
     <div className="demo-fields">{([{label:'Horas',v:hours,set:setHours,max:100},{label:'Coste por hora (€)',v:rate,set:setRate,max:100},{label:'Gastos (€)',v:expenses,set:setExpenses,max:2000},{label:'Ingresos (€)',v:revenue,set:setRevenue,max:6000}]).map(f=><label key={f.label}><span>{f.label} <strong>{f.v}</strong></span><input type="range" min={0} max={f.max} value={f.v} onChange={e=>f.set(Number(e.target.value))}/></label>)}</div>
-    <div className="px-metrics"><div><strong>{euro(cost)}</strong><span>Coste total</span></div><div><strong>{euro(profit)}</strong><span>Resultado</span></div><div><strong>{revenue?Math.round(profit/revenue*100)+'%':'—'}</strong><span>Margen</span></div></div>
+    <div className="px-metrics"><div><strong>{euro(cost)}</strong><span>Coste total</span></div><div><strong>{euro(profit)}</strong><span>Resultado</span></div><div><strong>{margin===null?'—':margin+'%'}</strong><span>Margen</span></div></div>
     <div className="demo-bars" aria-label="Comparación de ingresos y costes">{[{name:'Ingresos',value:revenue},{name:'Mano de obra',value:hours*rate},{name:'Gastos',value:expenses},{name:'Coste total',value:cost}].map(row=><div key={row.name}><span>{row.name}</span><i style={{width:row.value/Math.max(1,revenue,cost)*100+'%'}}/><strong>{euro(row.value)}</strong></div>)}</div>
   </section>
 }
@@ -96,6 +97,13 @@ function DeviceCompare({project}:{project:Project}){
     <div className="px-tabs"><button aria-pressed={mode==='both'} onClick={()=>setMode('both')}>Ambas</button><button aria-pressed={mode==='desktop'} onClick={()=>setMode('desktop')}>Escritorio</button><button aria-pressed={mode==='phone'} onClick={()=>setMode('phone')}>Móvil</button></div>
     <div className={'px-compare-devices is-'+mode}>{mode!=='phone'&&<figure className="px-compare-desktop"><img loading="lazy" src={url(desktop.src)} alt={desktop.alt}/><figcaption>Escritorio</figcaption></figure>}{mode!=='desktop'&&<figure className="px-compare-phone"><img loading="lazy" src={url(phone.src)} alt={phone.alt}/><figcaption>Móvil</figcaption></figure>}</div>
   </section>
+}
+const projectJourney:Record<string,{action:string;heading:string;sub:string}> = {
+  matchup:{action:'Probar la app',heading:'Del equipo al partido.',sub:'Una demostración de la experiencia deportiva.'},
+  ashesfire:{action:'Simular rentabilidad',heading:'Cada decisión cuenta.',sub:'Experimenta con el coste y los ingresos de un proyecto.'},
+  'my-journey':{action:'Explorar tecnologías',heading:'El universo detrás de esta web.',sub:'Descubre cómo se conectan sus tecnologías.'},
+  'cv-editorial':{action:'Explorar la edición',heading:'Un currículum que también cuenta una historia.',sub:'Compara la composición y su adaptación a distintos dispositivos.'},
+  'portfolio-narrativo':{action:'Leer los capítulos',heading:'Una trayectoria que cobra vida.',sub:'Recorre sus diferentes escenas narrativas.'},
 }
 const sequenceCopy:Record<string,string[]> = {
   matchup:['La bienvenida al deporte.','Explora partidos y encuentra tu equipo.','Tu identidad como jugador.','Una entrada con identidad propia.'],
@@ -145,7 +153,7 @@ export function ProjectExperience({project}:{project:Project}){
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return
     const el=root.current
     if(!el)return
-    const nodes=el.querySelectorAll('.px-story,.px-comparison,.px-demo')
+    const nodes=el.querySelectorAll('.px-story,.px-comparison')
     const observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}}},{threshold:.12,root:el.closest('.dlg__scroll')})
     nodes.forEach(node=>{node.classList.add('px-reveal');observer.observe(node)})
     return()=>{observer.disconnect();nodes.forEach(node=>node.classList.remove('px-reveal'))}
@@ -153,6 +161,8 @@ export function ProjectExperience({project}:{project:Project}){
   const shots=PROJECT_LAYERS[project.id]??[]
   const theme=themes[project.id]??{label:'PROJECT SHOWCASE',headline:project.title,sub:project.accent,tabs:[]}
   const current=shots[active]??shots[0]
+  const journey=projectJourney[project.id]
+  function goToDemo(){const el=root.current?.querySelector<HTMLElement>('.px-primary-experience');el?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'})}
   return <div ref={root} className={'px px--'+project.id}>
     <header className="px-hero dlg__in">
       <div className="px-copy">
@@ -161,7 +171,7 @@ export function ProjectExperience({project}:{project:Project}){
         <h2>{theme.headline}</h2>
         <p className="px-sub">{theme.sub}</p>
         <p>{project.summary}</p>
-        <span className="px-status">{project.status} · {project.role}</span>
+        <span className="px-status">{project.status} · {project.role}</span>{journey&&<button className="px-hero-action" onClick={goToDemo}>{journey.action} <span aria-hidden="true">↘</span></button>}
       </div>
       <div className="px-visual">
         {project.id==='cv-editorial'&&<div className="px-sphere" aria-hidden="true"/>}
@@ -175,16 +185,19 @@ export function ProjectExperience({project}:{project:Project}){
       <div className="px-tabs" role="group" aria-label="Escenas del proyecto">{shots.map((s,i)=><button key={s.src} aria-pressed={i===active} onClick={()=>setActive(i)}>{project.id==='portfolio-narrativo'&&<small>0{i+1} </small>}{theme.tabs[i]??s.title??s.alt}</button>)}</div>
       {current&&<figure className={'px-detail px-detail--'+current.kind}><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.alt}</figcaption></figure>}
       {project.id==='ashesfire'&&<div className="px-metrics"><div><strong>{shots.length}</strong><span>Vistas en esta exposición</span></div><div><strong>{project.features.length}</strong><span>Funcionalidades documentadas</span></div><div><strong>{project.technologies.length}</strong><span>Tecnologías del proyecto</span></div></div>}
-      {project.id==='my-journey'&&<Orbit project={project}/>}
       {project.id==='portfolio-narrativo'&&<div className="px-chapters">{shots.map((s,i)=><button key={s.src} aria-pressed={i===active} onClick={()=>setActive(i)}><span>0{i+1}</span>{theme.tabs[i]}</button>)}</div>}
       {project.id==='cv-editorial'&&<div className="px-editorial"><span>01 / Diseño</span><span>02 / Trayectoria</span><span>03 / Adaptabilidad</span></div>}
       {project.id==='matchup'&&<div className="px-sports"><span>FÚTBOL</span><span>PÁDEL</span><span>BASKET</span></div>}
     </section>
+    <section className="px-primary-experience">
+      {journey&&<header className="px-primary-head"><span className="px-kicker">EXPERIENCE / {project.title}</span><h3>{journey.heading}</h3><p>{journey.sub}</p></header>}
+      {project.id==='matchup'&&<MatchDemo/>}
+      {project.id==='ashesfire'&&<CostsDemo/>}
+      {project.id==='my-journey'&&<Orbit project={project}/>}
+      {(project.id==='cv-editorial'||project.id==='portfolio-narrativo')&&<EditorialDemo shots={shots} kind={project.id}/>}
+    </section>
     <CinematicSequence project={project}/>
-    <FeatureStory project={project}/>
     <DeviceCompare project={project}/>
-    {project.id==='matchup'&&<MatchDemo/>}
-    {project.id==='ashesfire'&&<CostsDemo/>}
-    {(project.id==='cv-editorial'||project.id==='portfolio-narrativo')&&<EditorialDemo shots={shots} kind={project.id}/>}
+    <FeatureStory project={project}/>
   </div>
 }
