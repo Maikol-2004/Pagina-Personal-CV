@@ -224,3 +224,10 @@
  .px-overview-foot{font-size:.63rem}.px-unfold-info{padding:16px;gap:16px}
 }
 @media(prefers-reduced-motion:reduce){.px-unfold-surface{transform:none!important}.px-unfold-content{opacity:1}}
+
+.px-overview-links{display:flex;flex-wrap:wrap;gap:6px 12px}
+.px-overview-links a{color:var(--px-accent);font-size:.76rem;text-decoration:underline;text-underline-offset:4px;padding-block:5px}
+.px-unfold-surface{transform:translate(var(--unfold-x,0px),var(--unfold-y,0px)) scale(var(--unfold-scale,1))}
+@media(max-width:900px){.px-unfold-surface{transform:translate(calc(var(--unfold-x,0px)*.3),var(--unfold-y,0px)) scale(max(.88,var(--unfold-scale,1)))}}
+.px-unfold-surface:focus-within{transform:none}
+@media(prefers-reduced-motion:reduce){.px-unfold-surface{transform:none!important}}
