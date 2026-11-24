@@ -47,7 +47,7 @@ function MatchDemo(){
     <div className="px-tabs">{['Fútbol','Pádel','Basket'].map(s=><button key={s} aria-pressed={sport===s} onClick={()=>{setSport(s);setJoined(false)}}>{s}</button>)}</div>
     {mode==='browse'?<><div className="demo-match"><span className="demo-ball">{sport==='Fútbol'?'⚽':sport==='Pádel'?'🎾':'🏀'}</span><div><h4>Partido de {sport.toLowerCase()}</h4><p>Madrid · 18:00 · {players}/{max} jugadores</p><div className="demo-track"><i style={{width:players/max*100+'%'}}/></div></div></div>
     <button className="demo-action" onClick={()=>setJoined(v=>!v)}>{joined?'Cancelar solicitud de ejemplo':'Solicitar plaza'}</button>
-    <p role="status">{joined?'✓ Solicitud registrada en esta simulación.':'Selecciona un deporte y prueba a solicitar una plaza.'}</p></>:<form className="demo-fields" onSubmit={e=>{e.preventDefault();if(place.trim())setCreated({place:place.trim(),time,sport})}}><label>Lugar de ejemplo<input required maxLength={80} value={place} placeholder="Polideportivo" onChange={e=>setPlace(e.target.value)}/></label><label>Hora<input type="time" required value={time} onChange={e=>setTime(e.target.value)}/></label><button className="demo-action" type="submit">Crear partido de ejemplo</button>{created&&<p role="status">✓ {created.sport} · {created.place} · {created.time}. Guardado solo en esta simulación.</p>}</form>}
+    <p key={String(joined)} className="px-feedback" role="status">{joined?'✓ Solicitud registrada en esta simulación.':'Selecciona un deporte y prueba a solicitar una plaza.'}</p></>:<form className="demo-fields" onSubmit={e=>{e.preventDefault();if(place.trim())setCreated({place:place.trim(),time,sport})}}><label>Lugar de ejemplo<input required maxLength={80} value={place} placeholder="Polideportivo" onChange={e=>setPlace(e.target.value)}/></label><label>Hora<input type="time" required value={time} onChange={e=>setTime(e.target.value)}/></label><button className="demo-action" type="submit">Crear partido de ejemplo</button>{created&&<p key={created.place+created.time+created.sport} className="px-feedback" role="status">✓ {created.sport} · {created.place} · {created.time}. Guardado solo en esta simulación.</p>}</form>}
   </section>
 }
 function CostsDemo(){
@@ -97,6 +97,47 @@ function DeviceCompare({project}:{project:Project}){
     <div className={'px-compare-devices is-'+mode}>{mode!=='phone'&&<figure className="px-compare-desktop"><img loading="lazy" src={url(desktop.src)} alt={desktop.alt}/><figcaption>Escritorio</figcaption></figure>}{mode!=='desktop'&&<figure className="px-compare-phone"><img loading="lazy" src={url(phone.src)} alt={phone.alt}/><figcaption>Móvil</figcaption></figure>}</div>
   </section>
 }
+const sequenceCopy:Record<string,string[]> = {
+  matchup:['La bienvenida al deporte.','Explora partidos y encuentra tu equipo.','Tu identidad como jugador.','Una entrada con identidad propia.'],
+  ashesfire:['Una vista central de los proyectos.','Cada herramienta en su lugar.','Los costes y la rentabilidad, a la vista.'],
+  'my-journey':['El inicio de una trayectoria.','La experiencia convertida en conexiones.','Una cronología pensada también para móvil.'],
+  'cv-editorial':['Una portada con identidad visual.','La experiencia profesional como relato.','La misma información, adaptada a tu mano.'],
+  'portfolio-narrativo':['El tiempo como hilo conductor.','Cada capítulo descubre una etapa.','Una historia adaptada a pantallas pequeñas.'],
+}
+function CinematicSequence({project}:{project:Project}){
+  const shots=PROJECT_LAYERS[project.id]??[]
+  const root=useRef<HTMLElement>(null)
+  const [active,setActive]=useState(0)
+  useEffect(()=>{
+    const el=root.current,scroll=el?.closest('.dlg__scroll')
+    if(!el||!scroll)return
+    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let frame=0
+    const cards=Array.from(el.querySelectorAll<HTMLElement>('.px-sequence-step'))
+    const update=()=>{
+      frame=0
+      const bounds=scroll.getBoundingClientRect()
+      let index=0,best=Infinity
+      cards.forEach((card,i)=>{
+        const r=card.getBoundingClientRect()
+        const distance=Math.abs(r.top+r.height*.5-(bounds.top+bounds.height*.5))
+        if(distance<best){best=distance;index=i}
+        if(!reduced){const v=Math.max(-1,Math.min(1,(r.top+r.height*.5-bounds.top-bounds.height*.5)/Math.max(1,bounds.height)))
+          card.style.setProperty('--scene-shift',(v*26).toFixed(2)+'px')
+          card.style.setProperty('--scene-angle',(v*7).toFixed(2)+'deg')}
+      })
+      setActive(index)
+    }
+    const tick=()=>{if(!frame)frame=requestAnimationFrame(update)}
+    scroll.addEventListener('scroll',tick,{passive:true})
+    window.addEventListener('resize',tick);tick()
+    return()=>{scroll.removeEventListener('scroll',tick);window.removeEventListener('resize',tick);cancelAnimationFrame(frame)}
+  },[])
+  return <section ref={root} className="px-sequence">
+    <header><span className="px-kicker">IN MOTION</span><h3>El proyecto, en movimiento.</h3><p>Desplázate para descubrir las capturas originales.</p></header>
+    {shots.map((s,i)=><article key={s.src} className={'px-sequence-step '+(i===active?'is-current':'')}><div className="px-sequence-copy"><span>0{i+1} / {project.title}</span><h4>{sequenceCopy[project.id]?.[i]??s.title??s.alt}</h4><p>{s.alt}</p></div><figure className={'px-sequence-shot px-sequence-shot--'+s.kind}><img loading="lazy" decoding="async" src={url(s.src)} alt={s.alt}/></figure></article>)}
+  </section>
+}
 export function ProjectExperience({project}:{project:Project}){
   const [active,setActive]=useState(0)
   const root=useRef<HTMLDivElement>(null)
@@ -125,7 +166,7 @@ export function ProjectExperience({project}:{project:Project}){
       <div className="px-visual">
         {project.id==='cv-editorial'&&<div className="px-sphere" aria-hidden="true"/>}
         {project.id==='my-journey'&&<div className="px-halo" aria-hidden="true"/>}
-        {project.id==='matchup'&&shots.slice(0,3).map((s,i)=><button key={s.src} className={'px-device px-device--'+i} onClick={()=>setActive(i)} aria-label={s.alt}><img src={url(s.src)} alt={s.alt}/></button>)}
+        {project.id==='matchup'&&shots.slice(0,3).map((s,i)=><button key={s.src} className={'px-device px-device--'+i+(i===active?' is-active':'')} aria-pressed={i===active} onClick={()=>setActive(i)} aria-label={s.alt}><img src={url(s.src)} alt={s.alt}/></button>)}
         {project.id!=='matchup'&&current&&<figure className={'px-screen px-screen--'+current.kind}><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.title??current.alt}</figcaption></figure>}
       </div>
     </header>
@@ -139,6 +180,7 @@ export function ProjectExperience({project}:{project:Project}){
       {project.id==='cv-editorial'&&<div className="px-editorial"><span>01 / Diseño</span><span>02 / Trayectoria</span><span>03 / Adaptabilidad</span></div>}
       {project.id==='matchup'&&<div className="px-sports"><span>FÚTBOL</span><span>PÁDEL</span><span>BASKET</span></div>}
     </section>
+    <CinematicSequence project={project}/>
     <FeatureStory project={project}/>
     <DeviceCompare project={project}/>
     {project.id==='matchup'&&<MatchDemo/>}
