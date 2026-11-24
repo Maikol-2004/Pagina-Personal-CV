@@ -356,3 +356,25 @@
  .px-freeform .px-overview-meta,.px-freeform .px-overview-links a{font-size:.67rem}
 }
 @media(prefers-reduced-motion:reduce){.px-freeform .px-preview img,.px-freeform .px-overview-card:after{transition:none}.px-freeform .px-preview:hover img{scale:1}}
+
+/* Override earlier theme wrappers explicitly so the entire page remains unframed. */
+.px.px--cv-editorial .px-hero.px-overview.px-freeform,.px.px--matchup .px-hero.px-overview.px-freeform,.px.px--ashesfire .px-hero.px-overview.px-freeform,.px.px--portfolio-narrativo .px-hero.px-overview.px-freeform,.px.px--my-journey .px-hero.px-overview.px-freeform{background:none;border:0;border-radius:0}
+.px--matchup .px-freeform .px-open-title{font-size:clamp(3rem,6.15vw,6.5rem)}
+.px--ashesfire .px-freeform .px-open-title{font-size:clamp(2.9rem,5.25vw,5.7rem)}
+.px--portfolio-narrativo .px-freeform .px-open-title{font-size:clamp(3.1rem,5.7vw,6rem)}
+.px--cv-editorial .px-freeform .px-preview span{color:#382719}
+.px--cv-editorial .px-tabs button[aria-pressed=true],.px--cv-editorial .demo-nav button{color:#f6efe4;background:#81502d}
+.px--cv-editorial .px-unfold .px-demo .px-kicker{color:#81502d}
+.px--cv-editorial .px-unfold .px-detail img{background:transparent}
+.px--cv-editorial .px-freeform .px-preview img{filter:drop-shadow(0 12px 18px #5e3e292a)}
+.px-freeform .px-preview-main{width:70%}
+.px--ashesfire .px-freeform .px-preview-main,.px--my-journey .px-freeform .px-preview-main,.px--cv-editorial .px-freeform .px-preview-main{width:70%}
+.px--ashesfire .px-freeform .px-preview-side .px-preview:last-child{width:36%}
+.px--portfolio-narrativo .px-freeform .px-preview-main{width:65%}
+.px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:first-child{width:37%}
+.px--matchup .px-freeform .px-preview-main{width:36%}
+@media(max-width:900px){
+ .px--matchup .px-freeform .px-open-title,.px--ashesfire .px-freeform .px-open-title,.px--portfolio-narrativo .px-freeform .px-open-title{font-size:clamp(2.6rem,10vw,5rem)}
+ .px-freeform .px-overview-screens{min-height:clamp(185px,40vw,310px)}
+}
+@media(max-width:480px){.px--matchup .px-freeform .px-open-title{font-size:clamp(2.6rem,11vw,3.4rem)}}
