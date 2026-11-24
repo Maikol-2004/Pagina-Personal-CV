@@ -114,6 +114,11 @@ try{
         window.scrollTo(0,window.scrollY+el.getBoundingClientRect().top+(el.clientHeight-view.clientHeight)*(21+8*index)/59)
       },i)
     }
+    for(const id of ['ashesfire','matchup','my-journey','cv-editorial','portfolio-narrativo']){
+      const response=await page.request.get(base+'gallery-posters/'+id+'.svg')
+      assert.ok(response.ok(),'Missing poster '+id)
+      assert.match(await response.text(),/viewBox="0 0 1400 1120"/)
+    }
     await walk(0)
     await page.locator('.gallery-viewport canvas').waitFor()
     const quality=page.getByLabel('Calidad gráfica')
