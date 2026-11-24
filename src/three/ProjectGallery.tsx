@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Environment, Html, Reflector, useTexture } from '@react-three/drei'
+import { Html, MeshReflectorMaterial, useTexture } from '@react-three/drei'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { Vector3, SRGBColorSpace } from 'three'
 import { projects } from '../data/profile'
@@ -38,7 +38,7 @@ function Artwork({ project, index, onSelect }: { project: Project; index: number
     <mesh position={[0,0,.13]} onClick={e=>{e.stopPropagation();onSelect()}} onPointerOver={()=>setHover(true)} onPointerOut={()=>setHover(false)}>
       <planeGeometry args={[4.3,2.65]}/><meshBasicMaterial transparent opacity={0} depthWrite={false}/>
     </mesh>
-    <Html position={[0,-1.55,.12]} transform distanceFactor={5} occlude pointerEvents="none">
+    <Html position={[0,-1.55,.12]} transform distanceFactor={5} occlude style={{pointerEvents:"none"}}>
       <div className="gallery-plaque"><small>0{index+1} / MY JOURNEY</small><strong>{project.title}</strong></div>
     </Html>
   </group>
@@ -64,8 +64,8 @@ function Room({progress,selected,onSelect,onArrive}: {progress: React.RefObject<
     <color attach="background" args={['#17120f']}/>
     <fog attach="fog" args={['#17120f',22,55]}/>
     <ambientLight intensity={.55}/>
-    <Environment preset="warehouse" environmentIntensity={.32}/>
-    <Reflector position={[0,.015,-17]} rotation={[-Math.PI/2,0,0]} args={[7,44]} resolution={512} mirror={.28} mixBlur={1} mixStrength={.65} blur={[350,100]} color="#30241c" metalness={.35} roughness={.45}/>
+    <hemisphereLight args={["#ffe1bf","#38251b",1.1]}/>
+    <mesh position={[0,.015,-17]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[7,44]}/><MeshReflectorMaterial resolution={512} mirror={.28} mixBlur={1} mixStrength={.65} blur={[350,100]} color="#30241c" metalness={.35} roughness={.45}/></mesh>
     <Block position={[0,4.5,-17]} size={[7,.3,44]} color="#211813"/>
     <Block position={[0,2.2,-39]} size={[7,4.5,.3]} color="#302219"/>
     {[-1,1].map(side=><group key={side}>
