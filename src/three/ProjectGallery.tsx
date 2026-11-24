@@ -10,7 +10,7 @@ import { CAMERA_START_Z, CAMERA_LENGTH as length, projectZ, nearestProject as fi
 import { transitionShot, cameraEase, fitScreenDistance, validScreenRect } from '../lib/projectTransition'
 import './projectGallery.css'
 
-type Props = { onOpen: (p: Project, rect: DOMRect | null) => void; activeProjectId?: string }
+type Props = { onOpen: (p: Project, rect: DOMRect | null) => void; activeProjectId?: string; paused?:boolean }
 type Quality = 'auto' | 'medium' | 'high' | 'ultra'
 const ROOM_FRONT_Z = 12
 const ROOM_BACK_Z = -57
@@ -488,7 +488,7 @@ function AdaptiveQuality({enabled,onChange}:{enabled:boolean;onChange:(n:number)
   })
   return null
 }
-export default function ProjectGallery({onOpen,activeProjectId}:Props){
+export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Props){
   const section=useRef<HTMLDivElement>(null)
   const viewport=useRef<HTMLDivElement>(null)
   const progress=useRef(0)
@@ -498,7 +498,10 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
   const [adaptiveDpr,setAdaptiveDpr]=useState(1)
   const [screen,setScreen]=useState(()=>({width:window.innerWidth,height:window.innerHeight,native:window.devicePixelRatio||1}))
   useEffect(()=>{const update=()=>setScreen({width:window.innerWidth,height:window.innerHeight,native:window.devicePixelRatio||1});window.addEventListener('resize',update);return()=>window.removeEventListener('resize',update)},[])
-  const [visible,setVisible]=useState(true)
+  const [visible,setVisible]=useState(false)
+  const [loaded,setLoaded]=useState(false)
+  const [tabActive,setTabActive]=useState(!document.hidden)
+  useEffect(()=>{const update=()=>setTabActive(!document.hidden);document.addEventListener('visibilitychange',update);return()=>document.removeEventListener('visibilitychange',update)},[])
   const [atEnd,setAtEnd]=useState(false)
   const [nearestProject,setNearestProject]=useState<number|null>(null)
   const [selected,setSelected]=useState<number|null>(null)
@@ -520,7 +523,7 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
   useEffect(()=>{
     const el=viewport.current
     if(!el)return
-    const observer=new IntersectionObserver(([entry])=>setVisible(entry.isIntersecting),{rootMargin:'160px'})
+    const observer=new IntersectionObserver(([entry])=>{setVisible(entry.isIntersecting);if(entry.isIntersecting)setLoaded(true)},{rootMargin:'220px'})
     observer.observe(el)
     return()=>observer.disconnect()
   },[fallback])
@@ -569,13 +572,13 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
   }
   function pointerEnd(){if(drag.current?.moved)ignoreClick.current=performance.now()+350;drag.current=null}
   const dpr=renderDpr(quality,adaptiveDpr,screen.width,screen.height,screen.native)
-  const effects=visible&&phase==='walking'&&quality==='ultra'&&!mobile
+  const effects=visible&&tabActive&&!paused&&phase==='walking'&&quality==='ultra'&&!mobile
 
   return <div className="gallery-shell">
     {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
-      <Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&!activeProjectId&&phase!=='inside'?'always':'never'} shadows={quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:80}} fallback={<p>WebGL no disponible.</p>}>
+      {loaded&&<Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&tabActive&&!paused&&!activeProjectId&&phase!=='inside'?'always':'never'} shadows={quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:80}} fallback={<p>WebGL no disponible.</p>}>
         <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} adaptiveDpr={adaptiveDpr} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects/>}</Suspense>
-      </Canvas>
+      </Canvas>}
       {!ready&&<div className="gallery-loading" role="status">Preparando la exposición…</div>}
       <div className="gallery-hud"><span>04 / THE EXHIBITION</span></div>
       <div className="gallery-quality"><AmbientSound/><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>
