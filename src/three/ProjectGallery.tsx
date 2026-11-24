@@ -1,13 +1,12 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, MeshReflectorMaterial, useTexture, RoundedBox, Environment, Lightformer, Sparkles } from '@react-three/drei'
+import { Html, MeshReflectorMaterial, useTexture, Environment, Lightformer, Sparkles } from '@react-three/drei'
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Vector3, Color, Matrix4, Mesh, InstancedMesh, TextureLoader, Group, PointLight, SpotLight, Object3D, BufferGeometry, Float32BufferAttribute, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
+import { Vector3, Color, Matrix4, Mesh, InstancedMesh, TextureLoader, Group, PointLight, SpotLight, Object3D, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
 import { projects } from '../data/profile'
-import { PROJECT_LAYERS } from '../data/projectShots'
 import type { Project } from '../data/types'
 import { GalleryEffects } from './GalleryEffects'
 import { CAMERA_START_Z, CAMERA_LENGTH as length, projectZ, nearestProject as findNearest, scrollProgress, focusFov, nextSelection, qualityStep, renderDpr, reflectionSize, ceilingIndices, type GalleryPhase as Phase } from '../lib/galleryLogic'
-import { transitionShot, cameraEase, fitScreenDistance, validScreenRect } from '../lib/projectTransition'
+import { transitionShot, posterUrl, cameraEase, fitScreenDistance, validScreenRect } from '../lib/projectTransition'
 import './projectGallery.css'
 
 type Props = { onOpen: (p: Project, rect: DOMRect | null) => void; activeProjectId?: string; paused?:boolean }
@@ -16,7 +15,7 @@ const ROOM_FRONT_Z = 12
 const ROOM_BACK_Z = -57
 const ROOM_LENGTH = ROOM_FRONT_Z - ROOM_BACK_Z
 const ROOM_CENTER = (ROOM_FRONT_Z + ROOM_BACK_Z) / 2
-const exhibitX = 4.04
+const exhibitX = 3.275
 const alcoveHalf = 2.85
 const alcoves = (side:number) => projects.map((_,i)=>i).filter(i=>(i%2?1:-1)===side).map(projectZ)
 const wallSegments = (side:number) => {
@@ -128,28 +127,6 @@ function usePhotoMaps(asset:string,repeat:[number,number]){
   },[asset,rx,ry,gl])
   return maps
 }
-function Sculpture({kind,accent}:{kind:string;accent:string}){
-  const ref=useRef<Group>(null)
-  const world=useMemo(()=>new Vector3(),[])
-  const vertices=useMemo(()=>{
-    const points=Array.from({length:18},(_,i)=>{
-      const y=1-2*i/17,a=i*2.399963,r=Math.sqrt(1-y*y)
-      return new Vector3(Math.cos(a)*r,y,Math.sin(a)*r).multiplyScalar(.42)
-    })
-    const lines:number[]=[]
-    points.forEach((p,i)=>points.slice(i+1).forEach(q=>{if(p.distanceTo(q)<.48)lines.push(...p.toArray(),...q.toArray())}))
-    const geometry=new BufferGeometry();geometry.setAttribute('position',new Float32BufferAttribute(lines,3))
-    return {points,geometry}
-  },[])
-  useEffect(()=>()=>vertices.geometry.dispose(),[vertices])
-  useFrame(({camera},dt)=>{if(ref.current&&Math.abs(camera.position.z-ref.current.getWorldPosition(world).z)<10)ref.current.rotation.y+=dt*.24})
-  return <group position={[0,-1.31,.88]}>
-    <Block position={[0,-.38,0]} size={[1.2,.12,.6]} color="#2b2018" metal={.4}/>
-    <group ref={ref} position={[0,.05,0]} scale={kind==='my-journey'?1.38:1.15}>
-      {kind==='my-journey'?<><lineSegments geometry={vertices.geometry}><lineBasicMaterial color={accent} transparent opacity={.8}/></lineSegments>{vertices.points.map((p,i)=><mesh key={i} position={p}><sphereGeometry args={[.033,8,8]}/><meshBasicMaterial color={accent}/></mesh>)}</>:kind==='cv-editorial'?<mesh><sphereGeometry args={[.36,40,28]}/><meshStandardMaterial color="#c28c62" metalness={.9} roughness={.23}/></mesh>:null}
-    </group>
-  </group>
-}
 function ContactStrips(){
   const tex=useMemo(()=>{
     const c=document.createElement('canvas');c.width=256;c.height=32
@@ -175,118 +152,25 @@ function Reception({progress}:{progress:React.RefObject<number>}){
     <Html position={[0,3.35,-2.4]} transform distanceFactor={7} style={{pointerEvents:'none'}}><div className="gallery-entry-sign">THE EXHIBITION <span>↓</span></div></Html>
   </group>
 }
-function Alcove({project,index}:{project:Project;index:number}){
+/** The artwork is a single near-square printed digital exhibition, without props or extra frames. */
+function Artwork({project,index,onSelect}:{project:Project;index:number;onSelect:()=>void}){
   const side=index%2?1:-1,z=projectZ(index)
-  const tone=project.id==='matchup'?'#536b31':project.id==='ashesfire'?'#64503d':'#a77b56'
-  return <group position={[side*3.46,2.2,z]} rotation={[0,-side*Math.PI/2,0]}>
-    <Block position={[0,0,-.87]} size={[5.7,4.45,.18]} color="#2d211a"/>
-    {[-1,1].map(s=><group key={s}>
-      <Block position={[s*2.85,0,-.4]} size={[.17,4.4,.98]} color="#493529"/>
-      <Block position={[s*2.76,0,.015]} size={[.045,4.3,.075]} color="#b98a63" metal={.78} roughness={.3}/>
-    </group>)}
-    <Block position={[0,2.05,-.4]} size={[5.7,.34,1.05]} color="#30241b"/>
-    <Block position={[0,-2.13,-.4]} size={[5.7,.14,1.05]} color="#66513e"/>
-    <mesh position={[0,1.84,-.1]}><boxGeometry args={[5.3,.045,.045]}/><meshBasicMaterial color={tone}/></mesh>
-  </group>
-}
-function Installation({kind,accent}:{kind:string;accent:string}){
-  const motion=useRef<Group>(null)
-  const world=useMemo(()=>new Vector3(),[])
-  useFrame(({camera,clock},dt)=>{
-    if(!motion.current)return
-    const nearby=Math.abs(camera.position.z-motion.current.getWorldPosition(world).z)<8
-    const goal=nearby?Math.sin(clock.elapsedTime*1.5)*.055:0
-    motion.current.position.y+=(goal-motion.current.position.y)*(1-Math.exp(-dt*3))
-  })
-  return <group position={[0,-1.55,.74]}>
-    {kind==='matchup'&&<group>
-      <Block position={[0,-.1,0]} size={[4.35,.18,1.05]} color="#142217" roughness={.7}/>
-      <group rotation={[-Math.PI/2,0,0]} position={[0,.002,0]}>
-        <mesh><planeGeometry args={[4.12,.94]}/><meshStandardMaterial color="#29422a" roughness={.95}/></mesh>
-        {[-1,1].map(s=><group key={s}><mesh position={[s*2.0,0,.012]}><planeGeometry args={[.018,.86]}/><meshBasicMaterial color={accent}/></mesh><mesh position={[0,s*.43,.012]}><planeGeometry args={[4,.018]}/><meshBasicMaterial color={accent}/></mesh></group>)}
-        <mesh position={[0,0,.013]}><ringGeometry args={[.21,.225,40]}/><meshBasicMaterial color={accent}/></mesh>
-        <mesh position={[0,0,.014]}><planeGeometry args={[.018,.86]}/><meshBasicMaterial color={accent}/></mesh>
-      </group>
-      <group ref={motion}><mesh position={[0,.26,0]}><sphereGeometry args={[.16,24,16]}/><meshStandardMaterial color="#dce4d0" roughness={.4}/></mesh></group>
-    </group>}
-    {kind==='ashesfire'&&<group>
-      <Block position={[0,-.08,0]} size={[4.25,.2,.85]} color="#292b2d" metal={.35}/>
-      <group ref={motion}>{[.28,.51,.39,.67,.86,.55,.72].map((h,i)=><group key={i} position={[-1.5+i*.5,0,0]}><Block position={[0,h/2,0]} size={[.26,h,.23]} color={i%2?'#b4733f':'#d2a27e'} metal={.6} roughness={.4}/><mesh position={[0,h,.01]}><boxGeometry args={[.27,.025,.25]}/><meshBasicMaterial color={accent}/></mesh></group>)}</group>
-    </group>}
-    {kind==='portfolio-narrativo'&&<group>
-      <Block position={[0,-.09,0]} size={[4.2,.18,.8]} color="#30241f" metal={.25}/>
-      <group ref={motion}><mesh position={[0,.14,0]}><boxGeometry args={[3.7,.022,.025]}/><meshBasicMaterial color={accent}/></mesh>{[-1.65,-.55,.55,1.65].map((x,i)=><group key={x} position={[x,.14,0]}><mesh><sphereGeometry args={[.07,12,12]}/><meshBasicMaterial color={accent}/></mesh><Block position={[0,.25,0]} size={[.62,.32,.055]} color={i%2?'#745441':'#a87d5d'} metal={.45}/></group>)}</group>
-    </group>}
-  </group>
-}
-function Artwork({ project, index, focused, entering, onSelect }: { project: Project; index: number; focused:boolean; entering:boolean; onSelect: () => void }) {
-  const side = index % 2 ? 1 : -1
-  const z = projectZ(index)
-  const layers = useMemo(()=>PROJECT_LAYERS[project.id].filter(l => !l.gallery),[project.id])
-  const sources = useMemo(()=>layers.map(l=>url(l.src)),[layers])
-  const textures = useTexture(sources)
-  const [hover, setHover] = useState(false)
+  const texture=useTexture(posterUrl(project.id))
   const gl=useThree(s=>s.gl)
   useEffect(()=>{
-    for(const t of textures){
-      t.colorSpace=SRGBColorSpace
-      t.anisotropy=gl.capabilities.getMaxAnisotropy()
-      t.minFilter=LinearMipmapLinearFilter
-      t.magFilter=LinearFilter
-      t.needsUpdate=true
-    }
-  },[textures,gl])
-  const display=useRef<Group>(null)
-  const aura=useRef<Group>(null)
-  const mobile=useThree(s=>s.size.width<700)
-  const accent=project.id==='matchup'?'#a8ed46':project.tone
-  const emission=useMemo(()=>new Color(accent).multiplyScalar(3.2),[accent])
-  useFrame(({clock,camera},dt)=>{
-    if(!display.current||entering)return
-    const proximity=Math.max(0,1-Math.abs(camera.position.z-z)/9)
-    const ease=1-Math.exp(-dt*4)
-    const target=Math.sin(clock.elapsedTime*1.2)*(focused?.025:.06)*proximity
-    display.current.position.y+=(target-display.current.position.y)*ease
-    display.current.position.z+=(.09*proximity-display.current.position.z)*ease
-    if(aura.current){const scale=.92+.08*proximity;aura.current.scale.x+=(scale-aura.current.scale.x)*ease;aura.current.scale.y+=(scale-aura.current.scale.y)*ease}
-  })
-  return <group position={[side*exhibitX,2.16,z]} rotation={[0,-side*Math.PI/2,0]} onClick={e=>{e.stopPropagation();onSelect()}} onPointerOver={()=>setHover(true)} onPointerOut={()=>setHover(false)}>
-    <RoundedBox position={[0,0,-.08]} args={[4.9,3.12,.17]} radius={.06} smoothness={3}><meshStandardMaterial color="#16100d" roughness={.65}/></RoundedBox>
-    <RoundedBox position={[0,0,.015]} args={[4.55,2.88,.08]} radius={.035} smoothness={3}><meshStandardMaterial color={hover?'#f4d2ad':'#b88a63'} metalness={.85} roughness={.29}/></RoundedBox>
-    <Block position={[0,0,.06]} size={[4.43,2.76,.04]} color={project.id==='matchup'?'#101a12':'#241b16'}/>
-    <Block position={[0,-1.43,.03]} size={[4.5,.07,.36]} color="#b98a63" metal={.65} roughness={.35}/>
-    <mesh position={[0,1.38,.22]}><boxGeometry args={[3.9,.045,.08]}/><meshBasicMaterial color={emission} toneMapped={false}/></mesh>
-    <group ref={aura}>
-      {[-1,1].map(s=><mesh key={s} position={[s*2.22,0,.11]}><boxGeometry args={[.022,2.7,.025]}/><meshBasicMaterial color={emission} toneMapped={false}/></mesh>)}
-    </group>
-    <group ref={display}>
-    {textures.map((t,i)=>{
-      const image=t.image as {width:number;height:number}
-      const aspect=image.width/image.height
-      const maxW=project.id==='matchup'?1.08:i===0?2.65:1.25
-      const height=Math.min(project.id==='matchup'?2.15:1.95,maxW/aspect)
-      const width=height*aspect
-      const x=project.id==='matchup'?(i-(textures.length-1)/2)*1.23:i===0?-.68:1.42
-      const y=project.id==='matchup'?0:i===0?0:i===1?.51:-.51
-      return <group key={layers[i].src} position={[x,y,i===0?.27:.17]} rotation={[0,project.id==='matchup'?(i-1)*-.12:0,0]}>
-        <RoundedBox args={[width+.075,height+.075,.095]} radius={.025} smoothness={3}><meshStandardMaterial color={project.id==='matchup'?'#111713':'#17120f'} metalness={.5} roughness={.3}/></RoundedBox>
-        <mesh name={layers[i].src===transitionShot(project.id)?.src?'transition-screen-'+project.id:undefined} position={[0,0,.052]}><planeGeometry args={[width,height]}/><meshBasicMaterial map={t} toneMapped={false}/></mesh>
-      </group>
-    })}
-    </group>
-    <Installation kind={project.id} accent={accent}/>
-    {[-1,1].map(s=><mesh key={s} position={[s*2.22,-1.35,.61]}><boxGeometry args={[.025,.42,.9]}/><meshPhysicalMaterial color="#d9e7df" transparent opacity={.12} roughness={.1} metalness={.05} depthWrite={false}/></mesh>)}
-    {(project.id==='my-journey'||project.id==='cv-editorial')&&<Sculpture kind={project.id} accent={accent}/>}
-    {project.id==='matchup'&&[-1,1].map(s=><mesh key={s} position={[s*2.03,0,.19]}><boxGeometry args={[.035,2.5,.055]}/><meshBasicMaterial color={emission} toneMapped={false}/></mesh>)}
-    {project.id==='ashesfire'&&Array.from({length:5},(_,i)=><mesh key={i} position={[-1.7+i*.17,-1.2,.22]}><boxGeometry args={[.10,.12+i*.055,.045]}/><meshBasicMaterial color={accent}/></mesh>)}
-    {project.id==='portfolio-narrativo'&&<group position={[0,-1.16,.2]}><mesh><boxGeometry args={[3.8,.018,.04]}/><meshBasicMaterial color={accent}/></mesh>{[-1.5,0,1.5].map(x=><mesh key={x} position={[x,0,.03]}><sphereGeometry args={[.055,10,10]}/><meshBasicMaterial color={accent}/></mesh>)}</group>}
-    {project.id==='my-journey'&&!mobile&&<Sparkles count={35} scale={[4,2.3,.35]} position={[0,0,.45]} size={2} speed={.35} color={accent}/>}
-    <Html position={[0,-1.72,.12]} transform distanceFactor={5} occlude style={{pointerEvents:"none"}}>
-      <div className="gallery-plaque"><small>0{index+1} / MY JOURNEY</small><strong>{project.title}</strong><small>{project.technologies.slice(0,3).join(" · ")}</small></div>
-    </Html>
+    texture.colorSpace=SRGBColorSpace
+    texture.anisotropy=Math.min(8,gl.capabilities.getMaxAnisotropy())
+    texture.minFilter=LinearMipmapLinearFilter;texture.magFilter=LinearFilter
+    texture.needsUpdate=true
+  },[texture,gl])
+  return <group position={[side*3.30,2.20,z]} rotation={[0,-side*Math.PI/2,0]}>
+    <mesh name={'transition-screen-'+project.id} position={[0,0,.025]} onClick={e=>{e.stopPropagation();onSelect()}}>
+      <planeGeometry args={[4.8,3.84]}/>
+      <meshBasicMaterial map={texture} toneMapped={false}/>
+    </mesh>
   </group>
 }
-/** Project the actual screenshot plane into browser coordinates for a seamless handoff. */
+/** Project the artwork plane into browser coordinates for a seamless handoff. */
 function screenRect(mesh:Mesh,camera:PerspectiveCamera,canvas:HTMLCanvasElement){
   mesh.geometry.computeBoundingBox()
   const bounds=mesh.geometry.boundingBox
@@ -317,17 +201,17 @@ function Camera({ progress, selected, phase, yaw, onArrive }: { progress: React.
     const focus=selected!==null&&phase!=='walking'
     const close=phase==='entering'||phase==='inside'
     const aspect=size.width/Math.max(1,size.height)
-    let fov=close?52:focus?focusFov(aspect):size.width<700?78:65
+    let fov=close?Math.max(52,focusFov(aspect)-10):focus?focusFov(aspect):size.width<700?78:65
     const p=targetPosition.set(focus?side*(exhibitX-(close?1.5:5.8)):0,focus?2.16:1.75+Math.sin(progress.current*95)*.018,focus?projectZ(selected!):z)
     const l=targetLook.set(focus?side*exhibitX:Math.sin(yaw.current)*10,focus?2.16:1.75,focus?p.z:z-Math.cos(yaw.current)*10)
-    const screen=close&&selected!==null?scene.getObjectByName('transition-screen-'+projects[selected].id):null
+    const screen=focus&&selected!==null?scene.getObjectByName('transition-screen-'+projects[selected].id):null
     if(screen instanceof Mesh){
       screen.updateWorldMatrix(true,false)
       screen.getWorldPosition(l);screen.getWorldQuaternion(screenRotation)
       normal.set(0,0,1).applyQuaternion(screenRotation)
       if(!screen.geometry.boundingBox)screen.geometry.computeBoundingBox()
       const bounds=screen.geometry.boundingBox
-      const distance=bounds?fitScreenDistance(bounds.max.x-bounds.min.x,bounds.max.y-bounds.min.y,aspect,fov):1.5
+      const distance=bounds?Math.min(6.1,fitScreenDistance(bounds.max.x-bounds.min.x,bounds.max.y-bounds.min.y,aspect,fov)):(close?4.5:5.8)
       p.copy(l).addScaledVector(normal,distance)
     }
     aimCamera.position.copy(p);aimCamera.lookAt(l);desiredRotation.copy(aimCamera.quaternion)
@@ -411,7 +295,7 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
     <Block position={[0,4.5,ROOM_CENTER]} size={[7,.3,ROOM_LENGTH]} color="#211813"/>
     <Block position={[0,2.2,ROOM_BACK_Z]} size={[7,4.5,.3]} color="#302219"/>
     {[-1,1].map(side=><group key={side}>
-      {wallSegments(side).map(s=><Block key={s.z} position={[side*3.55,2.2,s.z]} size={[.3,4.5,s.length]} color="#372a21"/>)}
+      <Block position={[side*3.55,2.2,ROOM_CENTER]} size={[.3,4.5,ROOM_LENGTH]} color="#372a21"/>
       {wallSegments(side).map(s=><Block key={s.z} position={[side*3.36,.15,s.z]} size={[.12,.3,s.length]} color="#916b4d" metal={.65}/>)}
       <Block position={[side*3.35,4.15,ROOM_CENTER]} size={[.12,.12,ROOM_LENGTH]} color="#b98a63" metal={.6}/>
       <mesh position={[side*3.26,4.02,ROOM_CENTER]}><boxGeometry args={[.035,.045 ,ROOM_LENGTH-1]}/><meshBasicMaterial color="#eed4b7" toneMapped={false}/></mesh>
@@ -436,14 +320,11 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
     <Block position={[0,2.3,ROOM_BACK_Z+.3]} size={[4.9,3.5,.12]} color="#201712"/>
     <Block position={[0,4.08,ROOM_BACK_Z+.45]} size={[5,.06,.16]} color="#d2a27e" metal={.6}/>
     <Html position={[0,2.35,ROOM_BACK_Z+.55]} transform distanceFactor={6} style={{pointerEvents:'none'}}><div className="gallery-end"><strong>MG.</strong><span>MY JOURNEY</span><p>Cada proyecto, un paso más en mi trayectoria.</p></div></Html>
-    <Block position={[0,.22,ROOM_BACK_Z+1.15]} size={[2.1,.44,1.3]} color="#5d4634" metal={.3}/>
-    <group position={[0,1.05,ROOM_BACK_Z+1.15]} rotation={[.3,0,.18]}><mesh><torusGeometry args={[.56,.075,16,64]}/><meshStandardMaterial color="#c18d61" metalness={.85} roughness={.23}/></mesh><mesh rotation={[0,Math.PI/2,0]}><torusGeometry args={[.48,.05,12,48]}/><meshStandardMaterial color="#e0b28a" metalness={.8} roughness={.28}/></mesh></group>
     <pointLight position={[0,3.8,ROOM_BACK_Z+2.2]} color="#ffce99" intensity={12} distance={7}/>
     <ContactStrips/>
     {quality==='ultra'&&!mobile&&<ExhibitShadow enabled/>}
     <Reception progress={progress}/>
-    {projects.map((p,i)=><Alcove key={'alcove-'+p.id} project={p} index={i}/>)}
-    {projects.map((p,i)=><Suspense key={p.id} fallback={null}><Artwork project={p} index={i} focused={selected===i&&phase==='focused'} entering={selected===i&&(phase==='entering'||phase==='inside')} onSelect={()=>onSelect(i)}/></Suspense>)}
+    {projects.map((p,i)=><Suspense key={p.id} fallback={null}><Artwork project={p} index={i} onSelect={()=>onSelect(i)}/></Suspense>)}
     <Camera progress={progress} selected={selected} phase={phase} yaw={yaw} onArrive={onArrive}/>
   </>
 }
@@ -583,7 +464,7 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
       <div className="gallery-hud"><span>04 / THE EXHIBITION</span></div>
       <div className="gallery-quality"><AmbientSound/><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>
       <div className="gallery-instruction">{phase==='turning'?'Girando hacia la exposición…':phase==='focused'?'Toca otra vez para entrar · Desliza para continuar':phase==='entering'||phase==='inside'?'Entrando en la experiencia…':atEnd?'Desliza para continuar hacia mis competencias':nearestProject===null?'Desliza hacia arriba para caminar · A los lados para mirar':'Toca una exposición para observarla'}</div>
-      {phase==='focused'&&selected!==null&&<div className="gallery-focus"><div className="gallery-focus-copy"><small>EXHIBITION / {String(selected+1).padStart(2,'0')}</small><strong>{projects[selected].title}</strong><p>{projects[selected].accent}</p></div><button onClick={()=>select(selected)}>Entrar al proyecto ↗</button><button onClick={resume}>Continuar recorrido →</button></div>}
+      {phase==='focused'&&selected!==null&&<div className="gallery-focus"><button onClick={()=>select(selected)}>Entrar al proyecto ↗</button><button onClick={resume}>Continuar recorrido →</button></div>}
       {phase==='walking'&&atEnd&&<div className="gallery-end-actions"><a href="https://github.com/Maikol-2004" target="_blank" rel="noreferrer">GitHub ↗</a><a href={import.meta.env.BASE_URL+'Michael-Guzman-CV.pdf'} download>Descargar CV ↓</a><a href="#habilidades">Competencias →</a></div>}
       {phase==='walking'&&nearestProject!==null&&<div className="gallery-near"><button onClick={()=>select(nearestProject)}>Observar {projects[nearestProject].title} ↗</button></div>}
     </div></div>}
