@@ -6,21 +6,15 @@ import { projects } from '../data/profile'
 import { PROJECT_LAYERS } from '../data/projectShots'
 import type { Project } from '../data/types'
 import { GalleryEffects } from './GalleryEffects'
+import { CAMERA_START_Z, CAMERA_LENGTH as length, projectZ, nearestProject as findNearest, scrollProgress, focusFov, nextSelection, qualityStep, type GalleryPhase as Phase } from '../lib/galleryLogic'
 import './projectGallery.css'
 
 type Props = { onOpen: (p: Project, rect: DOMRect | null) => void; activeProjectId?: string }
-type Phase = 'walking' | 'turning' | 'focused' | 'entering' | 'inside'
 type Quality = 'auto' | 'medium' | 'high' | 'ultra'
-const FIRST_PROJECT_Z = -14
-const PROJECT_SPACING = 8
-const CAMERA_START_Z = 7
-const CAMERA_END_Z = -52
 const ROOM_FRONT_Z = 12
 const ROOM_BACK_Z = -57
 const ROOM_LENGTH = ROOM_FRONT_Z - ROOM_BACK_Z
 const ROOM_CENTER = (ROOM_FRONT_Z + ROOM_BACK_Z) / 2
-const length = CAMERA_START_Z - CAMERA_END_Z
-const projectZ = (index: number) => FIRST_PROJECT_Z - index * PROJECT_SPACING
 const exhibitX = 4.04
 const alcoveHalf = 2.85
 const alcoves = (side:number) => projects.map((_,i)=>i).filter(i=>(i%2?1:-1)===side).map(projectZ)
@@ -35,10 +29,7 @@ const wallSegments = (side:number) => {
   if(cursor>ROOM_BACK_Z)result.push({z:(cursor+ROOM_BACK_Z)/2,length:cursor-ROOM_BACK_Z})
   return result
 }
-const nearestIndex = (z: number) => {
-  const index = Math.round((FIRST_PROJECT_Z - z) / PROJECT_SPACING)
-  return index >= 0 && index < projects.length && Math.abs(z - projectZ(index)) <= 4.5 ? index : null
-}
+const nearestIndex = (z:number)=>findNearest(z,projects.length)
 const url = (name: string) => import.meta.env.BASE_URL + 'projects/' + name + '.webp'
 
 function Block({ position, size, color, metal = 0, roughness = .7 }: { position: [number,number,number]; size: [number,number,number]; color: string; metal?: number; roughness?: number }) {
@@ -271,8 +262,7 @@ function Camera({ progress, selected, phase, yaw, onArrive }: { progress: React.
     aimCamera.position.copy(p);aimCamera.lookAt(l);desiredRotation.copy(aimCamera.quaternion);camera.quaternion.slerp(desiredRotation,a)
     if(camera instanceof PerspectiveCamera){
       const aspect=size.width/Math.max(1,size.height)
-      const fit=2*Math.atan((4.7*1.12)/(2*5.8*aspect))*180/Math.PI
-      const fov=close?48:focus?Math.max(62,Math.min(112,fit)):size.width<700?78:65
+      const fov=close?48:focus?focusFov(aspect):size.width<700?78:65
       if(Math.abs(camera.fov-fov)>.05){camera.fov+=(fov-camera.fov)*a;camera.updateProjectionMatrix()}
     }
     if((phase==='turning'||phase==='entering')&&notified.current!==phase&&camera.position.distanceTo(p)<.06&&look.current.distanceTo(l)<.06&&camera.quaternion.angleTo(desiredRotation)<.025){
@@ -312,7 +302,7 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     <ambientLight intensity={phase==='focused'?.18:.28}/>
     <Environment resolution={128}><Lightformer form="rect" intensity={3} color="#ffe0b8" position={[0,5,-10]} scale={[6,25,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={1.5} color="#c69a73" position={[4,2,-15]} scale={[30,4,1]} rotation={[0,-Math.PI/2,0]}/></Environment>
     <hemisphereLight args={["#ffe1bf","#38251b",phase==='focused'?.83:1.1]}/>
-    <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[7,ROOM_LENGTH]}/><MeshReflectorMaterial resolution={quality==='ultra'?1024:quality==='medium'?256:mobile?512:768} mirror={.12} mixBlur={.75} mixStrength={.28} blur={mobile?[80,40]:[160,75]} color="#181716" metalness={.12} roughness={.34}/></mesh>
+    <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[7,ROOM_LENGTH]}/><MeshReflectorMaterial resolution={quality==='ultra'?1024:quality==='medium'?256:mobile?512:768} mirror={.12} mixBlur={.75} mixStrength={.28} blur={mobile?[80,40]:[160,75]} color="#121313" metalness={.08} roughness={.38}/></mesh>
     <Block position={[0,4.5,ROOM_CENTER]} size={[7,.3,ROOM_LENGTH]} color="#211813"/>
     <Block position={[0,2.2,ROOM_BACK_Z]} size={[7,4.5,.3]} color="#302219"/>
     {[-1,1].map(side=><group key={side}>
@@ -324,7 +314,7 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
         <Block position={[-side*.09,0,1.46]} size={[.16,4.25,.085]} color="#211813"/>
         <Block position={[-side*.08,0,1.40]} size={[.05,4.1,.025]} color="#a77d58" metal={.65}/>
       </group>)}
-      <mesh position={[side*3.26,4.02,ROOM_CENTER]}><boxGeometry args={[.035,.045 ,ROOM_LENGTH-1]}/><meshBasicMaterial color="#ffdbac" toneMapped={false}/></mesh>
+      <mesh position={[side*3.26,4.02,ROOM_CENTER]}><boxGeometry args={[.035,.045 ,ROOM_LENGTH-1]}/><meshBasicMaterial color="#eed4b7" toneMapped={false}/></mesh>
       {wallSegments(side).map(s=><mesh key={s.z} position={[side*3.25,.31,s.z]}><boxGeometry args={[.025,.025,s.length]}/><meshBasicMaterial color="#d3a477" toneMapped={false}/></mesh>)}
     </group>)}
     {Array.from({length:8},(_,i)=><group key={'portal'+i} position={[0,0,6-i*8]}>
@@ -338,8 +328,8 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     {!mobile&&<Sparkles count={45} scale={[5,3,ROOM_LENGTH-4]} position={[0,2,ROOM_CENTER]} size={1.2} speed={.12} opacity={.18} color="#d2a27e"/>}
     {Array.from({length:21},(_,i)=><group key={i} position={[0,4.29,10-i*3.3]}>
       <Block position={[0,.04,0]} size={[6.7,.15,.38]} color="#17120f"/>
-      <mesh><boxGeometry args={[5.8,.035,.045]}/><meshBasicMaterial color="#ffdfb6" toneMapped={false}/></mesh>
-      <pointLight position={[0,-.2,0]} color="#ffd2a0" intensity={6} distance={8} decay={2}/>
+      <mesh><boxGeometry args={[5.8,.035,.045]}/><meshBasicMaterial color="#f4dfc5" toneMapped={false}/></mesh>
+      <pointLight position={[0,-.2,0]} color="#f7d9b6" intensity={5.5} distance={8} decay={2}/>
     </group>)}
     <Block position={[0,2.3,ROOM_BACK_Z+.3]} size={[4.9,3.5,.12]} color="#201712"/>
     <Block position={[0,4.08,ROOM_BACK_Z+.45]} size={[5,.06,.16]} color="#d2a27e" metal={.6}/>
@@ -390,7 +380,7 @@ function AdaptiveQuality({enabled,onChange}:{enabled:boolean;onChange:(n:number)
   useFrame((_,dt)=>{
     if(!enabled||dt>.25){sample.current.time=0;sample.current.frames=0;return}
     const s=sample.current;s.time+=dt;s.frames++
-    if(s.time>=3){const fps=s.frames/s.time;const next=fps<32?Math.max(1.5,s.level-.25):fps>52?Math.min(2.5,s.level+.25):s.level
+    if(s.time>=3){const fps=s.frames/s.time;const next=qualityStep(fps,s.level,window.innerWidth<700)
       if(next!==s.level){s.level=next;onChange(next)}s.time=0;s.frames=0}
   })
   return null
@@ -408,14 +398,17 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
   const [nearestProject,setNearestProject]=useState<number|null>(null)
   const [selected,setSelected]=useState<number|null>(null)
   const [fallback,setFallback]=useState(false)
+  const [ready,setReady]=useState(false)
   const [mobile,setMobile]=useState(false)
   const [phase,setPhase]=useState<Phase>('walking')
   const [quality,setQuality]=useState<Quality>('auto')
   const savedScroll=useRef(0)
   useEffect(()=>{
     const canvas=document.createElement('canvas')
-    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!canvas.getContext('webgl2'))setFallback(true)
-    const update=()=>{setMobile(window.innerWidth<700);const el=section.current;if(!el)return;const r=el.getBoundingClientRect();const value=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height-(viewport.current?.clientHeight??window.innerHeight))));if(Math.abs(progress.current-value)>.0005)yaw.current=0;progress.current=value;setAtEnd(value>.94);setNearestProject(nearestIndex(CAMERA_START_Z-value*length))}
+    const gl=canvas.getContext('webgl2')
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!gl)setFallback(true)
+    gl?.getExtension('WEBGL_lose_context')?.loseContext()
+    const update=()=>{setMobile(window.innerWidth<700);const el=section.current;if(!el)return;const r=el.getBoundingClientRect();const value=scrollProgress(r.top,r.height,viewport.current?.clientHeight??window.innerHeight);if(Math.abs(progress.current-value)>.0005)yaw.current=0;progress.current=value;setAtEnd(value>.94);setNearestProject(nearestIndex(CAMERA_START_Z-value*length))}
     update();window.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update)
     return()=>{window.removeEventListener('scroll',update);window.removeEventListener('resize',update)}
   },[])
@@ -433,18 +426,23 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
     }
   },[phase,selected,activeProjectId])
   useEffect(()=>{
-    if(phase!=='focused'&&phase!=='turning')return
+    if(phase!=='focused'&&phase!=='turning'&&phase!=='entering')return
     const resume=()=>{if(Math.abs(window.scrollY-savedScroll.current)>40){setPhase('walking');setSelected(null)}}
     window.addEventListener('scroll',resume,{passive:true})
     return()=>window.removeEventListener('scroll',resume)
   },[phase])
+  useEffect(()=>{
+    const onKey=(e:KeyboardEvent)=>{if(e.key==='Escape'&&(phase==='focused'||phase==='turning'||phase==='entering')){setSelected(null);setPhase('walking')}}
+    window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)
+  },[phase])
   function select(i:number){
     if(performance.now()<ignoreClick.current)return
     yaw.current=0
-    if(phase==='walking'){savedScroll.current=window.scrollY;setSelected(i);setPhase('turning')}
-    else if(phase==='focused'&&selected===i)setPhase('entering')
+    const next=nextSelection(phase,selected,i)
+    if(next==='turning'&&phase==='walking'){savedScroll.current=window.scrollY;setSelected(i)}
+    if(next!==phase)setPhase(next)
   }
-  function resume(){setSelected(null);setPhase('walking')}
+  function resume(){yaw.current=0;setSelected(null);setPhase('walking')}
   function arrive(){
     if(selected===null)return
     if(phase==='turning'){setPhase('focused');return}
@@ -470,9 +468,10 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
 
   return <div className="gallery-shell">
     {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
-      <Canvas frameloop={visible&&phase!=='inside'?'always':'never'} shadows dpr={[1,dpr]} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:80}} fallback={<p>WebGL no disponible.</p>}>
+      <Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&phase!=='inside'?'always':'never'} shadows dpr={[1,dpr]} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:80}} fallback={<p>WebGL no disponible.</p>}>
         <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects occlusion={quality==='ultra'&&!mobile}/>}</Suspense>
       </Canvas>
+      {!ready&&<div className="gallery-loading" role="status">Preparando la exposición…</div>}
       <div className="gallery-hud"><span>04 / THE EXHIBITION</span></div>
       <div className="gallery-quality"><AmbientSound/><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>
       <div className="gallery-instruction">{phase==='turning'?'Girando hacia la exposición…':phase==='focused'?'Toca otra vez para entrar · Desliza para continuar':phase==='entering'||phase==='inside'?'Entrando en la experiencia…':atEnd?'Desliza para continuar hacia mis competencias':nearestProject===null?'Desliza hacia arriba para caminar · A los lados para mirar':'Toca una exposición para observarla'}</div>
@@ -480,6 +479,7 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
       {phase==='walking'&&atEnd&&<div className="gallery-end-actions"><a href="https://github.com/Maikol-2004" target="_blank" rel="noreferrer">GitHub ↗</a><a href={import.meta.env.BASE_URL+'Michael-Guzman-CV.pdf'} download>Descargar CV ↓</a><a href="#habilidades">Competencias →</a></div>}
       {phase==='walking'&&nearestProject!==null&&<div className="gallery-near"><button onClick={()=>select(nearestProject)}>Observar {projects[nearestProject].title} ↗</button></div>}
     </div></div>}
+    {fallback&&<p className="gallery-fallback-note">Explora los proyectos directamente, sin animación 3D.</p>}
     <div className="gallery-access" aria-label="Acceso directo a proyectos">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title} ↗</button>)}</div>
     <p className="gallery-material-credit">Materiales fotográficos: <a href="https://polyhaven.com/" target="_blank" rel="noreferrer">Poly Haven (CC0)</a> · con alternativa procedural.</p>
   </div>
