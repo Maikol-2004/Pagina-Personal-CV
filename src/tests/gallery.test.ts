@@ -1,3 +1,4 @@
+import { PROJECT_OVERVIEW } from '../data/projectOverview'
 import { transitionShot, transitionStyles, cameraEase, fitScreenDistance, validScreenRect } from '../lib/projectTransition'
 import { describe, expect, it } from 'vitest'
 import { CAMERA_START_Z, CAMERA_END_Z, projectZ, nearestProject, scrollProgress, nextSelection, focusFov, qualityStep, renderDpr, reflectionSize, ceilingIndices, projectCosts } from '../lib/galleryLogic'
@@ -104,5 +105,19 @@ describe('cinematic handoff',()=>{
     expect(validScreenRect({left:10,top:-500,width:200,height:300},390,844)).toBe(false)
     expect(validScreenRect({left:10,top:20,width:30,height:30},390,844)).toBe(false)
     expect(validScreenRect({left:NaN,top:20,width:200,height:300},390,844)).toBe(false)
+  })
+})
+
+describe('project atlas',()=>{
+  it('covers every documented project with a compact identity and matching feature labels',()=>{
+    expect(Object.keys(PROJECT_OVERVIEW).sort()).toEqual(projects.map(p=>p.id).sort())
+    for(const p of projects){
+      const overview=PROJECT_OVERVIEW[p.id]
+      expect(overview.features.length).toBe(p.features.length)
+      expect(overview.screenLabels.length).toBe(PROJECT_LAYERS[p.id].length)
+      expect(overview.purpose.length).toBeGreaterThan(12)
+      expect(overview.demo.length).toBeGreaterThan(4)
+      expect(overview.demoHint.length).toBeGreaterThan(12)
+    }
   })
 })
