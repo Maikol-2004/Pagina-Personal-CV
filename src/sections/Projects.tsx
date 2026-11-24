@@ -1,9 +1,14 @@
-import { lazy, Suspense } from 'react'
+import { Component, lazy, Suspense, type ReactNode } from 'react'
 import { projects } from '../data/profile'
 import { ProjectExperience } from '../components/ProjectExperience'
 import type { Project } from '../data/types'
 import { SectionLabel } from '../components/SectionLabel'
 const ProjectGallery = lazy(() => import('../three/ProjectGallery'))
+class GalleryBoundary extends Component<{children:ReactNode;fallback:ReactNode},{failed:boolean}>{
+  state={failed:false}
+  static getDerivedStateFromError(){return {failed:true}}
+  render(){return this.state.failed?this.props.fallback:this.props.children}
+}
 
 interface Props {
   onOpen: (p: Project, rect: DOMRect | null) => void
@@ -24,6 +29,7 @@ const Out = () => (
  * y se recomponen con una entrada escalonada al cambiar de proyecto.
  */
 export function Projects({ onOpen, activeProjectId }: Props) {
+  const direct=<div className="container gallery-access" aria-label="Acceso directo a proyectos">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title}</button>)}</div>
   return <section className="section projects" id="proyectos" aria-labelledby="pr-title">
     <div className="container">
       <SectionLabel n="04" left="Proyectos" right="Lo que construyo" />
@@ -32,9 +38,9 @@ export function Projects({ onOpen, activeProjectId }: Props) {
         <p>Una exposición de software real. Recorre la galería y descubre cada proyecto.</p>
       </div>
     </div>
-    <Suspense fallback={<div className="container">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title}</button>)}</div>}>
+    <GalleryBoundary fallback={direct}><Suspense fallback={direct}>
       <ProjectGallery onOpen={onOpen} activeProjectId={activeProjectId}/>
-    </Suspense>
+    </Suspense></GalleryBoundary>
   </section>
 }
 
