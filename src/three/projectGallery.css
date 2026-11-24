@@ -97,3 +97,12 @@
 .gallery-focus button:first-of-type{background:#d9c2a4;color:#16181b;border-color:#d9c2a4}
 .gallery-focus{background:linear-gradient(0deg,#101214de,transparent)}
 .gallery-material-credit{color:#aaa29a}
+
+.gallery-viewport[data-atmosphere=infinity]{background:#030304}
+.gallery-viewport[data-atmosphere=infinity]:after{background:none}
+.gallery-infinity-title{width:290px;text-align:center;color:#eee4d5;display:grid;gap:8px;pointer-events:none}
+.gallery-infinity-title strong{font:italic 86px Georgia,serif;color:#d9b38c;line-height:1}
+.gallery-infinity-title span{font-size:12px;letter-spacing:.35em}
+.gallery-infinity-title p{font:italic 14px Georgia,serif;color:#d0c2b1}
+.gallery-quality{flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 2rem)}
+@media(max-width:550px){.gallery-quality{gap:5px;font-size:.64rem}.gallery-quality select{padding:5px 7px}.gallery-quality label{gap:4px}}
