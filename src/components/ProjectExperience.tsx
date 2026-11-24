@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { PROJECT_LAYERS } from '../data/projectShots'
 import type { Project } from '../data/types'
 import './projectExperience.css'
@@ -76,12 +76,43 @@ function EditorialDemo({shots,kind}:{shots:typeof PROJECT_LAYERS[string];kind:st
     <figure className="demo-editorial" onTouchStart={e=>{touch.current=e.touches[0].clientX}} onTouchEnd={e=>{if(touch.current===null)return;const dx=e.changedTouches[0].clientX-touch.current;touch.current=null;if(Math.abs(dx)>45)setStep(v=>Math.max(0,Math.min(shots.length-1,v+(dx<0?1:-1))))}}><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.alt}</figcaption></figure>
   </section>
 }
+function FeatureStory({project}:{project:Project}){
+  const [active,setActive]=useState(0)
+  const sections=[{label:'El objetivo',items:project.objectives},{label:'La solución',items:project.features},{label:'La tecnología',items:project.technical}]
+  const part=sections[active]
+  return <section className="px-story">
+    <div className="px-story-intro"><span className="px-kicker">BEHIND THE PROJECT</span><h3>De la idea<br/>al desarrollo.</h3><p>Explora el trabajo que hay detrás de {project.title}.</p></div>
+    <div className="px-story-body"><div className="px-tabs" role="group" aria-label="Aspectos del desarrollo">{sections.map((s,i)=><button key={s.label} aria-pressed={i===active} onClick={()=>setActive(i)}>{s.label}</button>)}</div><div key={active} className="px-story-items">{part.items.map((item,i)=><article key={item}><span>{String(i+1).padStart(2,'0')}</span><p>{item}</p></article>)}</div></div>
+  </section>
+}
+function DeviceCompare({project}:{project:Project}){
+  const shots=PROJECT_LAYERS[project.id]??[]
+  const desktop=shots.find(s=>s.kind==='window'||s.src==='narrativo-timeline')
+  const phone=shots.find(s=>s.kind==='phone'||s.src==='narrativo-phone')
+  const [mode,setMode]=useState<'both'|'desktop'|'phone'>('both')
+  if(!desktop||!phone)return null
+  return <section className="px-comparison">
+    <span className="px-kicker">RESPONSIVE DESIGN</span><h3>Una experiencia, dos perspectivas.</h3>
+    <div className="px-tabs"><button aria-pressed={mode==='both'} onClick={()=>setMode('both')}>Ambas</button><button aria-pressed={mode==='desktop'} onClick={()=>setMode('desktop')}>Escritorio</button><button aria-pressed={mode==='phone'} onClick={()=>setMode('phone')}>Móvil</button></div>
+    <div className={'px-compare-devices is-'+mode}>{mode!=='phone'&&<figure className="px-compare-desktop"><img loading="lazy" src={url(desktop.src)} alt={desktop.alt}/><figcaption>Escritorio</figcaption></figure>}{mode!=='desktop'&&<figure className="px-compare-phone"><img loading="lazy" src={url(phone.src)} alt={phone.alt}/><figcaption>Móvil</figcaption></figure>}</div>
+  </section>
+}
 export function ProjectExperience({project}:{project:Project}){
   const [active,setActive]=useState(0)
+  const root=useRef<HTMLDivElement>(null)
+  useEffect(()=>{
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return
+    const el=root.current
+    if(!el)return
+    const nodes=el.querySelectorAll('.px-story,.px-comparison,.px-demo')
+    const observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}}},{threshold:.12,root:el.closest('.dlg__scroll')})
+    nodes.forEach(node=>{node.classList.add('px-reveal');observer.observe(node)})
+    return()=>{observer.disconnect();nodes.forEach(node=>node.classList.remove('px-reveal'))}
+  },[])
   const shots=PROJECT_LAYERS[project.id]??[]
   const theme=themes[project.id]??{label:'PROJECT SHOWCASE',headline:project.title,sub:project.accent,tabs:[]}
   const current=shots[active]??shots[0]
-  return <div className={'px px--'+project.id}>
+  return <div ref={root} className={'px px--'+project.id}>
     <header className="px-hero dlg__in">
       <div className="px-copy">
         <span className="px-kicker">{theme.label}</span>
@@ -108,6 +139,8 @@ export function ProjectExperience({project}:{project:Project}){
       {project.id==='cv-editorial'&&<div className="px-editorial"><span>01 / Diseño</span><span>02 / Trayectoria</span><span>03 / Adaptabilidad</span></div>}
       {project.id==='matchup'&&<div className="px-sports"><span>FÚTBOL</span><span>PÁDEL</span><span>BASKET</span></div>}
     </section>
+    <FeatureStory project={project}/>
+    <DeviceCompare project={project}/>
     {project.id==='matchup'&&<MatchDemo/>}
     {project.id==='ashesfire'&&<CostsDemo/>}
     {(project.id==='cv-editorial'||project.id==='portfolio-narrativo')&&<EditorialDemo shots={shots} kind={project.id}/>}
