@@ -91,6 +91,7 @@ function usePhotoMaps(asset:string,repeat:[number,number]){
 }
 function Sculpture({kind,accent}:{kind:string;accent:string}){
   const ref=useRef<Group>(null)
+  const world=useMemo(()=>new Vector3(),[])
   const vertices=useMemo(()=>{
     const points=Array.from({length:18},(_,i)=>{
       const y=1-2*i/17,a=i*2.399963,r=Math.sqrt(1-y*y)
@@ -102,7 +103,7 @@ function Sculpture({kind,accent}:{kind:string;accent:string}){
     return {points,geometry}
   },[])
   useEffect(()=>()=>vertices.geometry.dispose(),[vertices])
-  useFrame(({camera},dt)=>{if(ref.current&&Math.abs(camera.position.z-ref.current.getWorldPosition(new Vector3()).z)<10)ref.current.rotation.y+=dt*.24})
+  useFrame(({camera},dt)=>{if(ref.current&&Math.abs(camera.position.z-ref.current.getWorldPosition(world).z)<10)ref.current.rotation.y+=dt*.24})
   return <group position={[0,-1.31,.88]}>
     <Block position={[0,-.38,0]} size={[1.2,.12,.6]} color="#2b2018" metal={.4}/>
     <group ref={ref} position={[0,.05,0]} scale={kind==='my-journey'?1.38:1.15}>
@@ -182,8 +183,9 @@ function Installation({kind,accent}:{kind:string;accent:string}){
 function Artwork({ project, index, focused, onSelect }: { project: Project; index: number; focused:boolean; onSelect: () => void }) {
   const side = index % 2 ? 1 : -1
   const z = projectZ(index)
-  const layers = PROJECT_LAYERS[project.id].filter(l => !l.gallery)
-  const textures = useTexture(layers.map(l => url(l.src)))
+  const layers = useMemo(()=>PROJECT_LAYERS[project.id].filter(l => !l.gallery),[project.id])
+  const sources = useMemo(()=>layers.map(l=>url(l.src)),[layers])
+  const textures = useTexture(sources)
   const [hover, setHover] = useState(false)
   const gl=useThree(s=>s.gl)
   useEffect(()=>{
@@ -209,7 +211,7 @@ function Artwork({ project, index, focused, onSelect }: { project: Project; inde
     display.current.position.y+=(target-display.current.position.y)*ease
     display.current.position.z+=(.09*proximity-display.current.position.z)*ease
     if(exhibitLight.current)exhibitLight.current.intensity+=(2+5*proximity+(focused?3:0)-exhibitLight.current.intensity)*ease
-    if(aura.current){const scale=.92+.08*proximity;aura.current.scale.lerp(new Vector3(scale,scale,1),ease)}
+    if(aura.current){const scale=.92+.08*proximity;aura.current.scale.x+=(scale-aura.current.scale.x)*ease;aura.current.scale.y+=(scale-aura.current.scale.y)*ease}
   })
   return <group position={[side*exhibitX,2.16,z]} rotation={[0,-side*Math.PI/2,0]} onClick={e=>{e.stopPropagation();onSelect()}} onPointerOver={()=>setHover(true)} onPointerOut={()=>setHover(false)}>
     <Block position={[0,0,-.08]} size={[4.9,3.12,.17]} color="#16100d"/>
@@ -351,7 +353,7 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     <ExhibitShadow enabled={quality==='ultra'||(!mobile&&quality==='high')}/>
     <Reception progress={progress}/>
     {projects.map((p,i)=><Alcove key={'alcove-'+p.id} project={p} index={i}/>)}
-    {projects.map((p,i)=><Artwork key={p.id} project={p} index={i} focused={selected===i&&phase==='focused'} onSelect={()=>onSelect(i)}/>)}
+    {projects.map((p,i)=><Suspense key={p.id} fallback={null}><Artwork project={p} index={i} focused={selected===i&&phase==='focused'} onSelect={()=>onSelect(i)}/></Suspense>)}
     <Camera progress={progress} selected={selected} phase={phase} yaw={yaw} onArrive={onArrive}/>
   </>
 }
@@ -481,5 +483,6 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
       {phase==='walking'&&nearestProject!==null&&<div className="gallery-near"><button onClick={()=>select(nearestProject)}>Observar {projects[nearestProject].title} ↗</button></div>}
     </div></div>}
     <div className="gallery-access" aria-label="Acceso directo a proyectos">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title} ↗</button>)}</div>
+    <p className="gallery-material-credit">Materiales fotográficos: <a href="https://polyhaven.com/" target="_blank" rel="noreferrer">Poly Haven (CC0)</a> · con alternativa procedural.</p>
   </div>
 }
