@@ -68,7 +68,7 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
       const proxy=bridge.current
       const useBridge=!!proxy&&!!dest&&validScreenRect(origin,window.innerWidth,window.innerHeight)
       const accent=host.querySelector('.dlg__portal')
-      const content=host.querySelectorAll(projectId?'.px-copy > *, .px-overview-card, .px-overview-foot':'.dlg__in')
+      const content=host.querySelectorAll(projectId?'.px-copy > :not(.px-open-title), .px-overview-card, .px-overview-foot':'.dlg__in')
       tl.fromTo('.dlg__veil',{opacity:0},{opacity:1,duration:duration*.6,ease:'power2.out'},0)
       tl.fromTo(node,{clipPath:insetFrom(origin)},{clipPath:'inset(0px 0px 0px 0px round 0px)',duration:duration,ease:'power3.inOut'},0)
       if(useBridge&&origin&&dest&&proxy){
@@ -77,9 +77,22 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
           .to(proxy,{opacity:0,duration:duration*.22,ease:'power1.out'},duration*.78)
       }
       if(accent&&style)tl.fromTo(accent,{opacity:0},{opacity:.65,duration:duration*.25,ease:'power2.out'},.04).to(accent,{opacity:0,duration:duration*.5,ease:'power2.in'},duration*.31)
-      const entry=style?.motion==='sprint'?{x:24,y:8}:style?.motion==='scan'?{x:-16,y:0}:style?.motion==='orbit'?{y:12,scale:.97}:style?.motion==='chapter'?{x:12,y:0}:{y:15}
-      tl.fromTo(content,{...entry,opacity:0},{x:0,y:0,scale:1,opacity:1,duration:.30,stagger:{amount:.16},ease:'power2.out'},duration*.44)
-      if(projectId)tl.fromTo('.px-overview-screens',{opacity:0},{opacity:1,duration:.22},duration*.66)
+      const entry=style?.motion==='sprint'?{x:-36,y:10}:style?.motion==='scan'?{x:22,y:0}:style?.motion==='orbit'?{y:22,scale:.97}:style?.motion==='chapter'?{x:-20,y:0}:{y:18}
+      tl.fromTo(content,{...entry,opacity:0},{x:0,y:0,scale:1,opacity:1,duration:.38,stagger:{amount:.16},ease:'power3.out'},duration*.39)
+      if(projectId){
+        const title=host.querySelector('.px-open-title')
+        const main=host.querySelector('.px-preview-main')
+        const secondary=host.querySelectorAll('.px-preview-side .px-preview')
+        const heading=style?.motion==='sprint'?{x:-65,y:0,skewX:-5}:style?.motion==='scan'?{x:35,y:0}:style?.motion==='orbit'?{scale:.88,y:0}:style?.motion==='chapter'?{x:-35,y:0}:{y:40}
+        if(title)tl.fromTo(title,{...heading,opacity:0},{x:0,y:0,scale:1,skewX:0,opacity:1,duration:.58,ease:'power3.out'},duration*.2)
+        // Keep the lead image stationary for the shared-element handoff; the satellites fly into their positions.
+        if(main)tl.fromTo(main,{opacity:0},{opacity:1,duration:.25},duration*.61)
+        secondary.forEach((image,i)=>{
+          const direction=i===0?-1:1
+          const start=style?.motion==='sprint'?{x:direction*60,y:20}:style?.motion==='scan'?{x:40,y:direction*18}:style?.motion==='orbit'?{x:direction*38,y:direction*38,scale:.84}:style?.motion==='chapter'?{x:25,y:direction*38}:{x:direction*22,y:30}
+          tl.fromTo(image,{...start,opacity:0},{x:0,y:0,scale:1,opacity:1,duration:.52,ease:'power3.out'},duration*.36+i*.09)
+        })
+      }
       // A throttled tab or renderer must never leave the dialog locked in opening.
       watchdog.current=window.setTimeout(()=>{if(!closing.current){tl.progress(1);finish()}},1800)
     },host)
