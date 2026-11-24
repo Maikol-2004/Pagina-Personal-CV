@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { gsap } from '../lib/gsap'
-import { PROJECT_LAYERS } from '../data/projectShots'
+import { transitionShot, transitionStyles, validScreenRect, type RectLike } from '../lib/projectTransition'
 
 interface Props {
   /** Rectángulo del elemento pulsado: el diálogo "nace" desde él y regresa a él. */
@@ -28,65 +28,83 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
   const panel = useRef<HTMLDivElement>(null)
   const closing = useRef(false)
   const animation = useRef<ReturnType<typeof gsap.timeline> | null>(null)
-  const firstShot = projectId ? PROJECT_LAYERS[projectId]?.[0] : undefined
+  const firstShot = projectId ? transitionShot(projectId) : undefined
+  const style = projectId ? transitionStyles[projectId] : undefined
+  const bridge=useRef<HTMLDivElement>(null)
+  const shotUrl=firstShot?import.meta.env.BASE_URL+'projects/'+firstShot.src+'.webp':undefined
+  const heroRect=useCallback(()=>{
+    const images=Array.from(panel.current?.querySelectorAll<HTMLImageElement>('.px-visual img')??[])
+    const image=images.find(img=>img.getAttribute('src')===shotUrl)
+    const rect=image?.getBoundingClientRect()
+    return validScreenRect(rect,window.innerWidth,window.innerHeight)?rect:null
+  },[shotUrl])
   const opener = useRef<Element | null>(
     typeof document !== 'undefined' ? document.activeElement : null,
   )
 
   useLayoutEffect(() => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const previousOverflow=document.documentElement.style.overflow
-    document.documentElement.style.overflow = 'hidden'
-    const ctx = gsap.context(() => {
-      if (reduce) {
-        gsap.set(panel.current, { clipPath: 'inset(0px)' })
-        return
+    document.documentElement.style.overflow='hidden'
+    closing.current=false
+    const host=root.current
+    const node=panel.current
+    if(!host||!node)return()=>{document.documentElement.style.overflow=previousOverflow}
+    const ctx=gsap.context(()=>{
+      if(reduce){gsap.set(node,{clipPath:'inset(0px)'});host.dataset.transition='ready';return}
+      const duration=style?.duration??.8
+      host.dataset.transition='opening'
+      const tl=gsap.timeline({onComplete:()=>{host.dataset.transition='ready'}})
+      animation.current=tl
+      const dest=heroRect()
+      const proxy=bridge.current
+      const useBridge=!!proxy&&!!dest&&validScreenRect(origin,window.innerWidth,window.innerHeight)
+      const accent=host.querySelector('.dlg__portal')
+      const content=host.querySelectorAll(projectId?'.px-copy > *, .px-visual':'.dlg__in')
+      tl.fromTo('.dlg__veil',{opacity:0},{opacity:1,duration:duration*.6,ease:'power2.out'},0)
+      tl.fromTo(node,{clipPath:insetFrom(origin)},{clipPath:'inset(0px 0px 0px 0px round 0px)',duration:duration,ease:'power3.inOut'},0)
+      if(useBridge&&origin&&dest&&proxy){
+        gsap.set(proxy,{left:origin.left,top:origin.top,width:origin.width,height:origin.height,x:0,y:0,scaleX:1,scaleY:1,opacity:1,transformOrigin:'top left'})
+        tl.to(proxy,{x:dest.left-origin.left,y:dest.top-origin.top,scaleX:dest.width/origin.width,scaleY:dest.height/origin.height,duration:duration*.83,ease:'power3.inOut'},0)
+          .to(proxy,{opacity:0,duration:duration*.22,ease:'power1.out'},duration*.78)
       }
-      const tl = gsap.timeline()
-      animation.current = tl
-      const entrance = projectId === 'matchup' ? { y: 48, scale: .96 } : projectId === 'ashesfire' ? { x: 36, scale: .99 } : projectId === 'my-journey' ? { scale: .9, y: 16 } : projectId === 'cv-editorial' ? { scale: .97, y: 24 } : projectId === 'portfolio-narrativo' ? { x: -35, rotateY: -5 } : { y: 36 }
-      if(projectId){
-        tl.fromTo('.dlg__portal',{opacity:0,scale:.85},{opacity:.8,scale:1.18,duration:.38,ease:'power2.out'},0).to('.dlg__portal',{opacity:0,duration:.65},.48)
-        tl.fromTo('.dlg__bridge',{opacity:0,scale:.9},{opacity:1,scale:1.1,duration:.26,ease:'power2.out'},0).to('.dlg__bridge',{scale:1.5,opacity:0,duration:.75,ease:'power3.inOut'},.26)
-        tl.fromTo('.dlg__particle',{opacity:0,scale:0},{opacity:.9,scale:1,duration:.35,stagger:{amount:.23,from:'center'}},.08).to('.dlg__particle',{opacity:0,scale:1.8,duration:.5},.48)
-      }
-      tl.fromTo('.dlg__veil', { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' }, 0)
-        .fromTo(
-          panel.current,
-          { clipPath: insetFrom(origin) },
-          { clipPath: 'inset(0px 0px 0px 0px round 0px)', duration: 1.05, ease: 'expo.inOut' },
-          0,
-        )
-        .fromTo(
-          '.dlg__in',
-          { ...entrance, opacity: 0 },
-          { x: 0, y: 0, scale: 1, rotateY: 0, opacity: 1, duration: 0.9, ease: 'expo.out', stagger: 0.07 },
-          0.55,
-        )
-    }, root)
-    return () => {
-      animation.current?.kill()
-      ctx.revert()
-      document.documentElement.style.overflow = previousOverflow
-    }
-  }, [origin,projectId])
+      if(accent&&style)tl.fromTo(accent,{opacity:0},{opacity:.65,duration:duration*.25,ease:'power2.out'},.04).to(accent,{opacity:0,duration:duration*.5,ease:'power2.in'},duration*.31)
+      const entry=style?.motion==='sprint'?{x:24,y:8}:style?.motion==='scan'?{x:-16,y:0}:style?.motion==='orbit'?{y:12,scale:.97}:style?.motion==='chapter'?{x:12,y:0}:{y:15}
+      tl.fromTo(content,{...entry,opacity:0},{x:0,y:0,scale:1,opacity:1,duration:.35,stagger:.045,ease:'power2.out'},duration*.53)
+    },host)
+    return()=>{animation.current?.kill();ctx.revert();document.documentElement.style.overflow=previousOverflow}
+  },[origin,projectId,style,heroRect])
 
-  const close = useCallback(() => {
-    if (closing.current) return
-    closing.current = true
-    const done = () => {
+  const close=useCallback(()=>{
+    if(closing.current)return
+    closing.current=true
+    const done=()=>{
       onClose()
-      if (opener.current instanceof HTMLElement) opener.current.focus({ preventScroll: true })
+      requestAnimationFrame(()=>{if(opener.current instanceof HTMLElement&&opener.current.isConnected)opener.current.focus({preventScroll:true})})
     }
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return done()
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return done()
     animation.current?.kill()
-    const tl = gsap.timeline({ onComplete: done })
-    animation.current = tl
-    if(projectId)tl.fromTo(root.current?.querySelector('.dlg__bridge')??null,{scale:1.5,opacity:0},{scale:1,opacity:.9,duration:.5,ease:'power2.inOut'},.1).to(root.current?.querySelector('.dlg__bridge')??null,{opacity:0,duration:.35},.6)
-    tl.to('.dlg__in', { y: 16, opacity: 0, duration: 0.3, ease: 'power2.in', stagger: 0.02 }, 0)
-      .to(panel.current, { clipPath: insetFrom(origin), duration: 0.85, ease: 'expo.inOut' }, 0.12)
-      .to('.dlg__veil', { opacity: 0, duration: 0.5 }, 0.4)
-  }, [onClose, origin, projectId])
+    const host=root.current
+    if(!host||!panel.current)return done()
+    host.dataset.transition='closing'
+    const duration=style?.duration??.8
+    const tl=gsap.timeline({onComplete:done})
+    animation.current=tl
+    const proxy=bridge.current,dest=heroRect()
+    // If the visitor has scrolled away from the hero, avoid a phantom screenshot jump.
+    if(proxy&&origin&&dest&&validScreenRect(origin,window.innerWidth,window.innerHeight)){
+      const current=proxy.getBoundingClientRect()
+      const shown=Number(gsap.getProperty(proxy,'opacity'))>.15
+      const start:RectLike=shown?current:dest
+      gsap.set(proxy,{left:start.left,top:start.top,width:start.width,height:start.height,x:0,y:0,scaleX:1,scaleY:1,transformOrigin:'top left'})
+      tl.to(proxy,{opacity:1,duration:.12},0)
+        .to(proxy,{x:origin.left-start.left,y:origin.top-start.top,scaleX:origin.width/start.width,scaleY:origin.height/start.height,duration:duration*.8,ease:'power3.inOut'},0)
+        .to(proxy,{opacity:0,duration:.16},duration*.78)
+    }else if(proxy)tl.to(proxy,{opacity:0,duration:.16},0)
+    tl.to(panel.current,{clipPath:insetFrom(origin),duration,ease:'power3.inOut'},0)
+      .to(host.querySelector('.dlg__veil'),{opacity:0,duration:duration*.65},duration*.3)
+      .to(host.querySelectorAll(projectId?'.px-copy > *, .px-visual':'.dlg__in'),{opacity:0,duration:.25,ease:'power2.in'},0)
+  },[onClose,origin,projectId,style,heroRect])
 
   useEffect(() => {
     root.current?.querySelector<HTMLElement>('[data-autofocus]')?.focus({ preventScroll: true })
@@ -116,15 +134,15 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
   return (
     <div
       ref={root}
-      className="dlg" data-project={projectId}
+      className="dlg" data-project={projectId} data-motion={style?.motion}
       role="dialog"
       aria-modal="true"
       aria-label={label}
       style={{ ['--tone' as string]: tone }}
     >
       <div className="dlg__veil" onClick={close} />
-      {projectId&&<div className="dlg__portal" aria-hidden="true"/>}
-      {firstShot&&<div className="dlg__bridge" aria-hidden="true"><img src={import.meta.env.BASE_URL+'projects/'+firstShot.src+'.webp'} alt=""/><div className="dlg__particles">{Array.from({length:22},(_,i)=><i key={i} className="dlg__particle" style={{left:(i*37%97)+'%',top:(i*61%93)+'%',width:3+i%4,height:3+i%4}}/>)}</div></div>}
+      {style&&<div className="dlg__portal" aria-hidden="true"><span className="dlg__motion-mark"/><span className="dlg__motion-title">{style.title}</span></div>}
+      {shotUrl&&<div ref={bridge} className="dlg__bridge" aria-hidden="true"><img src={shotUrl} alt=""/></div>}
       <div ref={panel} className="dlg__panel">
         <button className="dlg__close" onClick={close} data-autofocus aria-label="Cerrar y volver">
           <span aria-hidden="true">←</span> Volver
