@@ -378,3 +378,9 @@
  .px-freeform .px-overview-screens{min-height:clamp(185px,40vw,310px)}
 }
 @media(max-width:480px){.px--matchup .px-freeform .px-open-title{font-size:clamp(2.6rem,11vw,3.4rem)}}
+
+/* Keep the narrative screenshots individually selectable on touch screens. */
+.px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:first-child{top:0;bottom:auto;right:0;z-index:5}
+.px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:last-child{top:auto;bottom:0;right:1%;z-index:4}
+.px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:last-child img{height:clamp(80px,11vw,142px)}
+@media(max-width:900px){.px--portfolio-narrativo .px-freeform .px-overview-screens{min-height:clamp(205px,43vw,330px)}.px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:first-child img{height:clamp(45px,13vw,95px)}.px--portfolio-narrativo .px-freeform .px-preview-side .px-preview:last-child img{height:clamp(80px,18vw,140px)}}
