@@ -72,3 +72,24 @@
 .demo-bars strong{font-variant-numeric:tabular-nums}
 .demo-node-detail{max-width:44ch;text-align:center;padding:12px;border:1px solid #d2a27e44;border-radius:5px}
 .demo-editorial{touch-action:pan-y}
+
+/* Editorial case study and responsive device showcase */
+.px-story,.px-comparison{background:var(--px-bg);border:1px solid color-mix(in srgb,var(--px-accent) 32%,transparent);padding:clamp(24px,5vw,60px);border-radius:8px;display:grid;gap:24px}
+.px-story{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);align-items:start}
+.px-story-intro h3,.px-comparison h3{font-size:clamp(2rem,4.8vw,4.6rem);line-height:1;letter-spacing:-.04em;margin:12px 0}
+.px-story-intro p{opacity:.84;max-width:30ch;line-height:1.6}
+.px-story-body{display:grid;gap:22px}
+.px-story-items{display:grid;gap:10px;animation:px-enter .4s ease both}
+.px-story-items article{display:grid;grid-template-columns:38px 1fr;align-items:start;gap:14px;padding:14px 0;border-bottom:1px solid color-mix(in srgb,var(--px-accent) 22%,transparent)}
+.px-story-items article span{font:italic 1.4rem Georgia,serif;color:var(--px-accent)}
+.px-story-items article p{font-size:.96rem;line-height:1.55}
+.px-compare-devices{display:flex;align-items:center;justify-content:center;gap:clamp(12px,3vw,40px);perspective:900px}
+.px-compare-devices figure{margin:0;animation:px-enter .45s ease both}
+.px-compare-devices img{display:block;width:100%;height:auto;object-fit:contain;border:1px solid color-mix(in srgb,var(--px-accent) 45%,transparent);background:#101010;border-radius:8px;box-shadow:0 18px 50px #0005}
+.px-compare-devices figcaption{text-align:center;font-size:.75rem;color:var(--px-accent);padding-top:10px}
+.px-compare-desktop{flex:1;min-width:0;max-width:920px}.px-compare-phone{width:24%;max-width:250px;flex-shrink:0}
+.px-compare-devices.is-phone .px-compare-phone{width:min(100%,300px);max-width:none}
+.px-reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.2,1)}
+.px-reveal.is-visible,.px-reveal:focus-within{opacity:1;transform:translateY(0)}
+@media(max-width:760px){.px-story{grid-template-columns:1fr}.px-compare-devices{gap:9px}.px-compare-phone{width:29%}.px-story,.px-comparison{padding:20px 16px}.px-story-items article{grid-template-columns:30px 1fr}}
+@media(prefers-reduced-motion:reduce){.px-reveal{opacity:1;transform:none;transition:none}}
