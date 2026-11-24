@@ -66,3 +66,16 @@
 .gallery-quality{top:5rem}
 .gallery-near button{background:#17120ff5}
 @media(max-width:700px){.gallery-hud{top:5rem;font-size:.62rem}.gallery-quality{top:6.6rem}.gallery-instruction{max-width:34ch;margin-inline:auto;line-height:1.5}}
+
+/* Signature presentation: captions stay below the artwork, never on the screenshots. */
+.gallery-focus-copy{flex-basis:100%;display:grid;gap:3px;justify-items:center;animation:gallery-caption-in .55s ease both;text-shadow:0 2px 12px #000}
+.gallery-focus-copy small{font-size:.61rem;letter-spacing:.24em;color:#d2a27e}
+.gallery-focus-copy strong{font-size:clamp(1.5rem,3vw,2.5rem)}
+.gallery-focus-copy p{color:#f6efe4;font-size:.8rem;line-height:1.25}
+.gallery-end-actions{position:absolute;bottom:4.6rem;left:1rem;right:1rem;z-index:4;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;animation:gallery-caption-in .45s ease both}
+.gallery-end-actions a{padding:11px 17px;min-height:44px;display:inline-flex;align-items:center;background:#201711;color:#f6efe4;border:1px solid #d2a27e;border-radius:24px;font-size:.78rem;text-decoration:none}
+.gallery-end-actions a:last-child{background:#d2a27e;color:#17120f}
+.gallery-end-actions a:focus-visible{outline:2px solid #fff0da;outline-offset:3px}
+@keyframes gallery-caption-in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:700px){.gallery-focus{bottom:3.5rem;gap:6px}.gallery-focus-copy strong{font-size:1.4rem}.gallery-focus-copy p{font-size:.72rem}.gallery-end-actions{bottom:4.4rem;gap:5px}.gallery-end-actions a{padding:9px 11px;font-size:.69rem}}
+@media(prefers-reduced-motion:reduce){.gallery-focus-copy,.gallery-end-actions{animation:none}}
