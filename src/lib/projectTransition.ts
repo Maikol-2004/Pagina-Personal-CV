@@ -20,3 +20,6 @@ export type RectLike={left:number;top:number;width:number;height:number}
 export function validScreenRect(r:RectLike|null|undefined,width:number,height:number){
   return !!r&&[r.left,r.top,r.width,r.height].every(Number.isFinite)&&r.width>=60&&r.height>=60&&r.left<width&&r.top<height&&r.left+r.width>0&&r.top+r.height>0
 }
+
+/** Original conceptual cover, separate from real application screenshots. */
+export const posterUrl=(id:string)=>import.meta.env.BASE_URL+'gallery-posters/'+id+'.svg'
