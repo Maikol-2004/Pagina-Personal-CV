@@ -319,18 +319,21 @@ function Camera({ progress, selected, phase, yaw, onArrive }: { progress: React.
 function ExhibitShadow({enabled}:{enabled:boolean}){
   const lamp=useRef<SpotLight>(null)
   const target=useRef<Object3D>(null)
+  const previous=useRef<number|null>(null)
   useFrame(({camera})=>{
     const i=nearestIndex(camera.position.z)
     if(!lamp.current||!target.current)return
-    lamp.current.visible=enabled&&i!==null
-    if(i===null)return
+    lamp.current.intensity=enabled&&i!==null?10:0
+    if(i===null||i===previous.current)return
+    previous.current=i
     const side=i%2?1:-1,z=projectZ(i)
     lamp.current.position.set(side*.6,3.9,z+.9)
-    target.current.position.set(side*3.1,1.7,z)
+    target.current.position.set(side*exhibitX,1.7,z)
     lamp.current.target=target.current
     target.current.updateMatrixWorld()
+    lamp.current.shadow.needsUpdate=true
   })
-  return <><object3D ref={target}/><spotLight ref={lamp} color="#ffe0b8" intensity={10} angle={.62} penumbra={.85} distance={7} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-bias={-.0003} shadow-normalBias={.025}/></>
+  return <><object3D ref={target}/><spotLight ref={lamp} color="#ffe0b8" intensity={0} angle={.62} penumbra={.85} distance={7} castShadow shadow-autoUpdate={false} shadow-mapSize-width={768} shadow-mapSize-height={768} shadow-bias={-.0003} shadow-normalBias={.025}/></>
 }
 function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive}: {progress: React.RefObject<number>;selected:number|null;phase:Phase;quality:Quality;adaptiveDpr:number;yaw:React.RefObject<number>;onSelect:(i:number)=>void;onArrive:()=>void}) {
   const materials=useArchitecturalMaterials()
@@ -533,7 +536,7 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
   return <div className="gallery-shell">
     {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
       <Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&!activeProjectId&&phase!=='inside'?'always':'never'} shadows={quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:80}} fallback={<p>WebGL no disponible.</p>}>
-        <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} adaptiveDpr={adaptiveDpr} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects occlusion={false}/>}</Suspense>
+        <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} adaptiveDpr={adaptiveDpr} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects/>}</Suspense>
       </Canvas>
       {!ready&&<div className="gallery-loading" role="status">Preparando la exposición…</div>}
       <div className="gallery-hud"><span>04 / THE EXHIBITION</span></div>
