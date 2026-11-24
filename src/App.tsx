@@ -41,12 +41,12 @@ export default function App() {
         Saltar al contenido
       </a>
       <Header />
-      <main id="main">
+      <main id="main" inert={!!dlg}>
         <Hero />
         <About />
         <Timeline onOpen={openStage} />
-        <ConstellationSection onOpenStage={openStage} />
-        <Projects onOpen={openProject} activeProjectId={dlg?.kind === 'project' ? dlg.data.id : undefined} />
+        <ConstellationSection onOpenStage={openStage} paused={!!dlg} />
+        <Projects onOpen={openProject} paused={!!dlg} activeProjectId={dlg?.kind === 'project' ? dlg.data.id : undefined} />
         <Skills />
         <Contact />
       </main>
