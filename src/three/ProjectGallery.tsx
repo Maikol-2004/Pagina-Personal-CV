@@ -21,6 +21,20 @@ const ROOM_LENGTH = ROOM_FRONT_Z - ROOM_BACK_Z
 const ROOM_CENTER = (ROOM_FRONT_Z + ROOM_BACK_Z) / 2
 const length = CAMERA_START_Z - CAMERA_END_Z
 const projectZ = (index: number) => FIRST_PROJECT_Z - index * PROJECT_SPACING
+const exhibitX = 4.04
+const alcoveHalf = 2.85
+const alcoves = (side:number) => projects.map((_,i)=>i).filter(i=>(i%2?1:-1)===side).map(projectZ)
+const wallSegments = (side:number) => {
+  let cursor=ROOM_FRONT_Z
+  const result:{z:number;length:number}[]=[]
+  for(const z of alcoves(side)){
+    const end=z+alcoveHalf
+    if(cursor>end)result.push({z:(cursor+end)/2,length:cursor-end})
+    cursor=z-alcoveHalf
+  }
+  if(cursor>ROOM_BACK_Z)result.push({z:(cursor+ROOM_BACK_Z)/2,length:cursor-ROOM_BACK_Z})
+  return result
+}
 const nearestIndex = (z: number) => {
   const index = Math.round((FIRST_PROJECT_Z - z) / PROJECT_SPACING)
   return index >= 0 && index < projects.length && Math.abs(z - projectZ(index)) <= 4.5 ? index : null
@@ -67,9 +81,9 @@ function Sculpture({kind,accent}:{kind:string;accent:string}){
   },[])
   useEffect(()=>()=>vertices.geometry.dispose(),[vertices])
   useFrame(({camera},dt)=>{if(ref.current&&Math.abs(camera.position.z-ref.current.getWorldPosition(new Vector3()).z)<10)ref.current.rotation.y+=dt*.24})
-  return <group position={[0,-1.1,.65]}>
+  return <group position={[0,-1.31,.88]}>
     <Block position={[0,-.38,0]} size={[1.2,.12,.6]} color="#2b2018" metal={.4}/>
-    <group ref={ref} position={[0,.05,0]}>
+    <group ref={ref} position={[0,.05,0]} scale={kind==='my-journey'?1.38:1.15}>
       {kind==='my-journey'?<><lineSegments geometry={vertices.geometry}><lineBasicMaterial color={accent} transparent opacity={.8}/></lineSegments>{vertices.points.map((p,i)=><mesh key={i} position={p}><sphereGeometry args={[.033,8,8]}/><meshBasicMaterial color={accent}/></mesh>)}</>:kind==='cv-editorial'?<mesh><sphereGeometry args={[.36,40,28]}/><meshStandardMaterial color="#c28c62" metalness={.9} roughness={.23}/></mesh>:null}
     </group>
   </group>
@@ -99,7 +113,51 @@ function Reception({progress}:{progress:React.RefObject<number>}){
     <Html position={[0,3.35,-2.4]} transform distanceFactor={7} style={{pointerEvents:'none'}}><div className="gallery-entry-sign">THE EXHIBITION <span>↓</span></div></Html>
   </group>
 }
-function Artwork({ project, index, onSelect }: { project: Project; index: number; onSelect: () => void }) {
+function Alcove({project,index}:{project:Project;index:number}){
+  const side=index%2?1:-1,z=projectZ(index)
+  const tone=project.id==='matchup'?'#536b31':project.id==='ashesfire'?'#64503d':'#a77b56'
+  return <group position={[side*3.46,2.2,z]} rotation={[0,-side*Math.PI/2,0]}>
+    <Block position={[0,0,-.87]} size={[5.7,4.45,.18]} color="#2d211a"/>
+    {[-1,1].map(s=><group key={s}>
+      <Block position={[s*2.85,0,-.4]} size={[.17,4.4,.98]} color="#493529"/>
+      <Block position={[s*2.76,0,.015]} size={[.045,4.3,.075]} color="#b98a63" metal={.78} roughness={.3}/>
+    </group>)}
+    <Block position={[0,2.05,-.4]} size={[5.7,.34,1.05]} color="#30241b"/>
+    <Block position={[0,-2.13,-.4]} size={[5.7,.14,1.05]} color="#66513e"/>
+    <mesh position={[0,1.84,-.1]}><boxGeometry args={[5.3,.045,.045]}/><meshBasicMaterial color={tone}/></mesh>
+  </group>
+}
+function Installation({kind,accent}:{kind:string;accent:string}){
+  const motion=useRef<Group>(null)
+  const world=useMemo(()=>new Vector3(),[])
+  useFrame(({camera,clock},dt)=>{
+    if(!motion.current)return
+    const nearby=Math.abs(camera.position.z-motion.current.getWorldPosition(world).z)<8
+    const goal=nearby?Math.sin(clock.elapsedTime*1.5)*.055:0
+    motion.current.position.y+=(goal-motion.current.position.y)*(1-Math.exp(-dt*3))
+  })
+  return <group position={[0,-1.55,.74]}>
+    {kind==='matchup'&&<group>
+      <Block position={[0,-.1,0]} size={[4.35,.18,1.05]} color="#142217" roughness={.7}/>
+      <group rotation={[-Math.PI/2,0,0]} position={[0,.002,0]}>
+        <mesh><planeGeometry args={[4.12,.94]}/><meshStandardMaterial color="#29422a" roughness={.95}/></mesh>
+        {[-1,1].map(s=><group key={s}><mesh position={[s*2.0,0,.012]}><planeGeometry args={[.018,.86]}/><meshBasicMaterial color={accent}/></mesh><mesh position={[0,s*.43,.012]}><planeGeometry args={[4,.018]}/><meshBasicMaterial color={accent}/></mesh></group>)}
+        <mesh position={[0,0,.013]}><ringGeometry args={[.21,.225,40]}/><meshBasicMaterial color={accent}/></mesh>
+        <mesh position={[0,0,.014]}><planeGeometry args={[.018,.86]}/><meshBasicMaterial color={accent}/></mesh>
+      </group>
+      <group ref={motion}><mesh position={[0,.26,0]}><sphereGeometry args={[.16,24,16]}/><meshStandardMaterial color="#dce4d0" roughness={.4}/></mesh></group>
+    </group>}
+    {kind==='ashesfire'&&<group>
+      <Block position={[0,-.08,0]} size={[4.25,.2,.85]} color="#292b2d" metal={.35}/>
+      <group ref={motion}>{[.28,.51,.39,.67,.86,.55,.72].map((h,i)=><group key={i} position={[-1.5+i*.5,0,0]}><Block position={[0,h/2,0]} size={[.26,h,.23]} color={i%2?'#b4733f':'#d2a27e'} metal={.6} roughness={.4}/><mesh position={[0,h,.01]}><boxGeometry args={[.27,.025,.25]}/><meshBasicMaterial color={accent}/></mesh></group>)}</group>
+    </group>}
+    {kind==='portfolio-narrativo'&&<group>
+      <Block position={[0,-.09,0]} size={[4.2,.18,.8]} color="#30241f" metal={.25}/>
+      <group ref={motion}><mesh position={[0,.14,0]}><boxGeometry args={[3.7,.022,.025]}/><meshBasicMaterial color={accent}/></mesh>{[-1.65,-.55,.55,1.65].map((x,i)=><group key={x} position={[x,.14,0]}><mesh><sphereGeometry args={[.07,12,12]}/><meshBasicMaterial color={accent}/></mesh><Block position={[0,.25,0]} size={[.62,.32,.055]} color={i%2?'#745441':'#a87d5d'} metal={.45}/></group>)}</group>
+    </group>}
+  </group>
+}
+function Artwork({ project, index, focused, onSelect }: { project: Project; index: number; focused:boolean; onSelect: () => void }) {
   const side = index % 2 ? 1 : -1
   const z = projectZ(index)
   const layers = PROJECT_LAYERS[project.id].filter(l => !l.gallery)
@@ -128,11 +186,11 @@ function Artwork({ project, index, onSelect }: { project: Project; index: number
     const target=Math.sin(clock.elapsedTime*1.2)*.06*proximity
     display.current.position.y+=(target-display.current.position.y)*ease
     display.current.position.z+=(.09*proximity-display.current.position.z)*ease
-    if(exhibitLight.current)exhibitLight.current.intensity+=(2+5*proximity-exhibitLight.current.intensity)*ease
+    if(exhibitLight.current)exhibitLight.current.intensity+=(2+5*proximity+(focused?3:0)-exhibitLight.current.intensity)*ease
     if(aura.current){const scale=.92+.08*proximity;aura.current.scale.lerp(new Vector3(scale,scale,1),ease)}
   })
-  return <group position={[side*3.22,2.05,z]} rotation={[0,-side*Math.PI/2,0]} onClick={e=>{e.stopPropagation();onSelect()}} onPointerOver={()=>setHover(true)} onPointerOut={()=>setHover(false)}>
-    <Block position={[0,0,-.08]} size={[4.7,3.05,.17]} color="#16100d"/>
+  return <group position={[side*exhibitX,2.16,z]} rotation={[0,-side*Math.PI/2,0]} onClick={e=>{e.stopPropagation();onSelect()}} onPointerOver={()=>setHover(true)} onPointerOut={()=>setHover(false)}>
+    <Block position={[0,0,-.08]} size={[4.9,3.12,.17]} color="#16100d"/>
     <Block position={[0,0,.015]} size={[4.55,2.88,.06]} color={hover?'#f4d2ad':'#b88a63'} metal={.75} roughness={.28}/>
     <Block position={[0,0,.06]} size={[4.43,2.76,.04]} color={project.id==='matchup'?'#101a12':'#241b16'}/>
     <Block position={[0,-1.43,.03]} size={[4.5,.07,.36]} color="#b98a63" metal={.65} roughness={.35}/>
@@ -156,6 +214,7 @@ function Artwork({ project, index, onSelect }: { project: Project; index: number
       </group>
     })}
     </group>
+    <Installation kind={project.id} accent={accent}/>
     {(project.id==='my-journey'||project.id==='cv-editorial')&&<Sculpture kind={project.id} accent={accent}/>}
     {project.id==='matchup'&&[-1,1].map(s=><mesh key={s} position={[s*2.03,0,.19]}><boxGeometry args={[.035,2.5,.055]}/><meshBasicMaterial color={emission} toneMapped={false}/></mesh>)}
     {project.id==='ashesfire'&&Array.from({length:5},(_,i)=><mesh key={i} position={[-1.7+i*.17,-1.2,.22]}><boxGeometry args={[.10,.12+i*.055,.045]}/><meshBasicMaterial color={accent}/></mesh>)}
@@ -180,15 +239,15 @@ function Camera({ progress, selected, phase, yaw, onArrive }: { progress: React.
     const side=selected!==null?(selected%2?1:-1):0
     const focus=selected!==null&&phase!=='walking'
     const close=phase==='entering'||phase==='inside'
-    const distance=close?1.15:5.5
-    const p=targetPosition.set(focus?side*(3.0-distance):0,focus?2.05:1.75+Math.sin(progress.current*95)*.018,focus?projectZ(selected!):z)
-    const l=targetLook.set(focus?side*3.22:Math.sin(yaw.current)*10,focus?2.05:1.75,focus?p.z:z-Math.cos(yaw.current)*10)
+    const distance=close?1.25:5.8
+    const p=targetPosition.set(focus?side*(exhibitX-distance):0,focus?2.16:1.75+Math.sin(progress.current*95)*.018,focus?projectZ(selected!):z)
+    const l=targetLook.set(focus?side*exhibitX:Math.sin(yaw.current)*10,focus?2.16:1.75,focus?p.z:z-Math.cos(yaw.current)*10)
     const a=1-Math.exp(-Math.min(dt,.05)*(focus?4:5))
     camera.position.lerp(p,a);look.current.lerp(l,a)
     aimCamera.position.copy(p);aimCamera.lookAt(l);desiredRotation.copy(aimCamera.quaternion);camera.quaternion.slerp(desiredRotation,a)
     if(camera instanceof PerspectiveCamera){
       const aspect=size.width/Math.max(1,size.height)
-      const fit=2*Math.atan((4.7*1.12)/(2*5.5*aspect))*180/Math.PI
+      const fit=2*Math.atan((4.7*1.12)/(2*5.8*aspect))*180/Math.PI
       const fov=focus&&!close?Math.max(62,Math.min(112,fit)):size.width<700?78:65
       if(Math.abs(camera.fov-fov)>.05){camera.fov+=(fov-camera.fov)*a;camera.updateProjectionMatrix()}
     }
@@ -221,30 +280,30 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
   return <>
     <color attach="background" args={['#17120f']}/>
     <fog attach="fog" args={['#17120f',25,68]}/>
-    <ambientLight intensity={.28}/>
+    <ambientLight intensity={phase==='focused'?.18:.28}/>
     <Environment resolution={128}><Lightformer form="rect" intensity={3} color="#ffe0b8" position={[0,5,-10]} scale={[6,25,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={1.5} color="#c69a73" position={[4,2,-15]} scale={[30,4,1]} rotation={[0,-Math.PI/2,0]}/></Environment>
-    <hemisphereLight args={["#ffe1bf","#38251b",1.1]}/>
+    <hemisphereLight args={["#ffe1bf","#38251b",phase==='focused'?.83:1.1]}/>
     <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[7,ROOM_LENGTH]}/><MeshReflectorMaterial resolution={quality==='ultra'?1024:quality==='medium'?256:mobile?512:768} mirror={.22} mixBlur={.35} mixStrength={.48} blur={mobile?[40,18]:[90,35]} map={materials.stone} bumpMap={materials.stoneRelief} bumpScale={.022} roughnessMap={materials.stoneRelief} color="#9e8b79" metalness={.18} roughness={.46}/></mesh>
     <Block position={[0,4.5,ROOM_CENTER]} size={[7,.3,ROOM_LENGTH]} color="#211813"/>
     <Block position={[0,2.2,ROOM_BACK_Z]} size={[7,4.5,.3]} color="#302219"/>
     {[-1,1].map(side=><group key={side}>
-      <Block position={[side*3.55,2.2,ROOM_CENTER]} size={[.3,4.5,ROOM_LENGTH]} color="#372a21"/>
-      <Block position={[side*3.36,.15,ROOM_CENTER]} size={[.12,.3,ROOM_LENGTH]} color="#916b4d" metal={.65}/>
+      {wallSegments(side).map(s=><Block key={s.z} position={[side*3.55,2.2,s.z]} size={[.3,4.5,s.length]} color="#372a21"/>)}
+      {wallSegments(side).map(s=><Block key={s.z} position={[side*3.36,.15,s.z]} size={[.12,.3,s.length]} color="#916b4d" metal={.65}/>)}
       <Block position={[side*3.35,4.15,ROOM_CENTER]} size={[.12,.12,ROOM_LENGTH]} color="#b98a63" metal={.6}/>
-      {Array.from({length:23},(_,i)=><group key={i} position={[side*3.39,2.2,ROOM_FRONT_Z-1.5-i*3]}>
+      {Array.from({length:23},(_,i)=>ROOM_FRONT_Z-1.5-i*3).filter(z=>alcoves(side).every(a=>Math.abs(a-z)>alcoveHalf+1.5)).map(z=><group key={z} position={[side*3.39,2.2,z]}>
         <mesh material={materials.wall} receiveShadow><boxGeometry args={[.08,3.85,2.88]}/></mesh>
         <Block position={[-side*.09,0,1.46]} size={[.16,4.25,.085]} color="#211813"/>
         <Block position={[-side*.08,0,1.40]} size={[.05,4.1,.025]} color="#a77d58" metal={.65}/>
       </group>)}
       <mesh position={[side*3.26,4.02,ROOM_CENTER]}><boxGeometry args={[.035,.045 ,ROOM_LENGTH-1]}/><meshBasicMaterial color="#ffdbac" toneMapped={false}/></mesh>
-      <mesh position={[side*3.25,.31,ROOM_CENTER]}><boxGeometry args={[.025,.025 ,ROOM_LENGTH-1]}/><meshBasicMaterial color="#d3a477" toneMapped={false}/></mesh>
+      {wallSegments(side).map(s=><mesh key={s.z} position={[side*3.25,.31,s.z]}><boxGeometry args={[.025,.025,s.length]}/><meshBasicMaterial color="#d3a477" toneMapped={false}/></mesh>)}
     </group>)}
     {Array.from({length:8},(_,i)=><group key={'portal'+i} position={[0,0,6-i*8]}>
       {[-1,1].map(side=><group key={side}>
         <Block position={[side*3.13,2.2,0]} size={[.45,4.4,.52]} color="#241a14"/>
         <Block position={[side*2.89,2.2,0]} size={[.025,4.15,.38]} color="#b98a63" metal={.7}/>
       </group>)}
-      <Block position={[0,4.12,0]} size={[6.1,.55,.65]} color="#241a14"/>
+      <Block position={[0,i%2===0?4.12:4.26,0]} size={[6.1,i%2===0?.55:.3,.65]} color="#241a14"/>
       <mesh position={[0,3.83,0]}><boxGeometry args={[5.7,.025,.045]}/><meshBasicMaterial color="#ffe0b8" toneMapped={false}/></mesh>
     </group>)}
     {!mobile&&<Sparkles count={45} scale={[5,3,ROOM_LENGTH-4]} position={[0,2,ROOM_CENTER]} size={1.2} speed={.12} opacity={.18} color="#d2a27e"/>}
@@ -257,11 +316,14 @@ function Room({progress,selected,phase,quality,yaw,onSelect,onArrive}: {progress
     <Block position={[0,2.3,ROOM_BACK_Z+.3]} size={[4.9,3.5,.12]} color="#201712"/>
     <Block position={[0,4.08,ROOM_BACK_Z+.45]} size={[5,.06,.16]} color="#d2a27e" metal={.6}/>
     <Html position={[0,2.35,ROOM_BACK_Z+.55]} transform distanceFactor={6} style={{pointerEvents:'none'}}><div className="gallery-end"><strong>MG.</strong><span>MY JOURNEY</span><p>Cada proyecto, un paso más en mi trayectoria.</p></div></Html>
+    <Block position={[0,.22,ROOM_BACK_Z+1.15]} size={[2.1,.44,1.3]} color="#5d4634" metal={.3}/>
+    <group position={[0,1.05,ROOM_BACK_Z+1.15]} rotation={[.3,0,.18]}><mesh><torusGeometry args={[.56,.075,16,64]}/><meshStandardMaterial color="#c18d61" metalness={.85} roughness={.23}/></mesh><mesh rotation={[0,Math.PI/2,0]}><torusGeometry args={[.48,.05,12,48]}/><meshStandardMaterial color="#e0b28a" metalness={.8} roughness={.28}/></mesh></group>
     <pointLight position={[0,3.8,ROOM_BACK_Z+2.2]} color="#ffce99" intensity={12} distance={7}/>
     <ContactStrips/>
     <ExhibitShadow enabled={quality==='ultra'||(!mobile&&quality==='high')}/>
     <Reception progress={progress}/>
-    {projects.map((p,i)=><Artwork key={p.id} project={p} index={i} onSelect={()=>onSelect(i)}/>)}
+    {projects.map((p,i)=><Alcove key={'alcove-'+p.id} project={p} index={i}/>)}
+    {projects.map((p,i)=><Artwork key={p.id} project={p} index={i} focused={selected===i&&phase==='focused'} onSelect={()=>onSelect(i)}/>)}
     <Camera progress={progress} selected={selected} phase={phase} yaw={yaw} onArrive={onArrive}/>
   </>
 }
@@ -314,6 +376,7 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
   const ignoreClick=useRef(0)
   const [adaptiveDpr,setAdaptiveDpr]=useState(2)
   const [visible,setVisible]=useState(true)
+  const [atEnd,setAtEnd]=useState(false)
   const [nearestProject,setNearestProject]=useState<number|null>(null)
   const [selected,setSelected]=useState<number|null>(null)
   const [fallback,setFallback]=useState(false)
@@ -324,7 +387,7 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
   useEffect(()=>{
     const canvas=document.createElement('canvas')
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!canvas.getContext('webgl2'))setFallback(true)
-    const update=()=>{setMobile(window.innerWidth<700);const el=section.current;if(!el)return;const r=el.getBoundingClientRect();const value=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height-(viewport.current?.clientHeight??window.innerHeight))));if(Math.abs(progress.current-value)>.0005)yaw.current=0;progress.current=value;setNearestProject(nearestIndex(CAMERA_START_Z-value*length))}
+    const update=()=>{setMobile(window.innerWidth<700);const el=section.current;if(!el)return;const r=el.getBoundingClientRect();const value=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height-(viewport.current?.clientHeight??window.innerHeight))));if(Math.abs(progress.current-value)>.0005)yaw.current=0;progress.current=value;setAtEnd(value>.94);setNearestProject(nearestIndex(CAMERA_START_Z-value*length))}
     update();window.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update)
     return()=>{window.removeEventListener('scroll',update);window.removeEventListener('resize',update)}
   },[])
@@ -375,7 +438,7 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
   }
   function pointerEnd(){if(drag.current?.moved)ignoreClick.current=performance.now()+350;drag.current=null}
   const dpr=quality==='medium'?1.25:quality==='high'?2:quality==='ultra'?3:adaptiveDpr
-  const effects=phase==='walking'&&(quality==='high'||quality==='ultra'||(!mobile&&quality==='auto'&&adaptiveDpr>=2))
+  const effects=visible&&phase==='walking'&&(quality==='high'||quality==='ultra'||(!mobile&&quality==='auto'&&adaptiveDpr>=2))
 
   return <div className="gallery-shell">
     {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
@@ -384,8 +447,9 @@ export default function ProjectGallery({onOpen,activeProjectId}:Props){
       </Canvas>
       <div className="gallery-hud"><span>04 / THE EXHIBITION</span></div>
       <div className="gallery-quality"><AmbientSound/><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>
-      <div className="gallery-instruction">{phase==='turning'?'Girando hacia la exposición…':phase==='focused'?'Toca otra vez para entrar · Desliza para continuar':phase==='entering'||phase==='inside'?'Entrando en la experiencia…':nearestProject===null?'Desliza hacia arriba para caminar · A los lados para mirar':'Toca una exposición para observarla'}</div>
-      {phase==='focused'&&selected!==null&&<div className="gallery-focus"><strong>{projects[selected].title}</strong><button onClick={()=>select(selected)}>Entrar al proyecto ↗</button><button onClick={resume}>Continuar recorrido →</button></div>}
+      <div className="gallery-instruction">{phase==='turning'?'Girando hacia la exposición…':phase==='focused'?'Toca otra vez para entrar · Desliza para continuar':phase==='entering'||phase==='inside'?'Entrando en la experiencia…':atEnd?'Desliza para continuar hacia mis competencias':nearestProject===null?'Desliza hacia arriba para caminar · A los lados para mirar':'Toca una exposición para observarla'}</div>
+      {phase==='focused'&&selected!==null&&<div className="gallery-focus"><div className="gallery-focus-copy"><small>EXHIBITION / {String(selected+1).padStart(2,'0')}</small><strong>{projects[selected].title}</strong><p>{projects[selected].accent}</p></div><button onClick={()=>select(selected)}>Entrar al proyecto ↗</button><button onClick={resume}>Continuar recorrido →</button></div>}
+      {phase==='walking'&&atEnd&&<div className="gallery-end-actions"><a href="https://github.com/Maikol-2004" target="_blank" rel="noreferrer">GitHub ↗</a><a href={import.meta.env.BASE_URL+'Michael-Guzman-CV.pdf'} download>Descargar CV ↓</a><a href="#habilidades">Competencias →</a></div>}
       {phase==='walking'&&nearestProject!==null&&<div className="gallery-near"><button onClick={()=>select(nearestProject)}>Observar {projects[nearestProject].title} ↗</button></div>}
     </div></div>}
     <div className="gallery-access" aria-label="Acceso directo a proyectos">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title} ↗</button>)}</div>
