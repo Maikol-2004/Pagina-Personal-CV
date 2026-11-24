@@ -35,6 +35,7 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
 
   useLayoutEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const previousOverflow=document.documentElement.style.overflow
     document.documentElement.style.overflow = 'hidden'
     const ctx = gsap.context(() => {
       if (reduce) {
@@ -66,7 +67,7 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
     return () => {
       animation.current?.kill()
       ctx.revert()
-      document.documentElement.style.overflow = ''
+      document.documentElement.style.overflow = previousOverflow
     }
   }, [origin,projectId])
 
