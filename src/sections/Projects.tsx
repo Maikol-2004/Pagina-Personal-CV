@@ -13,6 +13,7 @@ class GalleryBoundary extends Component<{children:ReactNode;fallback:ReactNode},
 interface Props {
   onOpen: (p: Project, rect: DOMRect | null) => void
   activeProjectId?: string
+  paused?:boolean
 }
 
 export const shotUrl = (name: string) => `${import.meta.env.BASE_URL}projects/${name}.webp`
@@ -28,7 +29,7 @@ const Out = () => (
  * pantallas reales (ventanas, móvil, tarjetas) al otro. Las capas se mueven con el cursor a distinta profundidad
  * y se recomponen con una entrada escalonada al cambiar de proyecto.
  */
-export function Projects({ onOpen, activeProjectId }: Props) {
+export function Projects({ onOpen, activeProjectId, paused=false }: Props) {
   const direct=<div className="container gallery-access" aria-label="Acceso directo a proyectos">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title}</button>)}</div>
   return <section className="section projects" id="proyectos" aria-labelledby="pr-title">
     <div className="container">
@@ -39,7 +40,7 @@ export function Projects({ onOpen, activeProjectId }: Props) {
       </div>
     </div>
     <GalleryBoundary fallback={direct}><Suspense fallback={direct}>
-      <ProjectGallery onOpen={onOpen} activeProjectId={activeProjectId}/>
+      <ProjectGallery onOpen={onOpen} activeProjectId={activeProjectId} paused={paused}/>
     </Suspense></GalleryBoundary>
   </section>
 }
