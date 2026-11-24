@@ -10,3 +10,12 @@
 .gallery-plaque strong{font-family:Georgia,serif;font-size:19px;font-weight:400}
 .gallery-access{display:flex;flex-wrap:wrap;gap:.6rem;padding:1.5rem 0}
 @media(max-width:600px){.gallery-scroll{height:360vh}.gallery-hud{top:4.5rem;left:1rem;right:1rem}.gallery-instruction{font-size:.7rem}}
+
+.gallery-end{width:290px;text-align:center;color:#f6efe4;display:grid;gap:12px;text-shadow:0 0 20px #d2a27e55}
+.gallery-end strong{font:italic 90px Georgia,serif;color:#d2a27e;line-height:1}
+.gallery-end span{letter-spacing:.45em;font-size:12px}
+.gallery-end p{font:italic 16px Georgia,serif;color:#d0c2b1}
+.gallery-viewport:after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,transparent 48%,#100b073d 100%)}
+.gallery-hud,.gallery-instruction,.gallery-progress{z-index:2}
+.gallery-access{max-width:1100px;margin:auto;padding-inline:1.5rem}
+.gallery-plaque{box-shadow:0 4px 15px #0005;background:linear-gradient(135deg,#33251c,#1c1511)}
