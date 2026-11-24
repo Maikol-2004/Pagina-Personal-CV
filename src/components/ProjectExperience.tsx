@@ -31,6 +31,41 @@ function Orbit({project}:{project:Project}){
     <p>Stack seleccionado: <strong>{items[active]}</strong></p>
   </div>
 }
+function MatchDemo(){
+  const [sport,setSport]=useState('Fútbol')
+  const [joined,setJoined]=useState(false)
+  const max=sport==='Pádel'?4:10,players=sport==='Fútbol'?8:sport==='Pádel'?3:6
+  return <section className="px-demo">
+    <span className="px-kicker">DEMO / MATCHUP</span><h3>Encuentra tu próximo partido.</h3>
+    <p>Simulación local con datos ficticios; no se envían solicitudes reales.</p>
+    <div className="px-tabs">{['Fútbol','Pádel','Basket'].map(s=><button key={s} aria-pressed={sport===s} onClick={()=>{setSport(s);setJoined(false)}}>{s}</button>)}</div>
+    <div className="demo-match"><span className="demo-ball">{sport==='Fútbol'?'⚽':sport==='Pádel'?'🎾':'🏀'}</span><div><h4>Partido de {sport.toLowerCase()}</h4><p>Madrid · 18:00 · {players}/{max} jugadores</p><div className="demo-track"><i style={{width:players/max*100+'%'}}/></div></div></div>
+    <button className="demo-action" onClick={()=>setJoined(v=>!v)}>{joined?'Cancelar solicitud de ejemplo':'Solicitar plaza'}</button>
+    <p role="status">{joined?'✓ Solicitud registrada en esta simulación.':'Selecciona un deporte y prueba a solicitar una plaza.'}</p>
+  </section>
+}
+function CostsDemo(){
+  const [hours,setHours]=useState(24),[rate,setRate]=useState(35),[expenses,setExpenses]=useState(220),[revenue,setRevenue]=useState(1800)
+  const cost=hours*rate+expenses,profit=revenue-cost
+  const euro=(n:number)=>n.toLocaleString('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0})
+  return <section className="px-demo">
+    <span className="px-kicker">DEMO / ASHESFIRE</span><h3>Simulador de rentabilidad</h3><p>Datos ficticios y cálculo simplificado, sin conexión a la aplicación original.</p>
+    <div className="demo-fields">{([{label:'Horas',v:hours,set:setHours,max:100},{label:'Coste por hora (€)',v:rate,set:setRate,max:100},{label:'Gastos (€)',v:expenses,set:setExpenses,max:2000},{label:'Ingresos (€)',v:revenue,set:setRevenue,max:6000}]).map(f=><label key={f.label}><span>{f.label} <strong>{f.v}</strong></span><input type="range" min={0} max={f.max} value={f.v} onChange={e=>f.set(Number(e.target.value))}/></label>)}</div>
+    <div className="px-metrics"><div><strong>{euro(cost)}</strong><span>Coste total</span></div><div><strong>{euro(profit)}</strong><span>Resultado</span></div><div><strong>{revenue?Math.round(profit/revenue*100)+'%':'—'}</strong><span>Margen</span></div></div>
+    <div className="demo-track"><i style={{width:Math.min(100,cost/Math.max(1,revenue)*100)+'%'}}/></div><p>Costes respecto a ingresos.</p>
+  </section>
+}
+function EditorialDemo({shots,kind}:{shots:typeof PROJECT_LAYERS[string];kind:string}){
+  const [step,setStep]=useState(0)
+  const current=shots[step]
+  if(!current)return null
+  return <section className="px-demo">
+    <span className="px-kicker">DEMO / {kind==='cv-editorial'?'EDITORIAL':'NARRATIVE'}</span><h3>{kind==='cv-editorial'?'Cambia la perspectiva':'Recorre los capítulos'}</h3>
+    <p>Visor interactivo de capturas originales.</p>
+    <div className="demo-nav"><button disabled={step===0} onClick={()=>setStep(v=>v-1)}>← Anterior</button><span>{step+1} / {shots.length}</span><button disabled={step===shots.length-1} onClick={()=>setStep(v=>v+1)}>Siguiente →</button></div>
+    <figure className="demo-editorial"><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.alt}</figcaption></figure>
+  </section>
+}
 export function ProjectExperience({project}:{project:Project}){
   const [active,setActive]=useState(0)
   const shots=PROJECT_LAYERS[project.id]??[]
@@ -63,5 +98,8 @@ export function ProjectExperience({project}:{project:Project}){
       {project.id==='cv-editorial'&&<div className="px-editorial"><span>01 / Diseño</span><span>02 / Trayectoria</span><span>03 / Adaptabilidad</span></div>}
       {project.id==='matchup'&&<div className="px-sports"><span>FÚTBOL</span><span>PÁDEL</span><span>BASKET</span></div>}
     </section>
+    {project.id==='matchup'&&<MatchDemo/>}
+    {project.id==='ashesfire'&&<CostsDemo/>}
+    {(project.id==='cv-editorial'||project.id==='portfolio-narrativo')&&<EditorialDemo shots={shots} kind={project.id}/>}
   </div>
 }
