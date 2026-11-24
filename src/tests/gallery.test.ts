@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CAMERA_START_Z, CAMERA_END_Z, projectZ, nearestProject, scrollProgress, nextSelection, focusFov, qualityStep, projectCosts } from '../lib/galleryLogic'
+import { CAMERA_START_Z, CAMERA_END_Z, projectZ, nearestProject, scrollProgress, nextSelection, focusFov, qualityStep, renderDpr, reflectionSize, ceilingIndices, projectCosts } from '../lib/galleryLogic'
 import { PROJECT_LAYERS } from '../data/projectShots'
 import { projects } from '../data/profile'
 
@@ -37,10 +37,25 @@ describe('gallery release regressions',()=>{
     }
   })
   it('caps mobile rendering and reduces resolution under load',()=>{
-    expect(qualityStep(20,2,true)).toBe(1.75)
-    expect(qualityStep(60,2,true)).toBe(2)
-    expect(qualityStep(60,2,false)).toBe(2.25)
-    expect(qualityStep(10,1.25,true)).toBe(1.25)
+    expect(qualityStep(20,1,true)).toBe(.875)
+    expect(qualityStep(60,1.25,true)).toBe(1.25)
+    expect(qualityStep(60,1,false)).toBe(1.125)
+    expect(qualityStep(10,.75,true)).toBe(.75)
+    expect(qualityStep(50,1,false)).toBe(1)
+  })
+  it('limits render pixels and reflection buffers even in Ultra',()=>{
+    expect(renderDpr('medium',1,1920,1080,1)).toBeLessThan(1)
+    expect(renderDpr('ultra',1,3840,2160,2)).toBeLessThan(1)
+    expect(renderDpr('auto',.75,390,844,3)).toBe(.75)
+    expect(reflectionSize('auto',.875,false)).toBe(256)
+    expect(reflectionSize('auto',1,false)).toBe(512)
+    expect(reflectionSize('ultra',1,false)).toBe(1024)
+    expect(reflectionSize('ultra',1,true)).toBe(512)
+  })
+  it('keeps exactly five ceiling lights within the valid fixture range',()=>{
+    expect(ceilingIndices(7)).toEqual([0,1,2,3,4])
+    expect(ceilingIndices(-52)).toEqual([16,17,18,19,20])
+    for(const z of [20,0,-14,-35,-80]){const indices=ceilingIndices(z);expect(indices.length).toBe(5);expect(indices.every(i=>i>=0&&i<21)).toBe(true)}
   })
   it('handles positive, negative and zero revenue in the cost simulation',()=>{
     expect(projectCosts(24,35,220,1800)).toEqual({cost:1060,profit:740,margin:41})
