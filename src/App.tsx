@@ -23,6 +23,7 @@ export default function App() {
   useRevealAll()
   useProximity()
 
+  const closeDialog = useCallback(()=>setDlg(null),[])
   const openProject = useCallback(
     (data: Project, rect: DOMRect | null) => setDlg({ kind: 'project', data, rect }),
     [],
@@ -55,7 +56,7 @@ export default function App() {
           origin={dlg.rect}
           tone={dlg.data.tone}
           label={dlg.kind === 'stage' ? `${dlg.data.role} — ${dlg.data.company}` : dlg.data.title}
-          onClose={() => setDlg(null)}
+          onClose={closeDialog}
         >
           {dlg.kind === 'stage' ? (
             <StageDetail
