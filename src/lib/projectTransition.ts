@@ -22,4 +22,4 @@ export function validScreenRect(r:RectLike|null|undefined,width:number,height:nu
 }
 
 /** Original conceptual cover, separate from real application screenshots. */
-export const posterUrl=(id:string)=>import.meta.env.BASE_URL+'gallery-posters/'+id+'.svg'
+export const posterUrl=(id:string)=>import.meta.env.BASE_URL+'gallery-posters/editorial/'+id+'.svg'
