@@ -49,9 +49,10 @@ const findItem = (c: Category | null, key: string | null): Item | null =>
 
 interface Props {
   onOpenStage: (s: Stage, rect: DOMRect | null) => void
+  paused?:boolean
 }
 
-export function ConstellationSection({ onOpenStage }: Props) {
+export function ConstellationSection({ onOpenStage, paused=false }: Props) {
   const outer = useRef<HTMLElement>(null)
   const sticky = useRef<HTMLDivElement>(null)
   const progressRef = useRef(0)
@@ -165,7 +166,7 @@ export function ConstellationSection({ onOpenStage }: Props) {
                     focus={focus}
                     onFocus={setFocus}
                     zoom={zoom}
-                    active={onScreen && mode === '3d'}
+                    active={onScreen && mode === '3d' && !paused}
                     coarse={coarse}
                     reduced={reduced}
                   />
