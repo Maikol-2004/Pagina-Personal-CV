@@ -28,6 +28,7 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
   const panel = useRef<HTMLDivElement>(null)
   const closing = useRef(false)
   const animation = useRef<ReturnType<typeof gsap.timeline> | null>(null)
+  const watchdog=useRef<number|undefined>(undefined)
   const firstShot = projectId ? transitionShot(projectId) : undefined
   const style = projectId ? transitionStyles[projectId] : undefined
   const bridge=useRef<HTMLDivElement>(null)
@@ -35,8 +36,13 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
   const heroRect=useCallback(()=>{
     const images=Array.from(panel.current?.querySelectorAll<HTMLImageElement>('.px-visual img')??[])
     const image=images.find(img=>img.getAttribute('src')===shotUrl)
-    const rect=image?.getBoundingClientRect()
-    return validScreenRect(rect,window.innerWidth,window.innerHeight)?rect:null
+    const box=image?.getBoundingClientRect()
+    if(!image||!box)return null
+    // The screenshot is contained inside its preview. Match the actual image, not the letterbox.
+    const scale=image.naturalWidth&&image.naturalHeight?Math.min(box.width/image.naturalWidth,box.height/image.naturalHeight):0
+    const w=scale?image.naturalWidth*scale:box.width,h=scale?image.naturalHeight*scale:box.height
+    const rect=new DOMRect(box.left+(box.width-w)/2,box.top+(box.height-h)/2,w,h)
+    return validScreenRect(rect,window.innerWidth,window.innerHeight)?rect:validScreenRect(box,window.innerWidth,window.innerHeight)?box:null
   },[shotUrl])
   const opener = useRef<Element | null>(
     typeof document !== 'undefined' ? document.activeElement : null,
@@ -47,6 +53,7 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
     const previousOverflow=document.documentElement.style.overflow
     document.documentElement.style.overflow='hidden'
     closing.current=false
+    window.clearTimeout(watchdog.current)
     const host=root.current
     const node=panel.current
     if(!host||!node)return()=>{document.documentElement.style.overflow=previousOverflow}
@@ -54,13 +61,14 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
       if(reduce){gsap.set(node,{clipPath:'inset(0px)'});host.dataset.transition='ready';return}
       const duration=style?.duration??.8
       host.dataset.transition='opening'
-      const tl=gsap.timeline({onComplete:()=>{host.dataset.transition='ready'}})
+      const finish=()=>{window.clearTimeout(watchdog.current);if(!closing.current)host.dataset.transition='ready'}
+      const tl=gsap.timeline({onComplete:finish})
       animation.current=tl
       const dest=heroRect()
       const proxy=bridge.current
       const useBridge=!!proxy&&!!dest&&validScreenRect(origin,window.innerWidth,window.innerHeight)
       const accent=host.querySelector('.dlg__portal')
-      const content=host.querySelectorAll(projectId?'.px-copy > *, .px-visual':'.dlg__in')
+      const content=host.querySelectorAll(projectId?'.px-copy > *, .px-overview-card, .px-overview-foot':'.dlg__in')
       tl.fromTo('.dlg__veil',{opacity:0},{opacity:1,duration:duration*.6,ease:'power2.out'},0)
       tl.fromTo(node,{clipPath:insetFrom(origin)},{clipPath:'inset(0px 0px 0px 0px round 0px)',duration:duration,ease:'power3.inOut'},0)
       if(useBridge&&origin&&dest&&proxy){
@@ -70,15 +78,24 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
       }
       if(accent&&style)tl.fromTo(accent,{opacity:0},{opacity:.65,duration:duration*.25,ease:'power2.out'},.04).to(accent,{opacity:0,duration:duration*.5,ease:'power2.in'},duration*.31)
       const entry=style?.motion==='sprint'?{x:24,y:8}:style?.motion==='scan'?{x:-16,y:0}:style?.motion==='orbit'?{y:12,scale:.97}:style?.motion==='chapter'?{x:12,y:0}:{y:15}
-      tl.fromTo(content,{...entry,opacity:0},{x:0,y:0,scale:1,opacity:1,duration:.35,stagger:.045,ease:'power2.out'},duration*.53)
+      tl.fromTo(content,{...entry,opacity:0},{x:0,y:0,scale:1,opacity:1,duration:.30,stagger:{amount:.16},ease:'power2.out'},duration*.44)
+      if(projectId)tl.fromTo('.px-overview-screens',{opacity:0},{opacity:1,duration:.22},duration*.66)
+      // A throttled tab or renderer must never leave the dialog locked in opening.
+      watchdog.current=window.setTimeout(()=>{if(!closing.current){tl.progress(1);finish()}},1800)
     },host)
-    return()=>{animation.current?.kill();ctx.revert();document.documentElement.style.overflow=previousOverflow}
+    return()=>{window.clearTimeout(watchdog.current);animation.current?.kill();ctx.revert();document.documentElement.style.overflow=previousOverflow}
   },[origin,projectId,style,heroRect])
 
   const close=useCallback(()=>{
     if(closing.current)return
     closing.current=true
+    window.clearTimeout(watchdog.current)
+    let finished=false
     const done=()=>{
+      if(finished)return
+      finished=true
+      window.clearTimeout(watchdog.current)
+      animation.current?.kill()
       onClose()
       requestAnimationFrame(()=>{if(opener.current instanceof HTMLElement&&opener.current.isConnected)opener.current.focus({preventScroll:true})})
     }
@@ -90,6 +107,7 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
     const duration=style?.duration??.8
     const tl=gsap.timeline({onComplete:done})
     animation.current=tl
+    watchdog.current=window.setTimeout(done,1800)
     const proxy=bridge.current,dest=heroRect()
     // If the visitor has scrolled away from the hero, avoid a phantom screenshot jump.
     if(proxy&&origin&&dest&&validScreenRect(origin,window.innerWidth,window.innerHeight)){
@@ -103,7 +121,7 @@ export function CinematicDialog({ origin, tone, label, onClose, children, projec
     }else if(proxy)tl.to(proxy,{opacity:0,duration:.16},0)
     tl.to(panel.current,{clipPath:insetFrom(origin),duration,ease:'power3.inOut'},0)
       .to(host.querySelector('.dlg__veil'),{opacity:0,duration:duration*.65},duration*.3)
-      .to(host.querySelectorAll(projectId?'.px-copy > *, .px-visual':'.dlg__in'),{opacity:0,duration:.25,ease:'power2.in'},0)
+      .to(host.querySelectorAll(projectId?'.px-copy > *, .px-overview-card, .px-overview-screens, .px-overview-foot':'.dlg__in'),{opacity:0,duration:.25,ease:'power2.in'},0)
   },[onClose,origin,projectId,style,heroRect])
 
   useEffect(() => {
