@@ -19,3 +19,10 @@
 .gallery-hud,.gallery-instruction,.gallery-progress{z-index:2}
 .gallery-access{max-width:1100px;margin:auto;padding-inline:1.5rem}
 .gallery-plaque{box-shadow:0 4px 15px #0005;background:linear-gradient(135deg,#33251c,#1c1511)}
+
+.gallery-scroll{height:510vh}
+.gallery-near{position:absolute;bottom:4.1rem;left:0;right:0;display:flex;justify-content:center;z-index:3;pointer-events:none}
+.gallery-near button{pointer-events:auto;border:1px solid #d2a27e88;background:#17120fe8;color:#f6efe4;border-radius:30px;padding:.7rem 1.1rem;font:inherit;font-size:.75rem;backdrop-filter:blur(8px)}
+.gallery-near button:focus-visible{outline:2px solid #f6efe4;outline-offset:4px}
+.gallery-plaque{border-radius:2px;min-width:160px;padding:12px 20px}
+@media(max-width:700px){.gallery-scroll{height:430vh}.gallery-near{bottom:4.5rem}.gallery-instruction{bottom:1.7rem}}
