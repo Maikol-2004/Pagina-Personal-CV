@@ -1,3 +1,4 @@
+import { transitionShot, transitionStyles, cameraEase, fitScreenDistance, validScreenRect } from '../lib/projectTransition'
 import { describe, expect, it } from 'vitest'
 import { CAMERA_START_Z, CAMERA_END_Z, projectZ, nearestProject, scrollProgress, nextSelection, focusFov, qualityStep, renderDpr, reflectionSize, ceilingIndices, projectCosts } from '../lib/galleryLogic'
 import { PROJECT_LAYERS } from '../data/projectShots'
@@ -73,5 +74,35 @@ describe('gallery release regressions',()=>{
       expect(p.features.length).toBeGreaterThan(0)
       expect(p.technical.length).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('cinematic handoff',()=>{
+  it('has a distinct transition and an existing exhibition screenshot for every project',()=>{
+    const motions=projects.map(p=>transitionStyles[p.id]?.motion)
+    expect(new Set(motions).size).toBe(projects.length)
+    for(const project of projects){
+      const shot=transitionShot(project.id)
+      expect(shot).toBeDefined()
+      expect(PROJECT_LAYERS[project.id].some(s=>s.src===shot?.src&&!s.gallery)).toBe(true)
+    }
+    expect(transitionShot('matchup')?.src).toBe('matchup-inicio')
+  })
+  it('starts and ends a timed camera movement without discontinuity',()=>{
+    expect(cameraEase(-1)).toBe(0)
+    expect(cameraEase(0)).toBe(0)
+    expect(cameraEase(.5)).toBe(.5)
+    expect(cameraEase(1)).toBe(1)
+    expect(cameraEase(2)).toBe(1)
+  })
+  it('frames a wide display further away in portrait than landscape',()=>{
+    expect(fitScreenDistance(2.5,1.4,.45,52)).toBeGreaterThan(fitScreenDistance(2.5,1.4,1.8,52))
+    expect(fitScreenDistance(.1,.1,1,52)).toBeGreaterThanOrEqual(.7)
+  })
+  it('rejects invalid and offscreen origins before starting an image bridge',()=>{
+    expect(validScreenRect({left:10,top:20,width:200,height:300},390,844)).toBe(true)
+    expect(validScreenRect({left:10,top:-500,width:200,height:300},390,844)).toBe(false)
+    expect(validScreenRect({left:10,top:20,width:30,height:30},390,844)).toBe(false)
+    expect(validScreenRect({left:NaN,top:20,width:200,height:300},390,844)).toBe(false)
   })
 })
