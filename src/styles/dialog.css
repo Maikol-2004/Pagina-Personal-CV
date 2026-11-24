@@ -357,3 +357,13 @@
 .dlg[data-project="cv-editorial"] .dlg__portal{background:radial-gradient(circle,#f6d6ae 0, #a3694266 30%,transparent 65%)}
 .dlg[data-project="portfolio-narrativo"] .dlg__portal{background:linear-gradient(90deg,#e7c3a355,transparent 48%,#e7c3a355 50%,transparent 52%,#e7c3a355)}
 @media(prefers-reduced-motion:reduce){.dlg__portal{display:none}}
+
+/* The source screenshot bridges the physical display and the product page. */
+.dlg__bridge{position:absolute;inset:0;z-index:4;display:grid;place-items:center;opacity:0;pointer-events:none;overflow:hidden}
+.dlg__bridge img{display:block;max-width:85vw;max-height:76svh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 0 60px color-mix(in srgb,var(--tone) 35%,transparent)}
+.dlg__particles{position:absolute;inset:0;pointer-events:none}
+.dlg__particle{position:absolute;display:block;border-radius:50%;background:var(--tone);box-shadow:0 0 12px var(--tone);opacity:0}
+.dlg[data-project="matchup"] .dlg__particle{background:#baf34b;border-radius:1px;box-shadow:0 0 10px #baf34b}
+.dlg[data-project="ashesfire"] .dlg__particle{border-radius:0;background:#ffad60}
+.dlg[data-project="portfolio-narrativo"] .dlg__particle{border-radius:1px;transform:rotate(45deg)}
+@media(prefers-reduced-motion:reduce){.dlg__bridge{display:none}}
