@@ -3,7 +3,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 const dir=new URL('../public/gallery-materials/',import.meta.url)
 await mkdir(dir,{recursive:true})
-const assets=['dark_wood','square_floor']
+const assets=['dark_wood']
 await Promise.all(assets.map(async asset=>{
   try {
     const response=await fetch('https://api.polyhaven.com/files/'+asset,{signal:AbortSignal.timeout(7000)})
