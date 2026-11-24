@@ -51,6 +51,7 @@ export default function App() {
       </main>
       {dlg && (
         <CinematicDialog
+          projectId={dlg.kind === 'project' ? dlg.data.id : undefined}
           origin={dlg.rect}
           tone={dlg.data.tone}
           label={dlg.kind === 'stage' ? `${dlg.data.role} — ${dlg.data.company}` : dlg.data.title}
