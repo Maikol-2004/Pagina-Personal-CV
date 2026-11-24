@@ -3,3 +3,5 @@ dist
 .taste-skill
 *.log
 *.tsbuildinfo
+
+/public/gallery-posters/editorial/
