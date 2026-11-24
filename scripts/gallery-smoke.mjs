@@ -1,100 +1,155 @@
 import assert from 'node:assert/strict'
+import { mkdir } from 'node:fs/promises'
 import { chromium } from '@playwright/test'
 
+await mkdir('artifacts/gallery',{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']})
-try{
-  for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
-    const context=await browser.newContext({viewport,reducedMotion:'reduce'})
-    const page=await context.newPage()
-    const errors=[]
-    page.on('pageerror',e=>errors.push(e.message))
-    await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded'})
-    const access=page.locator('.gallery-access')
-    await access.waitFor({timeout:30000})
-    const entries=access.getByRole('button')
-    assert.equal(await entries.count(),5)
-    for(let i=0;i<5;i++){
-      await entries.nth(i).click()
-      const dialog=page.getByRole('dialog')
-      await dialog.waitFor()
-      assert.equal(await dialog.locator('.px-hero').count(),1)
-      const action=dialog.locator('.px-hero-action')
-      await action.click()
-      await dialog.locator('.px-primary-experience').waitFor()
-      const img=dialog.locator('.px-detail img')
-      await img.evaluate(el=>el.decode())
-      assert.ok(await img.evaluate(el=>el.naturalWidth>0))
-      if(await dialog.locator('.px--matchup').count()){
-        await dialog.getByRole('button',{name:'Solicitar plaza',exact:true}).click()
-        assert.match(await dialog.getByRole('status').innerText(),/Solicitud registrada/)
-      }
-      if(await dialog.locator('.px--ashesfire').count()){
-        await dialog.getByRole('button',{name:'Proyecto B',exact:true}).click()
-        assert.match(await dialog.locator('.px-demo .px-metrics').innerText(),/Resultado/)
-      }
-      await page.keyboard.press('Escape')
-      await dialog.waitFor({state:'hidden'})
-    }
-    assert.deepEqual(errors,[])
-    console.log('PASS accessible project navigation',viewport)
-    await context.close()
-  }
-  // Real animated entrances, not only the reduced-motion fallback.
-  for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
-    const animated=await browser.newContext({viewport,reducedMotion:'no-preference'})
-    const p=await animated.newPage(),faults=[]
-    p.on('pageerror',e=>faults.push(e.message))
-    await p.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded'})
-    const access=p.locator('.gallery-access')
-    await access.waitFor({timeout:30000})
-    const buttons=access.getByRole('button')
-    const modes=new Set()
-    for(let i=0;i<5;i++){
-      await buttons.nth(i).click()
-      const dialog=p.getByRole('dialog')
-      await dialog.waitFor()
-      modes.add(await dialog.getAttribute('data-motion'))
-      await dialog.locator('.dlg__scroll').waitFor()
-      await p.waitForFunction(()=>document.querySelector('.dlg')?.getAttribute('data-transition')==='ready',null,{timeout:15000})
-      assert.ok(await dialog.locator('.px-hero').isVisible())
-      if(i%2===0)await dialog.locator('.dlg__scroll').evaluate(el=>{el.scrollTop=el.scrollHeight})
-      await p.keyboard.press('Escape')
-      await dialog.waitFor({state:'hidden',timeout:15000})
-    }
-    assert.equal(modes.size,5)
-    await buttons.first().click()
-    await p.keyboard.press('Escape')
-    await p.getByRole('dialog').waitFor({state:'hidden',timeout:15000})
-    assert.deepEqual(faults,[])
-    console.log('PASS five animated entrances, deep-scroll return and early cancellation',viewport)
-    await animated.close()
-  }
-  const context=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'no-preference'})
-  const page=await context.newPage()
-  const errors=[]
-  page.on('pageerror',e=>errors.push(e.message))
-  await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded'})
-  const gallery=page.locator('.gallery-scroll')
-  await gallery.waitFor({timeout:30000})
-  await gallery.evaluate(el=>{
-    const view=el.querySelector('.gallery-viewport')
-    window.scrollTo(0,window.scrollY+el.getBoundingClientRect().top+(el.clientHeight-view.clientHeight)*21/59)
-  })
-  const observe=page.getByRole('button',{name:/Observar AshesFire/})
-  await observe.waitFor({timeout:30000})
-  await observe.click()
-  const enter=page.getByRole('button',{name:/Entrar al proyecto/})
-  await enter.waitFor({timeout:30000})
-  assert.equal(await page.getByRole('dialog').count(),0)
-  await enter.click()
-  await page.getByRole('dialog').waitFor({timeout:30000})
-  await page.waitForFunction(()=>document.querySelector('.dlg')?.getAttribute('data-transition')==='ready',null,{timeout:15000})
+const base='http://127.0.0.1:4173/'
+const names=['AshesFire','MatchUp','My Journey','CV web','Portfolio narrativo']
+const chapters=['screens','features','stack','demo']
+const sizes=[{width:390,height:844},{width:1440,height:900}]
+async function ready(page){
+  await page.waitForFunction(()=>document.querySelector('.dlg')?.getAttribute('data-transition')==='ready',null,{timeout:30000})
+}
+async function close(page){
   await page.keyboard.press('Escape')
   await page.getByRole('dialog').waitFor({state:'hidden',timeout:30000})
-  await enter.waitFor({timeout:30000})
-  await page.getByRole('button',{name:/Continuar recorrido/}).click()
-  assert.equal(await enter.count(),0)
-  assert.deepEqual(errors,[])
-  console.log('PASS WebGL two-step navigation and return')
-  await context.close()
+}
+async function disableWebGL(context){
+  // Isolate DOM animations from the software GPU. WebGL is tested separately below.
+  await context.addInitScript(()=>{
+    const original=HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext=function(type,...args){
+      if(type==='webgl'||type==='webgl2'||type==='experimental-webgl')return null
+      return original.call(this,type,...args)
+    }
+  })
+}
+try{
+  for(const reducedMotion of ['reduce','no-preference']){
+    for(const viewport of sizes){
+      const context=await browser.newContext({viewport,reducedMotion})
+      await disableWebGL(context)
+      const page=await context.newPage(),errors=[]
+      page.setDefaultTimeout(30000)
+      page.on('pageerror',e=>errors.push(e.message))
+      await page.goto(base,{waitUntil:'domcontentloaded'})
+      const access=page.locator('.gallery-access')
+      await access.waitFor()
+      const entries=access.getByRole('button')
+      assert.equal(await entries.count(),5)
+      const modes=new Set()
+      for(let i=0;i<5;i++){
+        await entries.nth(i).click()
+        const dialog=page.getByRole('dialog')
+        await dialog.waitFor();await ready(page)
+        modes.add(await dialog.getAttribute('data-motion'))
+        const overview=dialog.locator('.px-overview')
+        assert.equal(await overview.count(),1)
+        assert.equal(await overview.locator('[data-unfold-source]').count(),4)
+        assert.equal(await dialog.locator('[data-unfold-target]').count(),4)
+        for(const key of chapters)assert.equal(await dialog.locator('[data-unfold-target="'+key+'"]').count(),1)
+        assert.ok((await overview.innerText()).includes(names[i]))
+        await overview.locator('img').evaluateAll(imgs=>Promise.all(imgs.map(img=>img.decode())))
+        assert.ok(await overview.locator('img').evaluateAll(imgs=>imgs.every(img=>img.naturalWidth>0)))
+        assert.ok((await overview.boundingBox()).height<=viewport.height*1.4,'Overview should be compact')
+        if(reducedMotion==='no-preference'){
+          await page.screenshot({path:'artifacts/gallery/'+viewport.width+'-'+i+'-overview.png'})
+          // Native scrolling expands the features card from its overview column.
+          const surface=dialog.locator('[data-unfold-target="features"] .px-unfold-surface')
+          await dialog.locator('.dlg__scroll').evaluate(sc=>{
+            const r=sc.querySelector('[data-unfold-target="features"]').getBoundingClientRect()
+            sc.scrollTop+=r.top-sc.getBoundingClientRect().top-sc.clientHeight*.8
+          })
+          await page.waitForFunction(()=>Number(document.querySelector('[data-unfold-target="features"] .px-unfold-surface').style.getPropertyValue('--unfold-scale'))<.98)
+          await dialog.locator('.dlg__scroll').evaluate(sc=>{
+            const r=sc.querySelector('[data-unfold-target="features"]').getBoundingClientRect()
+            sc.scrollTop+=r.top-sc.getBoundingClientRect().top-80
+          })
+          await page.waitForFunction(()=>Number(document.querySelector('[data-unfold-target="features"] .px-unfold-surface').style.getPropertyValue('--unfold-scale'))>.98)
+          assert.ok(await surface.isVisible())
+          await page.screenshot({path:'artifacts/gallery/'+viewport.width+'-'+i+'-expanded.png'})
+        }
+        await overview.locator('.px-preview-side .px-preview').first().click()
+        const selected=dialog.locator('.px-detail img')
+        const expected=await overview.locator('.px-preview-side .px-preview img').first().getAttribute('src')
+        await page.waitForFunction(src=>document.querySelector('.px-detail img')?.getAttribute('src')===src,expected)
+        await selected.evaluate(img=>img.decode())
+        await overview.locator('[data-unfold-source="stack"]').click()
+        assert.equal(await dialog.locator('.px-stack-expanded span').count()>0,true)
+        await overview.locator('[data-unfold-source="demo"]').click()
+        if(i===1){
+          await dialog.getByRole('button',{name:'Solicitar plaza',exact:true}).click()
+          assert.match(await dialog.getByRole('status').innerText(),/Solicitud registrada/)
+        }
+        if(i===0){
+          await dialog.getByRole('button',{name:'Proyecto B',exact:true}).click()
+          assert.match(await dialog.locator('.px-demo .px-metrics').innerText(),/Resultado/)
+        }
+        await close(page)
+      }
+      assert.equal(modes.size,5)
+      await entries.first().click()
+      await close(page)
+      assert.deepEqual(errors,[])
+      console.log('PASS five project overviews, preview navigation, chapters and return',viewport,reducedMotion)
+      await context.close()
+    }
+  }
+  for(const viewport of [{width:390,height:844},{width:1280,height:800}]){
+    const context=await browser.newContext({viewport,reducedMotion:'no-preference'})
+    const page=await context.newPage(),errors=[]
+    page.setDefaultTimeout(45000)
+    page.on('pageerror',e=>errors.push(e.message))
+    await page.goto(base,{waitUntil:'domcontentloaded'})
+    const gallery=page.locator('.gallery-scroll')
+    await gallery.waitFor()
+    async function walk(i){
+      await gallery.evaluate((el,index)=>{
+        const view=el.querySelector('.gallery-viewport')
+        window.scrollTo(0,window.scrollY+el.getBoundingClientRect().top+(el.clientHeight-view.clientHeight)*(21+8*index)/59)
+      },i)
+    }
+    await walk(0)
+    await page.locator('.gallery-viewport canvas').waitFor()
+    const quality=page.getByLabel('Calidad gráfica')
+    for(const mode of ['auto','medium']){
+      await quality.selectOption(mode)
+      await page.waitForTimeout(350)
+      const result=await page.evaluate(()=>new Promise(resolve=>{
+        const times=[],start=performance.now()
+        let previous=start
+        function frame(now){
+          times.push(now-previous);previous=now
+          if(now-start<1300)requestAnimationFrame(frame)
+          else{times.sort((a,b)=>a-b);resolve({fps:Math.round(times.length*1000/(now-start)*10)/10,p95ms:Math.round(times[Math.floor((times.length-1)*.95)])})}
+        }
+        requestAnimationFrame(frame)
+      }))
+      console.log('Software renderer frame sample',viewport,mode,JSON.stringify(result))
+    }
+    await quality.selectOption('medium')
+    await page.screenshot({path:'artifacts/gallery/'+viewport.width+'-museum.png'})
+    for(let i=0;i<5;i++){
+      await walk(i)
+      const observe=page.getByRole('button',{name:'Observar '+names[i]+' ↗',exact:true})
+      await observe.waitFor();await observe.click()
+      const enter=page.getByRole('button',{name:/Entrar al proyecto/})
+      await enter.waitFor()
+      assert.equal(await page.getByRole('dialog').count(),0)
+      const scrollBefore=await page.evaluate(()=>window.scrollY)
+      await enter.click()
+      await page.getByRole('dialog').waitFor()
+      await ready(page)
+      assert.ok((await page.locator('.px-overview').innerText()).includes(names[i]))
+      await close(page)
+      await enter.waitFor()
+      assert.ok(Math.abs((await page.evaluate(()=>window.scrollY))-scrollBefore)<65)
+      await page.getByRole('button',{name:/Continuar recorrido/}).click()
+      assert.equal(await enter.count(),0)
+    }
+    assert.deepEqual(errors,[])
+    console.log('PASS all five WebGL two-step entries and return',viewport)
+    await context.close()
+  }
 }finally{await browser.close()}
