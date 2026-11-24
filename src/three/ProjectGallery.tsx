@@ -11,6 +11,7 @@ import './projectGallery.css'
 
 type Props = { onOpen: (p: Project, rect: DOMRect | null) => void; activeProjectId?: string; paused?:boolean }
 type Quality = 'auto' | 'medium' | 'high' | 'ultra'
+type Atmosphere='infinity'|'architecture'
 const ROOM_FRONT_Z = 12
 const ROOM_BACK_Z = -57
 const ROOM_LENGTH = ROOM_FRONT_Z - ROOM_BACK_Z
@@ -152,7 +153,7 @@ function Reception({progress}:{progress:React.RefObject<number>}){
   </group>
 }
 /** The artwork is a single near-square printed digital exhibition, without props or extra frames. */
-function Artwork({project,index,onSelect}:{project:Project;index:number;onSelect:()=>void}){
+function Artwork({project,index,onSelect,floating=false}:{project:Project;index:number;onSelect:()=>void;floating?:boolean}){
   const side=index%2?1:-1,z=projectZ(index)
   const texture=useTexture(posterUrl(project.id))
   const gl=useThree(s=>s.gl)
@@ -162,7 +163,16 @@ function Artwork({project,index,onSelect}:{project:Project;index:number;onSelect
     texture.minFilter=LinearMipmapLinearFilter;texture.magFilter=LinearFilter
     texture.needsUpdate=true
   },[texture,gl])
-  return <group position={[side*3.30,2.20,z]} rotation={[0,-side*Math.PI/2,0]}>
+  return <group position={[side*3.30,floating?2.27:2.20,z]} rotation={[0,-side*(Math.PI/2-(floating?.12:0)),0]}>
+    {floating&&<>
+      {/* Slim bronze-backed digital panel with a quiet, recessed central stand. */}
+      <Block position={[0,0,-.055]} size={[4.85,3.89,.10]} color="#5e4a36" metal={.85} roughness={.28}/>
+      <Block position={[0,0,-.115]} size={[4.75,3.79,.08]} color="#171619" metal={.48} roughness={.36}/>
+      <Block position={[0,-1.98,-.10]} size={[.13,.43,.14]} color="#9c7c55" metal={.88} roughness={.25}/>
+      <Block position={[0,-2.20,-.12]} size={[3.35,.10,.78]} color="#5d4934" metal={.82} roughness={.28}/>
+      <mesh position={[0,-2.244,.28]}><boxGeometry args={[3.25,.018,.022]}/><meshBasicMaterial color="#e5c39c" toneMapped={false}/></mesh>
+      <mesh position={[0,-1.957,.005]}><boxGeometry args={[4.81,.018,.019]}/><meshBasicMaterial color="#d7b18a" toneMapped={false}/></mesh>
+    </>}
     <mesh name={'transition-screen-'+project.id} position={[0,0,.025]} onClick={e=>{e.stopPropagation();onSelect()}}>
       <planeGeometry args={[4.8,3.84]}/>
       <meshBasicMaterial map={texture} toneMapped={false}/>
@@ -334,6 +344,26 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
     <Camera progress={progress} selected={selected} phase={phase} yaw={yaw} onArrive={onArrive}/>
   </>
 }
+function InfinityRoom({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive}:Parameters<typeof Room>[0]){
+  const mobile=useThree(s=>s.size.width<700)
+  return <>
+    <color attach="background" args={['#030304']}/>
+    <fog attach="fog" args={['#030304',28,67]}/>
+    <ambientLight intensity={.28}/>
+    <hemisphereLight args={['#f4e4cf','#08090a',.65]}/>
+    <Environment resolution={128}><Lightformer form="rect" intensity={3} color="#eed5b7" position={[0,6,-20]} scale={[8,45,1]} rotation={[Math.PI/2,0,0]}/><Lightformer form="rect" intensity={1.4} color="#d4ad84" position={[7,3,-20]} scale={[35,5,1]} rotation={[0,-Math.PI/2,0]}/><Lightformer form="rect" intensity={1.2} color="#f8f0e5" position={[-7,4,-20]} scale={[30,5,1]} rotation={[0,Math.PI/2,0]}/></Environment>
+    {/* An uninterrupted plane extends beyond the camera range; fog hides its horizon. */}
+    <mesh position={[0,.015,ROOM_CENTER]} rotation={[-Math.PI/2,0,0]}>
+      <planeGeometry args={[180,180]}/>
+      <MeshReflectorMaterial resolution={reflectionSize(quality,adaptiveDpr,mobile)} mirror={.38} mixStrength={3.6} mixBlur={0} blur={[0,0]} color="#08090b" metalness={.08} roughness={.19}/>
+    </mesh>
+    <ExhibitionLights selected={selected} phase={phase}/>
+    <Html position={[0,2.3,-4.5]} center distanceFactor={7} style={{pointerEvents:'none'}}><div className="gallery-infinity-title"><strong>MG.</strong><span>THE EXHIBITION</span><p>Cinco proyectos. Una trayectoria.</p></div></Html>
+    <Html position={[0,2.2,ROOM_BACK_Z+.55]} center distanceFactor={6} style={{pointerEvents:'none'}}><div className="gallery-end"><strong>MG.</strong><span>MY JOURNEY</span><p>Cada proyecto, un paso más en mi trayectoria.</p></div></Html>
+    {projects.map((p,i)=><Suspense key={p.id} fallback={null}><Artwork project={p} index={i} floating onSelect={()=>onSelect(i)}/></Suspense>)}
+    <Camera progress={progress} selected={selected} phase={phase} yaw={yaw} onArrive={onArrive}/>
+  </>
+}
 function AmbientSound(){
   const [enabled,setEnabled]=useState(false)
   const audio=useRef<{ctx:AudioContext;gain:GainNode}|null>(null)
@@ -397,6 +427,8 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
   const [mobile,setMobile]=useState(false)
   const [phase,setPhase]=useState<Phase>('walking')
   const [quality,setQuality]=useState<Quality>('auto')
+  const [atmosphere,setAtmosphere]=useState<Atmosphere>('infinity')
+  const Scene=atmosphere==='infinity'?InfinityRoom:Room
   const savedScroll=useRef(0)
   useEffect(()=>{
     const canvas=document.createElement('canvas')
@@ -462,13 +494,13 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
   const effects=visible&&tabActive&&!paused&&phase==='walking'&&quality==='ultra'&&!mobile
 
   return <div className="gallery-shell">
-    {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
-      {loaded&&<Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&tabActive&&!paused&&!activeProjectId&&phase!=='inside'?'always':'never'} shadows={quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:80}} fallback={<p>WebGL no disponible.</p>}>
-        <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} adaptiveDpr={adaptiveDpr} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects/>}</Suspense>
+    {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" data-atmosphere={atmosphere} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
+      {loaded&&<Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&tabActive&&!paused&&!activeProjectId&&phase!=='inside'?'always':'never'} shadows={atmosphere==='architecture'&&quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:80}} fallback={<p>WebGL no disponible.</p>}>
+        <Suspense fallback={null}><Scene progress={progress} selected={selected} phase={phase} quality={quality} adaptiveDpr={adaptiveDpr} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects/>}</Suspense>
       </Canvas>}
       {!ready&&<div className="gallery-loading" role="status">Preparando la exposición…</div>}
       <div className="gallery-hud"><span>04 / THE EXHIBITION</span></div>
-      <div className="gallery-quality"><AmbientSound/><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>
+      <div className="gallery-quality"><label>Ambiente <select aria-label="Ambiente de la galería" value={atmosphere} disabled={phase==='entering'||phase==='inside'} onChange={e=>{resume();setAtmosphere(e.target.value as Atmosphere)}}><option value="infinity">Infinito</option><option value="architecture">Arquitectónico</option></select></label><AmbientSound/><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>
       <div className="gallery-instruction">{phase==='turning'?'Girando hacia la exposición…':phase==='focused'?'Toca otra vez para entrar · Desliza para continuar':phase==='entering'||phase==='inside'?'Entrando en la experiencia…':atEnd?'Desliza para continuar hacia mis competencias':nearestProject===null?'Desliza hacia arriba para caminar · A los lados para mirar':'Toca una exposición para observarla'}</div>
       {phase==='focused'&&selected!==null&&<div className="gallery-focus"><button onClick={()=>select(selected)}>Entrar al proyecto ↗</button><button onClick={resume}>Continuar recorrido →</button></div>}
       {phase==='walking'&&atEnd&&<div className="gallery-end-actions"><a href="https://github.com/Maikol-2004" target="_blank" rel="noreferrer">GitHub ↗</a><a href={import.meta.env.BASE_URL+'Michael-Guzman-CV.pdf'} download>Descargar CV ↓</a><a href="#habilidades">Competencias →</a></div>}
@@ -476,6 +508,6 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
     </div></div>}
     {fallback&&<p className="gallery-fallback-note">Explora los proyectos directamente, sin animación 3D.</p>}
     <div className="gallery-access" aria-label="Acceso directo a proyectos">{projects.map(p=><button key={p.id} className="pill" onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title} ↗</button>)}</div>
-    <p className="gallery-material-credit">Materiales procedurales originales · piedra, bronce satinado y suelo pulido.</p>
+    <p className="gallery-material-credit">Portadas conceptuales con fotografía de Unsplash · capturas originales en el interior de cada proyecto.</p>
   </div>
 }
