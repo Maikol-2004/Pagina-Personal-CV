@@ -56,3 +56,7 @@
 .gallery-entry-sign{white-space:nowrap;color:#f6efe4;font-size:13px;letter-spacing:.22em;padding:10px 18px;background:#241913;border:1px solid #d2a27e66}
 .gallery-entry-sign span{color:#d2a27e}
 .gallery-viewport canvas{cursor:grab}.gallery-viewport canvas:active{cursor:grabbing}
+
+.gallery-quality{display:flex;align-items:center;gap:8px}
+.gallery-audio{color:#f6efe4;background:#17120f;border:1px solid #d2a27e77;border-radius:20px;padding:7px 10px;font:inherit;cursor:pointer}
+.gallery-audio[aria-pressed=true]{color:#17120f;background:#d2a27e}
