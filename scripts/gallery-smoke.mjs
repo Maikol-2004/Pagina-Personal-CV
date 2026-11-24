@@ -39,6 +39,36 @@ try{
     console.log('PASS accessible project navigation',viewport)
     await context.close()
   }
+  // Real animated entrances, not only the reduced-motion fallback.
+  for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
+    const animated=await browser.newContext({viewport,reducedMotion:'no-preference'})
+    const p=await animated.newPage(),faults=[]
+    p.on('pageerror',e=>faults.push(e.message))
+    await p.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded'})
+    const access=p.locator('.gallery-access')
+    await access.waitFor({timeout:30000})
+    const buttons=access.getByRole('button')
+    const modes=new Set()
+    for(let i=0;i<5;i++){
+      await buttons.nth(i).click()
+      const dialog=p.getByRole('dialog')
+      await dialog.waitFor()
+      modes.add(await dialog.getAttribute('data-motion'))
+      await dialog.locator('.dlg__scroll').waitFor()
+      await p.waitForFunction(()=>document.querySelector('.dlg')?.getAttribute('data-transition')==='ready',null,{timeout:15000})
+      assert.ok(await dialog.locator('.px-hero').isVisible())
+      if(i%2===0)await dialog.locator('.dlg__scroll').evaluate(el=>{el.scrollTop=el.scrollHeight})
+      await p.keyboard.press('Escape')
+      await dialog.waitFor({state:'hidden',timeout:15000})
+    }
+    assert.equal(modes.size,5)
+    await buttons.first().click()
+    await p.keyboard.press('Escape')
+    await p.getByRole('dialog').waitFor({state:'hidden',timeout:15000})
+    assert.deepEqual(faults,[])
+    console.log('PASS five animated entrances, deep-scroll return and early cancellation',viewport)
+    await animated.close()
+  }
   const context=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'no-preference'})
   const page=await context.newPage()
   const errors=[]
@@ -58,6 +88,7 @@ try{
   assert.equal(await page.getByRole('dialog').count(),0)
   await enter.click()
   await page.getByRole('dialog').waitFor({timeout:30000})
+  await page.waitForFunction(()=>document.querySelector('.dlg')?.getAttribute('data-transition')==='ready',null,{timeout:15000})
   await page.keyboard.press('Escape')
   await page.getByRole('dialog').waitFor({state:'hidden',timeout:30000})
   await enter.waitFor({timeout:30000})
