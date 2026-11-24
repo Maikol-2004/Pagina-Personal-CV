@@ -36,3 +36,15 @@
   .gallery-near{bottom:5.2rem}
   .gallery-instruction{bottom:1.5rem;font-size:.72rem}
 }
+
+/* Deliberate focus: the first tap only frames the exhibit. */
+.gallery-quality{position:absolute;top:7.1rem;right:1.5rem;z-index:4;font-size:.7rem;color:#f6efe4}
+.gallery-quality label{display:flex;align-items:center;gap:6px;text-shadow:0 1px 4px #000}
+.gallery-quality select{color:#f6efe4;background:#17120f;border:1px solid #d2a27e77;border-radius:20px;padding:7px 10px;font:inherit}
+.gallery-focus{position:absolute;left:1rem;right:1rem;bottom:4.3rem;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;z-index:4;text-align:center}
+.gallery-focus strong{flex-basis:100%;font:italic 1.7rem Georgia,serif;color:#f6efe4;text-shadow:0 2px 8px #000}
+.gallery-focus button{min-height:42px;padding:9px 16px;border:1px solid #d2a27e;background:#17120feb;color:#f6efe4;border-radius:30px;font:inherit;font-size:.78rem;cursor:pointer}
+.gallery-focus button:first-of-type{background:#d2a27e;color:#17120f}
+.gallery-focus button:focus-visible,.gallery-quality select:focus-visible{outline:2px solid #f6efe4;outline-offset:3px}
+.gallery-viewport:after{background:radial-gradient(ellipse at 50% 46%,transparent 65%,#100b0720 100%)}
+@media(max-width:700px){.gallery-hud{top:5.5rem}.gallery-quality{top:7rem;right:1rem}.gallery-focus{bottom:3.6rem}.gallery-focus strong{font-size:1.35rem}.gallery-focus button{font-size:.72rem;padding:8px 12px}}
