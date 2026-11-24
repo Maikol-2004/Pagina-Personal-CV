@@ -79,3 +79,5 @@
 @keyframes gallery-caption-in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:700px){.gallery-focus{bottom:3.5rem;gap:6px}.gallery-focus-copy strong{font-size:1.4rem}.gallery-focus-copy p{font-size:.72rem}.gallery-end-actions{bottom:4.4rem;gap:5px}.gallery-end-actions a{padding:9px 11px;font-size:.69rem}}
 @media(prefers-reduced-motion:reduce){.gallery-focus-copy,.gallery-end-actions{animation:none}}
+
+.gallery-material-credit{max-width:1100px;margin:0 auto;padding:0 1.5rem 1rem;color:#aa9787;font-size:.68rem}.gallery-material-credit a{text-decoration:underline;text-underline-offset:3px}
