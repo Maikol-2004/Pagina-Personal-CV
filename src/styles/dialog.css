@@ -371,3 +371,9 @@
 .dlg[data-transition="opening"] .dlg__scroll,.dlg[data-transition="closing"] .dlg__scroll{overflow-y:hidden}
 .dlg__close{z-index:5}
 @media(prefers-reduced-motion:reduce){.dlg__portal,.dlg__bridge{display:none}.dlg__motion-mark{animation:none}}
+
+/* Keep project layouts stable while opening and closing. */
+.dlg__panel{grid-template-rows:minmax(0,1fr)}
+.dlg__scroll{min-height:0;overflow-x:hidden;scrollbar-gutter:stable}
+.dlg[data-project] .dlg__scroll{padding-top:82px}
+@media(max-width:600px){.dlg[data-project] .dlg__scroll{padding:66px 12px 56px}.dlg__close{top:10px;min-height:44px;padding:0 16px}}
