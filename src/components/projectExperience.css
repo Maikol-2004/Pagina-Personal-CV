@@ -120,3 +120,22 @@
 @keyframes px-confirm{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:760px){.px-sequence-step{grid-template-columns:1fr;min-height:0;padding:22px 16px 40px;gap:24px}.px-sequence-shot{transform:translateY(calc(var(--scene-shift,0px) * .3));will-change:auto}.px--portfolio-narrativo .px-sequence-step:nth-of-type(even) .px-sequence-copy{order:0}.px-sequence-shot--phone{max-width:220px}}
 @media(prefers-reduced-motion:reduce){.px-sequence-shot{transform:none;will-change:auto}.px-feedback{animation:none}}
+
+/* Release layout: each project leads with its own experience, not a long dossier. */
+.px{gap:clamp(30px,5vw,64px)}
+.px-hero-action{display:inline-flex;align-items:center;justify-content:space-between;gap:20px;justify-self:start;padding:13px 20px;min-height:48px;color:var(--px-bg);background:var(--px-accent);border:1px solid var(--px-accent);border-radius:5px;font-weight:700;font-size:.86rem;cursor:pointer}
+.px-primary-experience{display:grid;gap:20px;scroll-margin-top:76px}
+.px-primary-head{display:grid;gap:12px;max-width:62ch}
+.px-primary-head h3{font-size:clamp(1.9rem,4vw,4.2rem);line-height:1.03;letter-spacing:-.04em}
+.px-primary-head p{line-height:1.5;color:var(--px-ink);opacity:.84}
+.px--matchup .px-primary-head h3{font-family:system-ui,sans-serif;font-weight:850;font-style:italic;text-transform:uppercase}
+.px--matchup .px-demo{border-radius:20px;background:radial-gradient(ellipse at 90% 0%,#baf34b15,transparent 55%),#0d160f}
+.px--ashesfire .px-demo{border-radius:5px;background:#141b22}.px--ashesfire .px-demo .px-metrics{order:0}
+.px--my-journey .px-primary-experience{padding:clamp(18px,4vw,48px);border:1px solid #d2a27e44;border-radius:8px;background:radial-gradient(ellipse at 50% 55%,#5c33253d,transparent 65%),#18100e}
+.px--cv-editorial .px-primary-experience,.px--portfolio-narrativo .px-primary-experience{border-top:1px solid var(--px-accent);padding-top:30px}
+.px--cv-editorial .px-primary-head h3,.px--portfolio-narrativo .px-primary-head h3{font-family:Georgia,serif;font-weight:400;font-style:italic}
+.px--cv-editorial .px-demo{background:#f0e1d0;color:#30241c;border-color:#b58c66}.px--cv-editorial .px-demo .px-kicker{color:#754329}.px--cv-editorial .demo-nav button{background:#30241c;color:#f0e1d0}
+.px--portfolio-narrativo .px-demo{border-radius:2px;background:linear-gradient(135deg,#2d222c,#1c161f)}
+.px-tabs button,.demo-action,.demo-nav button{min-height:44px}
+.px-visual,.px-story-body,.px-sequence-copy{min-width:0;overflow-wrap:anywhere}
+@media(max-width:480px){.px-hero-action{width:100%}.px-copy h2{font-size:clamp(2rem,9vw,3.5rem)}.px-primary-head h3{font-size:clamp(1.65rem,7vw,2.7rem)}.demo-bars{padding:12px}.demo-bars>div{grid-template-columns:75px minmax(0,1fr) auto;gap:6px;font-size:.68rem}.px-metrics strong{font-size:1.7rem}}
