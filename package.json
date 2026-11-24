@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/prepare-editorial-posters.mjs",
     "dev": "vite",
-    "build": "vitest run && tsc -b && vite build",
+    "build": "vitest run && node scripts/prepare-editorial-posters.mjs && tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
