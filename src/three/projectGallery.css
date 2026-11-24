@@ -26,3 +26,13 @@
 .gallery-near button:focus-visible{outline:2px solid #f6efe4;outline-offset:4px}
 .gallery-plaque{border-radius:2px;min-width:160px;padding:12px 20px}
 @media(max-width:700px){.gallery-scroll{height:430vh}.gallery-near{bottom:4.5rem}.gallery-instruction{bottom:1.7rem}}
+
+/* Extended entrance: preserve a comfortable walking speed on touch screens. */
+.gallery-scroll{height:650vh}
+.gallery-near{bottom:5.4rem}
+.gallery-instruction{bottom:1.8rem}
+@media(max-width:700px){
+  .gallery-scroll{height:560vh}
+  .gallery-near{bottom:5.2rem}
+  .gallery-instruction{bottom:1.5rem;font-size:.72rem}
+}
