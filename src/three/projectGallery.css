@@ -89,3 +89,11 @@
 .gallery-focus-copy small{color:#e5bb95}
 .gallery-quality select,.gallery-audio{min-height:36px}
 @media(max-width:400px){.gallery-quality{left:1rem;right:1rem;justify-content:flex-end}.gallery-focus-copy p{max-width:35ch}.gallery-focus button{min-height:44px}}
+
+/* Sculptural architecture palette: charcoal stone and champagne bronze. */
+.gallery-viewport{background:#141619}
+.gallery-viewport:after{background:radial-gradient(ellipse at 50% 46%,transparent 70%,#080a0c24 100%)}
+.gallery-quality select,.gallery-audio,.gallery-near button,.gallery-focus button:not(:first-of-type){background:#17191ce8;border-color:#c6ad8e88}
+.gallery-focus button:first-of-type{background:#d9c2a4;color:#16181b;border-color:#d9c2a4}
+.gallery-focus{background:linear-gradient(0deg,#101214de,transparent)}
+.gallery-material-credit{color:#aaa29a}
