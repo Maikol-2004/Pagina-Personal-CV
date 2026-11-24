@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { PROJECT_LAYERS } from '../data/projectShots'
 import type { Project } from '../data/types'
 import './projectExperience.css'
@@ -16,6 +16,7 @@ const themes:Record<string,{label:string;headline:string;sub:string;tabs:string[
 function Orbit({project}:{project:Project}){
   const [active,setActive]=useState(0)
   const items=project.technologies
+  const details:Record<string,string>={'React':'Componentes de interfaz y gestión del estado.','TypeScript':'Tipado del código y contratos entre componentes.','Vite':'Servidor de desarrollo y compilación.','GSAP':'Animaciones y transiciones de interfaz.','Three.js':'Escenas, cámaras, materiales y geometrías 3D.','React Three Fiber':'Integración declarativa de Three.js con React.','Vitest':'Pruebas automatizadas del proyecto.'}
   return <div className="px-orbit">
     <svg viewBox="0 0 400 300" role="img" aria-label="Mapa visual del stack tecnológico">
       <ellipse cx="200" cy="150" rx="154" ry="103" fill="none" stroke="currentColor" opacity=".2"/>
@@ -28,42 +29,51 @@ function Orbit({project}:{project:Project}){
       <circle cx="200" cy="150" r="28" fill="#201711" stroke="currentColor"/><text x="200" y="157" textAnchor="middle" fill="currentColor" fontSize="20">MG</text>
     </svg>
     <div className="px-tabs" aria-label="Tecnologías">{items.map((t,i)=><button key={t} aria-pressed={active===i} onClick={()=>setActive(i)}>{t}</button>)}</div>
-    <p>Stack seleccionado: <strong>{items[active]}</strong></p>
+    <p>Stack seleccionado: <strong>{items[active]}</strong></p><p className="demo-node-detail">{details[items[active]]??"Tecnología incluida en el stack documentado del proyecto."}</p>
   </div>
 }
 function MatchDemo(){
+  const [mode,setMode]=useState<'browse'|'create'>('browse')
+  const [place,setPlace]=useState('')
+  const [time,setTime]=useState('18:00')
+  const [created,setCreated]=useState<{place:string;time:string;sport:string}|null>(null)
   const [sport,setSport]=useState('Fútbol')
   const [joined,setJoined]=useState(false)
   const max=sport==='Pádel'?4:10,players=sport==='Fútbol'?8:sport==='Pádel'?3:6
   return <section className="px-demo">
     <span className="px-kicker">DEMO / MATCHUP</span><h3>Encuentra tu próximo partido.</h3>
     <p>Simulación local con datos ficticios; no se envían solicitudes reales.</p>
+    <div className="px-tabs"><button aria-pressed={mode==='browse'} onClick={()=>setMode('browse')}>Buscar partido</button><button aria-pressed={mode==='create'} onClick={()=>setMode('create')}>Crear partido</button></div>
     <div className="px-tabs">{['Fútbol','Pádel','Basket'].map(s=><button key={s} aria-pressed={sport===s} onClick={()=>{setSport(s);setJoined(false)}}>{s}</button>)}</div>
-    <div className="demo-match"><span className="demo-ball">{sport==='Fútbol'?'⚽':sport==='Pádel'?'🎾':'🏀'}</span><div><h4>Partido de {sport.toLowerCase()}</h4><p>Madrid · 18:00 · {players}/{max} jugadores</p><div className="demo-track"><i style={{width:players/max*100+'%'}}/></div></div></div>
+    {mode==='browse'?<><div className="demo-match"><span className="demo-ball">{sport==='Fútbol'?'⚽':sport==='Pádel'?'🎾':'🏀'}</span><div><h4>Partido de {sport.toLowerCase()}</h4><p>Madrid · 18:00 · {players}/{max} jugadores</p><div className="demo-track"><i style={{width:players/max*100+'%'}}/></div></div></div>
     <button className="demo-action" onClick={()=>setJoined(v=>!v)}>{joined?'Cancelar solicitud de ejemplo':'Solicitar plaza'}</button>
-    <p role="status">{joined?'✓ Solicitud registrada en esta simulación.':'Selecciona un deporte y prueba a solicitar una plaza.'}</p>
+    <p role="status">{joined?'✓ Solicitud registrada en esta simulación.':'Selecciona un deporte y prueba a solicitar una plaza.'}</p></>:<form className="demo-fields" onSubmit={e=>{e.preventDefault();if(place.trim())setCreated({place:place.trim(),time,sport})}}><label>Lugar de ejemplo<input required maxLength={80} value={place} placeholder="Polideportivo" onChange={e=>setPlace(e.target.value)}/></label><label>Hora<input type="time" required value={time} onChange={e=>setTime(e.target.value)}/></label><button className="demo-action" type="submit">Crear partido de ejemplo</button>{created&&<p role="status">✓ {created.sport} · {created.place} · {created.time}. Guardado solo en esta simulación.</p>}</form>}
   </section>
 }
 function CostsDemo(){
+  const scenarios=[{name:'Proyecto A',hours:24,rate:35,expenses:220,revenue:1800},{name:'Proyecto B',hours:48,rate:42,expenses:480,revenue:3200},{name:'Proyecto C',hours:12,rate:30,expenses:150,revenue:800}]
+  const [scenario,setScenario]=useState(0)
   const [hours,setHours]=useState(24),[rate,setRate]=useState(35),[expenses,setExpenses]=useState(220),[revenue,setRevenue]=useState(1800)
   const cost=hours*rate+expenses,profit=revenue-cost
   const euro=(n:number)=>n.toLocaleString('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0})
   return <section className="px-demo">
     <span className="px-kicker">DEMO / ASHESFIRE</span><h3>Simulador de rentabilidad</h3><p>Datos ficticios y cálculo simplificado, sin conexión a la aplicación original.</p>
+    <div className="px-tabs">{scenarios.map((s,i)=><button key={s.name} aria-pressed={scenario===i} onClick={()=>{setScenario(i);setHours(s.hours);setRate(s.rate);setExpenses(s.expenses);setRevenue(s.revenue)}}>{s.name}</button>)}</div>
     <div className="demo-fields">{([{label:'Horas',v:hours,set:setHours,max:100},{label:'Coste por hora (€)',v:rate,set:setRate,max:100},{label:'Gastos (€)',v:expenses,set:setExpenses,max:2000},{label:'Ingresos (€)',v:revenue,set:setRevenue,max:6000}]).map(f=><label key={f.label}><span>{f.label} <strong>{f.v}</strong></span><input type="range" min={0} max={f.max} value={f.v} onChange={e=>f.set(Number(e.target.value))}/></label>)}</div>
     <div className="px-metrics"><div><strong>{euro(cost)}</strong><span>Coste total</span></div><div><strong>{euro(profit)}</strong><span>Resultado</span></div><div><strong>{revenue?Math.round(profit/revenue*100)+'%':'—'}</strong><span>Margen</span></div></div>
-    <div className="demo-track"><i style={{width:Math.min(100,cost/Math.max(1,revenue)*100)+'%'}}/></div><p>Costes respecto a ingresos.</p>
+    <div className="demo-bars" aria-label="Comparación de ingresos y costes">{[{name:'Ingresos',value:revenue},{name:'Mano de obra',value:hours*rate},{name:'Gastos',value:expenses},{name:'Coste total',value:cost}].map(row=><div key={row.name}><span>{row.name}</span><i style={{width:row.value/Math.max(1,revenue,cost)*100+'%'}}/><strong>{euro(row.value)}</strong></div>)}</div>
   </section>
 }
 function EditorialDemo({shots,kind}:{shots:typeof PROJECT_LAYERS[string];kind:string}){
   const [step,setStep]=useState(0)
+  const touch=useRef<number|null>(null)
   const current=shots[step]
   if(!current)return null
   return <section className="px-demo">
     <span className="px-kicker">DEMO / {kind==='cv-editorial'?'EDITORIAL':'NARRATIVE'}</span><h3>{kind==='cv-editorial'?'Cambia la perspectiva':'Recorre los capítulos'}</h3>
     <p>Visor interactivo de capturas originales.</p>
     <div className="demo-nav"><button disabled={step===0} onClick={()=>setStep(v=>v-1)}>← Anterior</button><span>{step+1} / {shots.length}</span><button disabled={step===shots.length-1} onClick={()=>setStep(v=>v+1)}>Siguiente →</button></div>
-    <figure className="demo-editorial"><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.alt}</figcaption></figure>
+    <figure className="demo-editorial" onTouchStart={e=>{touch.current=e.touches[0].clientX}} onTouchEnd={e=>{if(touch.current===null)return;const dx=e.changedTouches[0].clientX-touch.current;touch.current=null;if(Math.abs(dx)>45)setStep(v=>Math.max(0,Math.min(shots.length-1,v+(dx<0?1:-1))))}}><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.alt}</figcaption></figure>
   </section>
 }
 export function ProjectExperience({project}:{project:Project}){
