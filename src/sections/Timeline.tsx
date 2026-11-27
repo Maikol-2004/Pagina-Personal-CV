@@ -27,13 +27,12 @@ export function Timeline({ onOpen }: Props) {
   const fill = useRef<HTMLSpanElement>(null)
   const cards = useRef<(HTMLElement | null)[]>([])
   const [active, setActive] = useState(0)
-  const [listMode,setListMode]=useState(false)
   const mobile = useIsMobile()
   const reduced = useReducedMotion()
   const activeRef = useRef(0)
 
   useLayoutEffect(() => {
-    if (reduced||listMode) return
+    if (reduced) return
     const ctx = gsap.context(() => {
       const proxy = { f: 0 }
       const place = () => {
@@ -104,7 +103,7 @@ export function Timeline({ onOpen }: Props) {
       })
     }, root)
     return () => ctx.revert()
-  }, [mobile, reduced, listMode])
+  }, [mobile, reduced])
 
   // Saltar a una etapa desde la regla inferior: calcula el scroll exacto de ese punto.
   const goTo = (i: number) => {
@@ -118,7 +117,7 @@ export function Timeline({ onOpen }: Props) {
   return (
     <section
       ref={root}
-      className={`tl ${reduced||listMode ? 'tl--static' : ''}`}
+      className={`tl ${reduced ? 'tl--static' : ''}`}
       id="trayectoria"
       aria-labelledby="tl-title"
     >
@@ -140,7 +139,7 @@ export function Timeline({ onOpen }: Props) {
             Etapa {String(active + 1).padStart(2, '0')} / {String(n).padStart(2, '0')} · de lo más
             reciente a lo más antiguo
           </p>
-          <div className="timeline-tools"><button className="pill" aria-pressed={reduced||listMode} disabled={reduced} onClick={()=>setListMode(v=>!v)}>{reduced?'Vista de lista':listMode?'Ver en movimiento':'Ver como lista'}</button><a className="text-link" href="#constelacion">Explorar conexiones ↗</a></div>
+          <div className="timeline-tools"><a className="text-link" href="#constelacion">Explorar conexiones ↗</a></div>
         </div>
 
         <ol className="tl__stage">
@@ -152,7 +151,7 @@ export function Timeline({ onOpen }: Props) {
               }}
               className="tl__card"
               data-active={i === active}
-              inert={!reduced&&!listMode&&i!==active}
+              inert={!reduced&&i!==active}
               style={{ ['--tone' as string]: s.tone }}
             >
               <TiltCard stage={s} index={i} live={Math.abs(i - active) <= 1} onOpen={onOpen} />
@@ -160,7 +159,7 @@ export function Timeline({ onOpen }: Props) {
           ))}
         </ol>
 
-        <div className="tl__rail" role="group" aria-label="Etapas" hidden={reduced||listMode}>
+        <div className="tl__rail" role="group" aria-label="Etapas" hidden={reduced}>
           <span className="tl__track" aria-hidden="true">
             <span ref={fill} className="tl__fill" />
           </span>

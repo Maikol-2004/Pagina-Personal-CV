@@ -1,10 +1,8 @@
-import { Component, lazy, Suspense, useState, useEffect, type ReactNode } from 'react'
-import { projects } from '../data/profile'
-import { posterUrl } from '../lib/projectTransition'
+import { Component, lazy, Suspense, type ReactNode } from 'react'
+import { ProjectIndex } from '../components/ProjectIndex'
 import { CaseStudy } from '../components/CaseStudy'
 import { ProjectExperience } from '../components/ProjectExperience'
 import type { Project } from '../data/types'
-import { ScrollTrigger } from '../lib/gsap'
 import { SectionLabel } from '../components/SectionLabel'
 const ProjectGallery = lazy(() => import('../three/ProjectGallery'))
 class GalleryBoundary extends Component<{children:ReactNode;fallback:ReactNode},{failed:boolean}>{
@@ -33,27 +31,18 @@ const Out = () => (
  * y se recomponen con una entrada escalonada al cambiar de proyecto.
  */
 export function Projects({ onOpen, activeProjectId, paused=false }: Props) {
-  const [immersive,setImmersive]=useState(true)
-  useEffect(()=>{const frame=requestAnimationFrame(()=>ScrollTrigger.refresh());return()=>cancelAnimationFrame(frame)},[immersive])
-  const openGallery=()=>{setImmersive(true);requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('gallery-mount')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})))}
-  const direct=<p className="container gallery-unavailable" role="status">Puedes abrir las fichas desde el índice superior.</p>
+  const direct=<div className="container"><ProjectIndex onOpen={onOpen} fallback/></div>
   return <section className="section projects" id="proyectos" aria-labelledby="pr-title">
     <div className="container projects-intro">
       <SectionLabel n="04" left="Proyectos" right="Lo que construyo" />
       <div className="section-heading" data-reveal>
         <h2 id="pr-title">Proyectos<br/><em>destacados.</em></h2>
-        <div className="projects-intro-copy"><p>Siete proyectos, una exposición interactiva. Descubre sus soluciones, tecnologías y demostraciones.</p><button className="projects-intro-link" onClick={openGallery}>Entrar en la exposición <span aria-hidden="true">↓</span></button></div>
+        <div className="projects-intro-copy"><p>Siete proyectos, una exposición interactiva. Descubre sus soluciones, tecnologías y demostraciones.</p><a className="projects-intro-link" href="#gallery-mount">Entrar en la exposición <span aria-hidden="true">↓</span></a></div>
       </div>
-      <div className="reception-heading"><span className="eyebrow">01—07 / CATÁLOGO DE LA EXPOSICIÓN</span><span className="muted">Elige una obra o recorre el museo.</span></div>
-      <div className="gallery-access reception-grid" aria-label="Acceso directo a proyectos">{projects.map((p,i)=><button id={'ficha-'+p.id} key={p.id} className="reception-project" aria-disabled={p.detailMode==='announcement'} onClick={e=>{if(p.detailMode!=='announcement')onOpen(p,e.currentTarget.querySelector('img')?.getBoundingClientRect()??e.currentTarget.getBoundingClientRect())}}>
-        <span className="reception-art"><img src={posterUrl(p.id)} alt="" loading="lazy" decoding="async"/><span className="reception-index">{String(i+1).padStart(2,'0')}</span><span className="reception-arrow" aria-hidden="true">{p.detailMode==='announcement'?'·':'↗'}</span></span>
-        <span className="reception-meta"><span className="eyebrow muted">{p.status}</span><strong>{p.title}</strong><span>{p.detailMode==='announcement'?'Próximamente · '+p.accent:p.accent.replace(/\.$/,'')}</span></span>
-      </button>)}</div>
-      <div className="reception-controls"><button className="pill pill--solid" onClick={openGallery}>Recorrer museo 3D ↓</button><button className="pill" aria-pressed={!immersive} onClick={()=>setImmersive(v=>!v)}>{immersive?'Ocultar recorrido 3D':'Mostrar recorrido 3D'}</button><a className="text-link" href="#habilidades">Ir a competencias →</a></div>
     </div>
-    {immersive&&<div id="gallery-mount"><GalleryBoundary fallback={direct}><Suspense fallback={direct}>
+    <div id="gallery-mount"><GalleryBoundary fallback={direct}><Suspense fallback={<p className="container gallery-unavailable" role="status">Preparando la exposición…</p>}>
       <ProjectGallery onOpen={onOpen} activeProjectId={activeProjectId} paused={paused}/>
-    </Suspense></GalleryBoundary></div>}
+    </Suspense></GalleryBoundary></div>
   </section>
 }
 

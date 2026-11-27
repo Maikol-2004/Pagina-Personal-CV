@@ -4,6 +4,7 @@ import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type P
 import { Vector3, Color, Matrix4, Mesh, InstancedMesh, Group, PointLight, SpotLight, Object3D, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
 import { projects } from '../data/profile'
 import type { Project } from '../data/types'
+import { ProjectIndex } from '../components/ProjectIndex'
 import { GalleryEffects } from './GalleryEffects'
 import { CAMERA_START_Z, CAMERA_END_Z, CEILING_COUNT, CAMERA_LENGTH as length, projectZ, nearestProject as findNearest, scrollProgress, focusFov, nextSelection, qualityStep, renderDpr, reflectionSize, ceilingIndices, type GalleryPhase as Phase } from '../lib/galleryLogic'
 import { transitionShot, posterUrl, cameraEase, fitScreenDistance, validScreenRect } from '../lib/projectTransition'
@@ -326,7 +327,7 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
     <ExhibitionLights selected={selected} phase={phase}/>
     <mesh position={[0,2.3,ROOM_BACK_Z+.26]} material={materials.wall}><boxGeometry args={[5.4,4.1,.14]}/></mesh>
     <Block position={[0,4.32,ROOM_BACK_Z+.44]} size={[5.4,.08,.16]} color="#b69d80" metal={.7}/>
-    <Html position={[0,2.35,ROOM_BACK_Z+.55]} transform distanceFactor={6} style={{pointerEvents:'none'}}><div className="gallery-end"><strong>MG.</strong><span>MY JOURNEY</span><p>Cada proyecto, un paso más en mi trayectoria.</p></div></Html>
+    <Html position={[0,2.35,ROOM_BACK_Z+.55]} transform distanceFactor={6} style={{pointerEvents:'none'}}><div className="gallery-end"><strong>MG.</strong><span>ARCHIVO / 07</span><p>El final del recorrido.</p></div></Html>
     <pointLight position={[0,3.8,ROOM_BACK_Z+2.2]} color="#e8d5bc" intensity={12} distance={7}/>
     <ContactStrips/>
     {quality==='ultra'&&!mobile&&<ExhibitShadow enabled/>}
@@ -404,7 +405,7 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
     const gl=canvas.getContext('webgl2')
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!gl)setFallback(true)
     gl?.getExtension('WEBGL_lose_context')?.loseContext()
-    const update=()=>{setMobile(window.innerWidth<700);const el=section.current;if(!el)return;const r=el.getBoundingClientRect();const value=scrollProgress(r.top,r.height,viewport.current?.clientHeight??window.innerHeight);if(Math.abs(progress.current-value)>.0005)yaw.current=0;progress.current=value;viewport.current?.style.setProperty('--gallery-entry-fade',String(Math.max(0,1-value/.09)));setAtEnd(value>.94);setNearestProject(nearestIndex(CAMERA_START_Z-value*length))}
+    const update=()=>{setMobile(window.innerWidth<700);const el=section.current;if(!el)return;const r=el.getBoundingClientRect();const value=scrollProgress(r.top,r.height,viewport.current?.clientHeight??window.innerHeight);if(Math.abs(progress.current-value)>.0005)yaw.current=0;progress.current=value;viewport.current?.style.setProperty('--gallery-entry-fade',String(Math.max(0,1-value/.09)));setAtEnd(value>.975);setNearestProject(nearestIndex(CAMERA_START_Z-value*length))}
     update();window.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update)
     return()=>{window.removeEventListener('scroll',update);window.removeEventListener('resize',update)}
   },[])
@@ -463,10 +464,11 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
   const walkingDpr=renderDpr(quality,adaptiveDpr,screen.width,screen.height,screen.native)
   // Keep the frontal artwork crisp, without raising the full walking render budget.
   const dpr=phase==='focused'||phase==='entering'||phase==='inside'?Math.max(walkingDpr,Math.min(screen.native,1.5,Math.sqrt(2400000/Math.max(1,screen.width*screen.height)))):walkingDpr
-  const effects=visible&&tabActive&&!paused&&phase==='walking'&&quality==='ultra'&&!mobile
+  const directory=atEnd&&phase==='walking'
+  const effects=visible&&tabActive&&!paused&&!directory&&phase==='walking'&&quality==='ultra'&&!mobile
 
   return <div className="gallery-shell" id="galeria-inmersiva">
-    {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" data-atmosphere="architecture" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
+    {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" data-atmosphere="architecture" data-directory={directory} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
       {loaded&&<Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&tabActive&&!paused&&!activeProjectId&&phase!=='inside'?'always':'never'} shadows={quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:115}} fallback={<p>WebGL no disponible.</p>}>
         <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} adaptiveDpr={adaptiveDpr} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects/>}</Suspense>
       </Canvas>}
@@ -476,11 +478,11 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
       <div className="gallery-quality"><AmbientSound/><label>Calidad <select value={quality} onChange={e=>setQuality(e.target.value as Quality)} aria-label="Calidad gráfica"><option value="auto">Auto</option><option value="medium">Equilibrada</option><option value="high">Alta</option><option value="ultra">Ultra</option></select></label></div>
       <div className="gallery-instruction">{phase==='turning'?'Girando hacia la exposición…':phase==='focused'?(selected!==null&&projects[selected].detailMode==='announcement'?'En desarrollo · Próximamente':'Pulsa otra vez para entrar · Desplázate para continuar'):phase==='entering'||phase==='inside'?'Entrando en la experiencia…':atEnd?'Desliza para continuar hacia mis competencias':nearestProject===null?'Desplázate para avanzar · Arrastra a los lados para mirar':'Toca una exposición para observarla'}</div>
       {phase==='focused'&&selected!==null&&<div className="gallery-focus">{projects[selected].detailMode==='announcement'?<span className="gallery-coming">En desarrollo · Próximamente</span>:<button onClick={()=>select(selected)}>Entrar al proyecto ↗</button>}<button onClick={resume}>Continuar recorrido →</button></div>}
-      {phase==='walking'&&atEnd&&<div className="gallery-end-actions"><a href="https://github.com/Maikol-2004" target="_blank" rel="noreferrer">GitHub ↗</a><a href={import.meta.env.BASE_URL+'Michael-Guzman-CV.pdf'} download>Descargar CV ↓</a><a href="#habilidades">Competencias →</a></div>}
-      {phase==='walking'&&nearestProject!==null&&<div className="gallery-near"><button onClick={()=>select(nearestProject)}>Observar {projects[nearestProject].title} ↗</button></div>}
+      {directory&&<div className="gallery-wall-directory"><ProjectIndex onOpen={onOpen}/></div>}
+      {phase==='walking'&&!directory&&nearestProject!==null&&<div className="gallery-near"><button onClick={()=>select(nearestProject)}>Observar {projects[nearestProject].title} ↗</button></div>}
     </div></div>}
-    {fallback&&<p className="gallery-fallback-note">Explora los proyectos directamente, sin animación 3D.</p>}
-    <div className="gallery-return"><a className="pill" href="#proyectos">Volver al catálogo ↑</a><a className="pill" href="#habilidades">Continuar a competencias →</a></div>
+    {fallback&&<div className="container"><p className="gallery-fallback-note">Explora los proyectos directamente, sin animación 3D.</p><ProjectIndex onOpen={onOpen} fallback/></div>}
+    <div className="gallery-return"><a className="pill" href="#proyectos">Volver al inicio ↑</a><a className="pill" href="#habilidades">Continuar a competencias →</a></div>
     <p className="gallery-material-credit">Portadas editoriales de cada proyecto · capturas originales y demostraciones en el interior.</p>
   </div>
 }

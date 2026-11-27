@@ -74,7 +74,7 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
 
   // Progreso vinculado al scroll (sin pin: el scroll nunca se bloquea y la animación es reversible).
   useLayoutEffect(() => {
-    if (reduced) {
+    if (reduced||mode==='list') {
       progressRef.current = 1
       return
     }
@@ -87,13 +87,15 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
       },
     })
     return () => st.kill()
-  }, [reduced])
+  }, [reduced,mode])
 
   // El modo lista cambia la altura de la sección: hay que recalcular todos los disparadores de scroll.
   useEffect(() => {
     const id = requestAnimationFrame(() => ScrollTrigger.refresh())
     return () => cancelAnimationFrame(id)
   }, [mode])
+
+  useEffect(()=>{if(reduced){setMode('list');setFocus(NO_FOCUS)}},[reduced])
 
   const stage = findStage(focus.stage)
   const cat = findCat(stage, focus.category)
@@ -157,13 +159,13 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
             className="cn__stage"
             hidden={mode !== '3d'}
             role="group"
-            aria-label="Constelación 3D interactiva. Hay una vista de lista equivalente."
+            aria-label="Constelación 3D interactiva"
           >
             <Boundary fallback={<ListFallback onList={() => setMode('list')} />}>
               {loaded && (
                 <Suspense fallback={<p className="cn__loading muted">Cargando escena…</p>}>
                   <Constellation
-                    stages={visibleStages}
+                    stages={stages}
                     progressRef={progressRef}
                     focus={focus}
                     onFocus={setFocus}
@@ -185,12 +187,7 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
         )}
 
         <div className="cn__controls">
-          <label className="cn-filter"><span>Explorar</span><select aria-label="Filtrar experiencias" value={filter} onChange={e=>{setFilter(e.target.value as Stage['kind']|'all');setFocus(NO_FOCUS)}}><option value="all">Todo</option><option value="work">Experiencia</option><option value="education">Formación</option><option value="project">Proyectos</option><option value="volunteer">Voluntariado</option></select></label>
-          {webgl && (
-            <button className="pill" onClick={() => setMode(mode === '3d' ? 'list' : '3d')}>
-              {mode === '3d' ? 'Ver como lista' : 'Ver en 3D'}
-            </button>
-          )}
+          <label className="cn-filter"><span>{mode==='3d'?'Accesos':'Explorar'}</span><select aria-label="Filtrar experiencias" value={filter} onChange={e=>{setFilter(e.target.value as Stage['kind']|'all');setFocus(NO_FOCUS)}}><option value="all">Todo</option><option value="work">Experiencia</option><option value="education">Formación</option><option value="project">Proyectos</option><option value="volunteer">Voluntariado</option></select></label>
           {mode === '3d' && (
             <>
               <button className="pill" onClick={back} disabled={!focus.stage}>

@@ -1,4 +1,5 @@
 import { profile, skillGroups, stages, projects } from '../data/profile'
+import type { Project } from '../data/types'
 import { SectionLabel } from '../components/SectionLabel'
 
 const edu = stages
@@ -12,7 +13,7 @@ const technicalGroups=[
   {id:'data',label:'03 / DATOS',title:'Software & persistencia',icon:'M4 6c0-4 16-4 16 0s-16 4-16 0z M4 6v12c0 4 16 4 16 0V6 M4 12c0 4 16 4 16 0',items:['Python','Streamlit','SQL','PostgreSQL','SQLAlchemy','pandas','PL/SQL','Hibernate','Firebase'],proof:['ashesfire']},
   {id:'tools',label:'04 / FUNDAMENTOS',title:'Entorno & calidad',icon:'M4 5h16v14H4z M7 9l4 3-4 3 M13 15h4',items:['Git / GitHub','GNU/Linux','Vitest','JavaFX','Java Swing','XML'],proof:['my-journey']},
 ] as const
-export function Skills() {
+export function Skills({onOpen}:{onOpen:(project:Project,rect:DOMRect|null)=>void}) {
   return (
     <>
       <section className="section skills" id="habilidades" aria-labelledby="sk-title">
@@ -39,7 +40,7 @@ export function Skills() {
                 <div className="skill-ledger-head"><svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><path d={g.icon}/></svg><span className="eyebrow">{g.label}</span></div>
                 <h3>{g.title}</h3>
                 <ul className="skill-tech">{g.items.map(it=><li key={it}>{it}</li>)}</ul>
-                <div className="skill-evidence"><span className="eyebrow muted">PROYECTOS RELACIONADOS</span>{g.proof.map(id=>{const p=projects.find(p=>p.id===id);return p&&<a key={id} href={'#ficha-'+id}>{p.title} ↗</a>})}</div>
+                <div className="skill-evidence"><span className="eyebrow muted">PROYECTOS RELACIONADOS</span>{g.proof.map(id=>{const p=projects.find(p=>p.id===id);return p&&<button key={id} onClick={e=>onOpen(p,e.currentTarget.getBoundingClientRect())}>{p.title} ↗</button>})}</div>
               </article>)}
               <div className="skill-human">{skillGroups.filter(g=>g.id==='personas'||g.id==='idiomas').map(g=><article key={g.id} data-reveal><p className="eyebrow muted">{g.label}</p><h3>{g.title} <em>{g.accent}</em></h3><ul className="skill-tech">{g.items.map(it=><li key={it}>{it}</li>)}</ul></article>)}</div>
             </div>

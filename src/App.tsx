@@ -47,7 +47,7 @@ export default function App() {
         <Timeline onOpen={openStage} />
         <ConstellationSection onOpenStage={openStage} paused={!!dlg} />
         <Projects onOpen={openProject} paused={!!dlg} activeProjectId={dlg?.kind === 'project' ? dlg.data.id : undefined} />
-        <Skills />
+        <Skills onOpen={openProject} />
         <Contact />
       </main>
       {dlg && (
