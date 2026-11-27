@@ -24,7 +24,7 @@ export function Contact() {
               </span>
             </a>
           </h2>
-          <p className="contact-sub">¿Conectamos? Me encantará conocer tu próximo proyecto.</p>
+          <p className="contact-sub">¿Hablamos de desarrollo, oportunidades profesionales o nuevos proyectos?</p>
         </div>
         <div className="contact-links" data-reveal>
           <a href={`mailto:${profile.email}`}>
@@ -45,6 +45,7 @@ export function Contact() {
               LinkedIn <Out />
             </span>
           </a>
+          <a href="https://github.com/Maikol-2004" target="_blank" rel="noreferrer"><span className="eyebrow">Explora mi código</span><span className="row">GitHub <Out /></span></a>
           <a href={`${import.meta.env.BASE_URL}Michael-Guzman-CV.pdf`} download>
             <span className="eyebrow">Guárdalo para después</span>
             <span className="row">

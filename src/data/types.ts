@@ -53,9 +53,11 @@ export interface Project {
   links: { label: string; href: string }[]
   tone: string
   /** Qué ilustración mostrar en la ficha. */
-  visual: 'ashesfire' | 'matchup' | 'journey' | 'portfolio'
+  visual: 'ashesfire' | 'matchup' | 'journey' | 'portfolio' | 'lingo' | 'fitness' | 'eurogrip'
   /** true = ficha de ejemplo pendiente de validación. */
   provisional: boolean
+  /** Announcement-only or documented case study; ordinary projects retain their interactive experience. */
+  detailMode?: 'announcement' | 'case-study'
 }
 
 export interface SkillGroup {

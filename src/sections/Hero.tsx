@@ -67,8 +67,8 @@ export function Hero() {
       <div className="hero-glow" aria-hidden="true" />
       <div className="container">
         <div className="hero-top eyebrow">
-          <span className="dot-label">Desarrollo · Personas · Posibilidades</span>
-          <span>Currículum personal / 2026</span>
+          <span className="dot-label">PORTAFOLIO / DESARROLLO DE SOFTWARE</span>
+          <span>MADRID · 2026</span>
         </div>
         <div className="hero-title">
           <div className="hero-name">
@@ -86,6 +86,9 @@ export function Hero() {
               </span>
             </h1>
             <span className="hero-full eyebrow">{profile.name}</span>
+            <p className="hero-role">{profile.headline}</p>
+            <p className="hero-description">Diseño y desarrollo aplicaciones web, móviles y soluciones de gestión. Conecto tecnología, creatividad y personas.</p>
+            <div className="hero-actions"><a className="pill pill--solid" href="#proyectos">Explorar proyectos <Arrow d="M5 19 19 5M5 5h14v14"/></a><a className="pill" href={import.meta.env.BASE_URL+'Michael-Guzman-CV.pdf'} download>Descargar CV <Arrow d="M12 3v18M5 14l7 7 7-7"/></a></div>
           </div>
           <figure
             className="sculpture"
@@ -117,14 +120,7 @@ export function Hero() {
             <br />
             Compromiso para <em>crear.</em>
           </p>
-          <div className="hero-intro">
-            <p>
-              {profile.headline}. {profile.tagline}
-            </p>
-            <a className="text-link" href="#trayectoria">
-              Explora mi trayectoria <Arrow d="M5 19 19 5M5 5h14v14" />
-            </a>
-          </div>
+          <div className="hero-intro"><span className="eyebrow muted">TECNOLOGÍAS Y FORMACIÓN</span><ul className="hero-stack"><li>Java</li><li>Kotlin</li><li>React</li><li>TypeScript</li><li>Python</li><li>SQL</li></ul><a className="text-link" href="https://github.com/Maikol-2004" target="_blank" rel="noreferrer">GitHub <Arrow d="M5 19 19 5M5 5h14v14"/></a></div>
           <a className="circle-link" href="#perfil" aria-label="Descubrir mi perfil">
             <Arrow d="M12 3v18M5 14l7 7 7-7" />
           </a>
@@ -132,7 +128,7 @@ export function Hero() {
         <div className="hero-foot eyebrow">
           <span>{profile.location} · España</span>
           <span>Desliza para descubrir</span>
-          <span>40°28′ N · 3°52′ O</span>
+          <span>WEB · ANDROID · DATOS</span>
         </div>
       </div>
     </section>

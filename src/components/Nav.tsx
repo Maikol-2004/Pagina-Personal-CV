@@ -49,7 +49,7 @@ export function Header() {
         <a className="brand" href="#inicio" aria-label="Michael Guzmán, inicio">
           mg<span>CV / 26</span>
         </a>
-        <nav className="nav" aria-label="Principal" data-open={open}>
+        <nav id="primary-nav" className="nav" aria-label="Principal" data-open={open}>
           {links.map((l) => (
             <a
               key={l.id}
@@ -60,6 +60,7 @@ export function Header() {
               {l.label}
             </a>
           ))}
+          <a className="nav-mobile-cv" href={import.meta.env.BASE_URL+'Michael-Guzman-CV.pdf'} download onClick={()=>setOpen(false)}>Descargar CV ↓</a>
         </nav>
         <a
           className="pill pill--solid"
@@ -68,7 +69,7 @@ export function Header() {
         >
           Descargar CV
         </a>
-        <button className="menu-btn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <button className="menu-btn" aria-expanded={open} aria-controls="primary-nav" onClick={() => setOpen((o) => !o)}>
           {open ? 'Cerrar' : 'Menú'}
         </button>
       </div>

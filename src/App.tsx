@@ -25,7 +25,7 @@ export default function App() {
 
   const closeDialog = useCallback(()=>setDlg(null),[])
   const openProject = useCallback(
-    (data: Project, rect: DOMRect | null) => setDlg({ kind: 'project', data, rect }),
+    (data: Project, rect: DOMRect | null) => {if(data.detailMode!=='announcement')setDlg({ kind: 'project', data, rect })},
     [],
   )
   // Las ramas de proyecto de la constelación abren la ficha de proyecto; el resto, la ficha de etapa.

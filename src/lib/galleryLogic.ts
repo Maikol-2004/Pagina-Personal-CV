@@ -1,9 +1,11 @@
+import { projects } from '../data/profile'
 /** Pure geometry and state helpers, shared by the gallery and its regression tests. */
 export const FIRST_PROJECT_Z=-14
 export const PROJECT_SPACING=8
 export const CAMERA_START_Z=7
-export const CAMERA_END_Z=-44
+export const CAMERA_END_Z=FIRST_PROJECT_Z-(projects.length-1)*PROJECT_SPACING-6
 export const CAMERA_LENGTH=CAMERA_START_Z-CAMERA_END_Z
+export const CEILING_COUNT=Math.floor((10-(CAMERA_END_Z-5))/3.3)+1
 export const clamp=(value:number,min:number,max:number)=>Math.max(min,Math.min(max,value))
 export function projectZ(index:number){return FIRST_PROJECT_Z-index*PROJECT_SPACING}
 export function scrollProgress(top:number,height:number,viewport:number){return clamp(-top/Math.max(1,height-viewport),0,1)}
@@ -47,6 +49,6 @@ export function reflectionSize(quality:GalleryQuality,adaptive:number,mobile:boo
 /** Assign a stable pool of lamps to the nearest ceiling fixtures. */
 export function ceilingIndices(cameraZ:number,count=5){
   const center=Math.round((10-cameraZ)/3.3)
-  const start=clamp(center-2,0,18-count)
+  const start=clamp(center-2,0,CEILING_COUNT-count)
   return Array.from({length:count},(_,i)=>start+i)
 }
