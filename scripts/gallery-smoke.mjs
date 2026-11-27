@@ -121,15 +121,12 @@ try{
       assert.match(poster,/viewBox="0 0 1400 1120"/)
       assert.match(poster,/data:image\/webp;base64,/)
       assert.ok(!poster.includes('images.unsplash.com'))
+      assert.match(poster,/data-cover="photograph"/,'Expected the local professional photograph for '+id)
     }
     await walk(0)
     await page.locator('.gallery-viewport canvas').waitFor()
-    const atmosphere=page.getByLabel('Ambiente de la galería')
-    assert.equal(await atmosphere.inputValue(),'infinity')
-    await atmosphere.selectOption('architecture')
+    assert.equal(await page.getByLabel('Ambiente de la galería').count(),0)
     assert.equal(await page.locator('.gallery-viewport').getAttribute('data-atmosphere'),'architecture')
-    await atmosphere.selectOption('infinity')
-    assert.equal(await page.locator('.gallery-viewport').getAttribute('data-atmosphere'),'infinity')
     const quality=page.getByLabel('Calidad gráfica')
     for(const mode of ['auto','medium']){
       await quality.selectOption(mode)

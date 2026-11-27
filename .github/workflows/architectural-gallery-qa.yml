@@ -1,0 +1,45 @@
+name: Architectural gallery photography and release QA
+on:
+  push:
+    branches: [feature/architectural-edition]
+permissions:
+  contents: read
+jobs:
+  import-and-test:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Import licensed photographs
+        run: node scripts/import-gallery-photography.mjs
+      - run: npm ci
+      - run: npm run build
+      - run: npm install --no-save --package-lock=false @playwright/test
+      - run: npx playwright install --with-deps chromium
+      - name: Browser smoke tests
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/gallery-preview.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ > /dev/null && break; sleep 1; done
+          node scripts/gallery-smoke.mjs
+      - name: Save tested photo assets in this branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/gallery-posters/artwork/
+          if ! git diff --cached --quiet; then
+            git commit -m "Add five licensed high-resolution gallery photographs"
+            git push origin HEAD:feature/architectural-edition
+          fi
+      - name: Save visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architectural-gallery-qa
+          path: artifacts/gallery
+          retention-days: 7
