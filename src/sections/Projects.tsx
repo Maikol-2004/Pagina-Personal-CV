@@ -35,7 +35,7 @@ const Out = () => (
 export function Projects({ onOpen, activeProjectId, paused=false }: Props) {
   const [immersive,setImmersive]=useState(true)
   useEffect(()=>{const frame=requestAnimationFrame(()=>ScrollTrigger.refresh());return()=>cancelAnimationFrame(frame)},[immersive])
-  const openGallery=()=>{setImmersive(true);requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('galeria-inmersiva')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})))}
+  const openGallery=()=>{setImmersive(true);requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('gallery-mount')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})))}
   const direct=<p className="container gallery-unavailable" role="status">Puedes abrir las fichas desde el índice superior.</p>
   return <section className="section projects" id="proyectos" aria-labelledby="pr-title">
     <div className="container projects-intro">

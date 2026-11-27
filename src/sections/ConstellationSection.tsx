@@ -66,7 +66,7 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
   const webgl = useMemo(() => hasWebGL(), [])
   const [mode, setMode] = useState<'3d' | 'list'>(webgl&&!reduced ? '3d' : 'list')
   const [filter,setFilter]=useState<Stage['kind']|'all'>('all')
-  const visibleStages=stages.filter(s=>filter==='all'||s.kind===filter)
+  const visibleStages=useMemo(()=>stages.filter(s=>filter==='all'||s.kind===filter),[filter])
 
   useEffect(() => {
     if (near&&mode==='3d') setLoaded(true)
