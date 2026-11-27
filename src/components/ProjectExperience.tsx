@@ -59,13 +59,13 @@ function CostsDemo(){
     <div className="demo-bars" aria-label="Comparación de ingresos y costes">{[{name:'Ingresos',value:revenue},{name:'Mano de obra',value:hours*rate},{name:'Gastos',value:expenses},{name:'Coste total',value:cost}].map(row=><div key={row.name}><span>{row.name}</span><i style={{width:row.value/Math.max(1,revenue,cost)*100+'%'}}/><strong>{euro(row.value)}</strong></div>)}</div>
   </section>
 }
-function EditorialDemo({shots,kind}:{shots:typeof PROJECT_LAYERS[string];kind:string}){
+function NarrativeDemo({shots}:{shots:typeof PROJECT_LAYERS[string]}){
   const [step,setStep]=useState(0)
   const touch=useRef<number|null>(null)
   const current=shots[step]
   if(!current)return null
   return <section className="px-demo">
-    <span className="px-kicker">DEMO / {kind==='cv-editorial'?'EDITORIAL':'NARRATIVE'}</span><h3>{kind==='cv-editorial'?'Cambia la perspectiva':'Recorre los capítulos'}</h3>
+    <span className="px-kicker">DEMO / NARRATIVE</span><h3>Recorre los capítulos</h3>
     <p>Visor interactivo de capturas originales.</p>
     <div className="demo-nav"><button disabled={step===0} onClick={()=>setStep(v=>v-1)}>← Anterior</button><span>{step+1} / {shots.length}</span><button disabled={step===shots.length-1} onClick={()=>setStep(v=>v+1)}>Siguiente →</button></div>
     <figure className="demo-editorial" onTouchStart={e=>{touch.current=e.touches[0].clientX}} onTouchEnd={e=>{if(touch.current===null)return;const dx=e.changedTouches[0].clientX-touch.current;touch.current=null;if(Math.abs(dx)>45)setStep(v=>Math.max(0,Math.min(shots.length-1,v+(dx<0?1:-1))))}}><img key={current.src} src={url(current.src)} alt={current.alt}/><figcaption>{current.alt}</figcaption></figure>
@@ -204,7 +204,7 @@ export function ProjectExperience({project}:{project:Project}){
         {project.id==='matchup'&&<MatchDemo/>}
         {project.id==='ashesfire'&&<CostsDemo/>}
         {project.id==='my-journey'&&<Orbit project={project}/>}
-        {(project.id==='cv-editorial'||project.id==='portfolio-narrativo')&&<EditorialDemo shots={shots} kind={project.id}/>}
+        {project.id==='portfolio-narrativo'&&<NarrativeDemo shots={shots}/>}
       </div>
     </section>
     <button className="px-back-overview" onClick={()=>root.current?.querySelector('.px-overview')?.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})}>↑ Volver a la vista general</button>

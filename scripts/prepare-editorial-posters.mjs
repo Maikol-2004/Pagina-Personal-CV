@@ -8,12 +8,19 @@ const entries=[
  ['ashesfire','AshesFire','Gestión de proyectos · Costes · Rentabilidad','SOFTWARE DE GESTIÓN','#d0a07a','ashesfire-costs','ashesfire-list'],
  ['matchup','MatchUp','Organiza · Comparte · Juega','EXPERIENCIA DEPORTIVA','#baf34b','matchup-inicio','matchup-perfil'],
  ['my-journey','My Journey','Trayectoria profesional · Web interactiva','PORTAFOLIO INMERSIVO','#d2a27e','journey-constel-focus','journey-hero'],
- ['cv-editorial','CV web','Diseño editorial · Identidad profesional','CURRÍCULUM INTERACTIVO','#d2a27e','cv-hero','cv-exp'],
  ['portfolio-narrativo','Portfolio narrativo','Una trayectoria contada en capítulos','NARRATIVA DIGITAL','#e7c3a3','narrativo-timeline','narrativo-detail'],
 ]
 const data=async(name)=>'data:image/webp;base64,'+(await readFile(new URL(name+'.webp',projectDir))).toString('base64')
 await Promise.all(entries.map(async ([id,title,subtitle,category,accent,main,secondary],index)=>{
   const target=new URL(id+'.svg',dir)
+  // Approved campaign artwork is complete; preserve it uncropped instead of printing its title twice.
+  try{
+    const approved='data:image/webp;base64,'+(await readFile(new URL('approved/'+id+'.webp',root))).toString('base64')
+    const label=id==='matchup'?'<text x="70" y="126" font-family="Arial,sans-serif" font-weight="800" font-style="italic" font-size="98" fill="#c6f052">MatchUp</text><text x="76" y="165" font-family="Arial,sans-serif" font-size="26" fill="#fff">Organiza · Comparte · Juega</text>':''
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1440" viewBox="0 0 1400 1120" data-cover="approved-art"><title>${title}</title><desc>Arte conceptual aprobado, no captura de la aplicación.</desc><rect width="1400" height="1120" fill="#090909"/><image href="${approved}" width="1400" height="1120" preserveAspectRatio="xMidYMid meet"/>${label}</svg>`
+    await writeFile(target,svg)
+    return
+  }catch(error){if(error.code!=='ENOENT')throw error}
   let artwork
   try{artwork='data:image/webp;base64,'+(await readFile(new URL('artwork/'+id+'.webp',root))).toString('base64')}catch{}
   const primary=artwork?null:await data(main),second=artwork?null:await data(secondary)

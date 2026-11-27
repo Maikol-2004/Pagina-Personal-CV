@@ -36,7 +36,7 @@ export function Projects({ onOpen, activeProjectId, paused=false }: Props) {
       <SectionLabel n="04" left="Proyectos" right="Lo que construyo" />
       <div className="section-heading" data-reveal>
         <h2 id="pr-title">Proyectos<br/><em>destacados.</em></h2>
-        <div className="projects-intro-copy"><p>Cinco proyectos reales, una exposición interactiva. Descubre sus soluciones, tecnologías y demostraciones.</p><a className="projects-intro-link" href="#galeria-inmersiva">Entrar en la exposición <span aria-hidden="true">↓</span></a></div>
+        <div className="projects-intro-copy"><p>Cuatro proyectos reales, una exposición interactiva. Descubre sus soluciones, tecnologías y demostraciones.</p><a className="projects-intro-link" href="#galeria-inmersiva">Entrar en la exposición <span aria-hidden="true">↓</span></a></div>
       </div>
     </div>
     <GalleryBoundary fallback={direct}><Suspense fallback={direct}>

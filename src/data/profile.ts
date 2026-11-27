@@ -491,34 +491,6 @@ export const projects: Project[] = [
     provisional: false,
   },
   {
-    id: 'cv-editorial',
-    title: 'CV web',
-    accent: 'editorial.',
-    summary:
-      'Primera versión de mi currículum en la web: composición editorial con una esfera de cobre construida solo con CSS y escenas que se abren al pulsar.',
-    context: 'Proyecto personal · 2026',
-    role: 'Diseño y desarrollo',
-    status: 'Publicado',
-    technologies: ['HTML', 'CSS', 'JavaScript'],
-    objectives: ['Presentar el CV con una identidad visual propia y sin dependencias externas.'],
-    features: [
-      'Filtros de experiencia y desplegables nativos accesibles con teclado.',
-      'Escenas con iluminación por proximidad del cursor y foco táctil en móvil.',
-      'Adaptación a distintos anchos, movimiento reducido e impresión.',
-    ],
-    technical: [
-      'Sin dependencias de ejecución ni peticiones externas; fuentes alojadas en local.',
-      'Controlador único para abrir y cerrar escenas, con transiciones reversibles.',
-    ],
-    links: [
-      { label: 'Ver la web', href: 'https://maikol-2004.github.io/Prueba/' },
-      { label: 'Código en GitHub', href: 'https://github.com/Maikol-2004/Prueba' },
-    ],
-    tone: '#b98a63',
-    visual: 'cv',
-    provisional: false,
-  },
-  {
     id: 'portfolio-narrativo',
     title: 'Portfolio narrativo',
     accent: 'para otra persona.',

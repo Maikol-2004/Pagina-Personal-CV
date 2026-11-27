@@ -1,10 +1,9 @@
 import { PROJECT_LAYERS } from '../data/projectShots'
 
-export const transitionStyles:Record<string,{duration:number;title:string;motion:'sprint'|'scan'|'orbit'|'editorial'|'chapter'}>={
+export const transitionStyles:Record<string,{duration:number;title:string;motion:'sprint'|'scan'|'orbit'|'chapter'}>={
   matchup:{duration:.78,title:'MATCHUP',motion:'sprint'},
   ashesfire:{duration:.86,title:'ASHESFIRE',motion:'scan'},
   'my-journey':{duration:.94,title:'MY JOURNEY',motion:'orbit'},
-  'cv-editorial':{duration:.86,title:'CV WEB',motion:'editorial'},
   'portfolio-narrativo':{duration:.9,title:'PORTFOLIO NARRATIVO',motion:'chapter'},
 }
 export function transitionShot(id:string){

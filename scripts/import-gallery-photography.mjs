@@ -21,12 +21,6 @@ const photos=[
     "https://unsplash.com/photos/M_VdGQTLv2g"
   ],
   [
-    "cv-editorial",
-    "1764755932155-dabbee87df7e",
-    "ReyLabs Studio",
-    "https://unsplash.com/photos/ohxs8oPgQ9k"
-  ],
-  [
     "portfolio-narrativo",
     "1760840415585-ae89d94bb636",
     "byVlado",

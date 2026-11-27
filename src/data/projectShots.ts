@@ -1,6 +1,6 @@
 /**
  * Imágenes reales de cada proyecto y su composición en el escaparate.
- * Capturas: AshesFire (app Streamlit ejecutada en local con datos de ejemplo), My Journey y CV web (sitios en ejecución).
+ * Capturas: AshesFire (app Streamlit ejecutada en local con datos de ejemplo), My Journey y Portfolio narrativo (sitios en ejecución).
  * MatchUp: recursos gráficos reales de la app (portada y fotos de deportes).
  */
 export type Layer = {
@@ -129,40 +129,6 @@ export const PROJECT_LAYERS: Record<string, Layer[]> = {
       left: 76,
       top: 12,
       width: 22,
-      depth: 3,
-      z: 3,
-    },
-  ],
-  'cv-editorial': [
-    {
-      src: 'cv-hero',
-      alt: 'Portada del CV web editorial',
-      title: 'Portada',
-      kind: 'window',
-      left: 0,
-      top: 4,
-      width: 76,
-      depth: 1,
-      z: 1,
-    },
-    {
-      src: 'cv-exp',
-      alt: 'Sección de experiencia del CV web',
-      title: 'Trayectoria',
-      kind: 'window',
-      left: 30,
-      top: 44,
-      width: 62,
-      depth: 2,
-      z: 2,
-    },
-    {
-      src: 'cv-m-exp',
-      alt: 'CV web en móvil',
-      kind: 'phone',
-      left: 78,
-      top: 10,
-      width: 21,
       depth: 3,
       z: 3,
     },

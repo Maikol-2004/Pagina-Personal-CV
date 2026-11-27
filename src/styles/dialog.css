@@ -357,12 +357,10 @@
 .dlg[data-motion="sprint"] .dlg__motion-mark{background:linear-gradient(115deg,transparent 32%,#baf34b44 48%,#baf34b88 49%,transparent 51%);animation:dlg-sprint .8s cubic-bezier(.2,.7,.3,1) both}
 .dlg[data-motion="scan"] .dlg__motion-mark{background:linear-gradient(90deg,transparent 42%,#ffad6044 49%,#ffad60 50%,transparent 51%);animation:dlg-scan .85s ease-out both}
 .dlg[data-motion="orbit"] .dlg__motion-mark{inset:10% auto;width:min(85vw,75vh);aspect-ratio:1;border:1px solid #d2a27e77;border-radius:50%;box-shadow:0 0 30px #d2a27e33,inset 0 0 45px #d2a27e22;animation:dlg-orbit .95s ease-out both}
-.dlg[data-motion="editorial"] .dlg__motion-mark{background:linear-gradient(90deg,#e9b99233 0 50%,transparent 50%);transform-origin:left center;animation:dlg-page .86s ease-out both}
 .dlg[data-motion="chapter"] .dlg__motion-mark{background:linear-gradient(90deg,transparent 49.8%,#e7c3a388 50%,transparent 50.2%);animation:dlg-chapter .9s ease-out both}
 @keyframes dlg-sprint{from{transform:translateX(-70%)}to{transform:translateX(70%)}}
 @keyframes dlg-scan{from{transform:translateX(-55%)}to{transform:translateX(55%)}}
 @keyframes dlg-orbit{from{transform:scale(.5);opacity:.2}to{transform:scale(1.3);opacity:.75}}
-@keyframes dlg-page{from{transform:scaleX(0)}to{transform:scaleX(2)}}
 @keyframes dlg-chapter{from{transform:scaleY(0);opacity:.2}to{transform:scaleY(1);opacity:.8}}
 .dlg__bridge{position:absolute;left:0;top:0;width:1px;height:1px;z-index:4;opacity:0;pointer-events:none;overflow:hidden;border-radius:4px}
 .dlg__bridge img{display:block;width:100%;height:100%;object-fit:fill}
@@ -383,11 +381,7 @@
 .dlg[data-project="matchup"]{--project-plane:radial-gradient(ellipse at 75% 29%,#243918 0,transparent 45%),#080e0a}
 .dlg[data-project="ashesfire"]{--project-plane:radial-gradient(ellipse at 76% 31%,#3b3029 0,transparent 47%),#141b22}
 .dlg[data-project="my-journey"]{--project-plane:radial-gradient(ellipse at 74% 29%,#3a261d 0,transparent 48%),#18100e}
-.dlg[data-project="cv-editorial"]{--project-plane:#e9ddce;--tone:#81502d}
 .dlg[data-project="portfolio-narrativo"]{--project-plane:radial-gradient(ellipse at 72% 22%,#483132 0,transparent 48%),#211923}
 .dlg[data-project] .dlg__close{border:0;border-radius:0;background:transparent;color:#f6efe4;padding-left:0;text-shadow:0 1px 10px #0007}
-.dlg[data-project="cv-editorial"] .dlg__close{color:#382719;text-shadow:none}
-.dlg[data-project="cv-editorial"] .pd__links a{color:#30241c;background:transparent;border-color:#81502d}
-.dlg[data-project="cv-editorial"] .pd__links .muted{color:#5e4a3d}
 .dlg[data-project] .dlg__scroll{padding-top:66px}
 @media(max-width:600px){.dlg[data-project] .dlg__scroll{padding-top:59px;padding-inline:18px}}

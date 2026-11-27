@@ -12,7 +12,7 @@ import './projectGallery.css'
 type Props = { onOpen: (p: Project, rect: DOMRect | null) => void; activeProjectId?: string; paused?:boolean }
 type Quality = 'auto' | 'medium' | 'high' | 'ultra'
 const ROOM_FRONT_Z = 12
-const ROOM_BACK_Z = -57
+const ROOM_BACK_Z = -49
 const ROOM_LENGTH = ROOM_FRONT_Z - ROOM_BACK_Z
 const ROOM_CENTER = (ROOM_FRONT_Z + ROOM_BACK_Z) / 2
 const exhibitX = 3.275
@@ -32,7 +32,7 @@ const wallSegments = (side:number) => {
 const nearestIndex = (z:number)=>findNearest(z,projects.length)
 const url = (name: string) => import.meta.env.BASE_URL + 'projects/' + name + '.webp'
 
-const ceilingPositions:[number,number,number][]=Array.from({length:21},(_,i)=>[0,4.29,10-i*3.3])
+const ceilingPositions:[number,number,number][]=Array.from({length:18},(_,i)=>[0,4.29,10-i*3.3])
 /** Batch identical static geometry so the main and reflected views use fewer draw calls. */
 function BoxBatch({positions,size,color,metal=0,roughness=.7,material,glow}:{positions:[number,number,number][];size:[number,number,number];color?:string;metal?:number;roughness?:number;material?:MeshStandardMaterial;glow?:Color}){
   const ref=useRef<InstancedMesh>(null)
@@ -145,7 +145,7 @@ function Reception({progress}:{progress:React.RefObject<number>}){
       <Block position={[0,0,-.08]} size={[5.1,3.3,.18]} color="#27282a"/>
       <Block position={[0,1.67,.02]} size={[5.1,.035,.05]} color="#d2a27e" metal={.7}/>
       <Block position={[0,-1.67,.02]} size={[5.1,.035,.05]} color="#d2a27e" metal={.7}/>
-      <Html transform position={[0,0,.12]} distanceFactor={5} style={{pointerEvents:'none'}}><div className="gallery-reception"><strong>MG.</strong><span>THE EXHIBITION</span><p>Cinco proyectos. Una trayectoria.</p></div></Html>
+      <Html transform position={[0,0,.12]} distanceFactor={5} style={{pointerEvents:'none'}}><div className="gallery-reception"><strong>MG.</strong><span>THE EXHIBITION</span><p>Cuatro proyectos. Una trayectoria.</p></div></Html>
     </group>)}
     <pointLight ref={light} position={[0,3.4,1.5]} color="#ecddc7" intensity={11} distance={10}/>
     <Html position={[0,3.35,-2.4]} transform distanceFactor={7} style={{pointerEvents:'none'}}><div className="gallery-entry-sign">THE EXHIBITION <span>↓</span></div></Html>
@@ -263,14 +263,14 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
   const ceilingGlow=useMemo(()=>new Color('#f2e7d7').multiplyScalar(2.25),[])
   const accentGlow=useMemo(()=>new Color('#e0c4a0').multiplyScalar(1.55),[])
   const architecture=useMemo(()=>{
-    const positions=(fn:(side:number,z:number)=>[number,number,number])=>[-1,1].flatMap(side=>Array.from({length:8},(_,i)=>fn(side,6-i*8)))
+    const positions=(fn:(side:number,z:number)=>[number,number,number])=>[-1,1].flatMap(side=>Array.from({length:7},(_,i)=>fn(side,6-i*8)))
     const panels=([-1,1] as const).flatMap(side=>wallSegments(side).flatMap(seg=>{
       const count=Math.max(1,Math.floor(seg.length/2.3))
       const step=seg.length/count
       return Array.from({length:count},(_,i)=>({side,z:seg.z-seg.length/2+step*(i+.5),length:step-.055}))
     }))
     const flutes: [number,number,number][]=[]
-    for(const side of [-1,1])for(const z of [6,-2,-10,-18,-26,-34,-42,-50]){
+    for(const side of [-1,1])for(const z of [6,-2,-10,-18,-26,-34,-42]){
       if(alcoves(side).some(a=>Math.abs(a-z)<3.05))continue
       for(let j=0;j<5;j++)flutes.push([side*2.82,2.28,z+(j-2)*.12])
     }
@@ -279,8 +279,8 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
       pillarInset:positions((s,z)=>[s*2.94,2.25,z]),
       pillarEdges:positions((s,z)=>[s*2.83,2.25,z+.35]),
       pillarLights:positions((s,z)=>[s*2.81,2.25,z-.35]),
-      crossbeams:Array.from({length:8},(_,i):[number,number,number]=>[0,4.13,6-i*8]),
-      crossTrim:Array.from({length:8},(_,i):[number,number,number]=>[0,3.965,6-i*8]),
+      crossbeams:Array.from({length:7},(_,i):[number,number,number]=>[0,4.13,6-i*8]),
+      crossTrim:Array.from({length:7},(_,i):[number,number,number]=>[0,3.965,6-i*8]),
       coves:[[-2.67,4.13,ROOM_CENTER],[2.67,4.13,ROOM_CENTER]] as [number,number,number][],
       coveLights:[[-2.50,3.975,ROOM_CENTER],[2.50,3.975,ROOM_CENTER]] as [number,number,number][],
       fixtures:ceilingPositions.map(([x,y,z]):[number,number,number]=>[x,y+.04,z]),
@@ -308,7 +308,7 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
       <Block position={[side*3.34,4.22,ROOM_CENTER]} size={[.16,.18,ROOM_LENGTH]} color="#383633"/>
       <mesh position={[side*3.23,4.11,ROOM_CENTER]}><boxGeometry args={[.035,.035,ROOM_LENGTH-1]}/><meshBasicMaterial color={accentGlow} toneMapped={false}/></mesh>
     </group>)}
-    {/* Real stone slabs, slightly stepped relative to one another. Nothing overlaps the five posters. */}
+    {/* Real stone slabs, slightly stepped relative to one another. Nothing overlaps the four posters. */}
     {architecture.panels.map((p,i)=><mesh key={i} position={[p.side*(i%2?3.32:3.36),2.24,p.z]} material={materials.wall} receiveShadow><boxGeometry args={[.12,3.85,p.length]}/></mesh>)}
     <BoxBatch positions={architecture.pillars} size={[.49,4.38,.76]} material={materials.wall}/>
     <BoxBatch positions={architecture.pillarInset} size={[.18,3.98,.66]} color="#292b2d" metal={.25}/>

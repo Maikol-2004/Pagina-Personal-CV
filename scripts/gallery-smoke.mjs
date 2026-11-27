@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test'
 await mkdir('artifacts/gallery',{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']})
 const base='http://127.0.0.1:4173/'
-const names=['AshesFire','MatchUp','My Journey','CV web','Portfolio narrativo']
+const names=['AshesFire','MatchUp','My Journey','Portfolio narrativo']
 const chapters=['screens','features','stack','demo']
 const sizes=[{width:390,height:844},{width:1440,height:900}]
 async function ready(page){
@@ -37,9 +37,9 @@ try{
       const access=page.locator('.gallery-access')
       await access.waitFor()
       const entries=access.getByRole('button')
-      assert.equal(await entries.count(),5)
+      assert.equal(await entries.count(),names.length)
       const modes=new Set()
-      for(let i=0;i<5;i++){
+      for(let i=0;i<names.length;i++){
         await entries.nth(i).click()
         const dialog=page.getByRole('dialog')
         await dialog.waitFor();await ready(page)
@@ -92,11 +92,11 @@ try{
         }
         await close(page)
       }
-      assert.equal(modes.size,5)
+      assert.equal(modes.size,names.length)
       await entries.first().click()
       await close(page)
       assert.deepEqual(errors,[])
-      console.log('PASS five project overviews, preview navigation, chapters and return',viewport,reducedMotion)
+      console.log('PASS four project overviews, preview navigation, chapters and return',viewport,reducedMotion)
       await context.close()
     }
   }
@@ -111,17 +111,17 @@ try{
     async function walk(i){
       await gallery.evaluate((el,index)=>{
         const view=el.querySelector('.gallery-viewport')
-        window.scrollTo(0,window.scrollY+el.getBoundingClientRect().top+(el.clientHeight-view.clientHeight)*(21+8*index)/59)
+        window.scrollTo(0,window.scrollY+el.getBoundingClientRect().top+(el.clientHeight-view.clientHeight)*(21+8*index)/51)
       },i)
     }
-    for(const id of ['ashesfire','matchup','my-journey','cv-editorial','portfolio-narrativo']){
+    for(const id of ['ashesfire','matchup','my-journey','portfolio-narrativo']){
       const response=await page.request.get(base+'gallery-posters/editorial/'+id+'.svg')
       assert.ok(response.ok(),'Missing poster '+id)
       const poster=await response.text()
       assert.match(poster,/viewBox="0 0 1400 1120"/)
       assert.match(poster,/data:image\/webp;base64,/)
       assert.ok(!poster.includes('images.unsplash.com'))
-      assert.match(poster,/data-cover="photograph"/,'Expected the local professional photograph for '+id)
+      assert.match(poster,/data-cover="(?:photograph|approved-art)"/,'Expected a local cover for '+id)
     }
     await walk(0)
     await page.locator('.gallery-viewport canvas').waitFor()
@@ -145,7 +145,7 @@ try{
     }
     await quality.selectOption('medium')
     await page.screenshot({path:'artifacts/gallery/'+viewport.width+'-museum.png'})
-    for(let i=0;i<5;i++){
+    for(let i=0;i<names.length;i++){
       await walk(i)
       const observe=page.getByRole('button',{name:'Observar '+names[i]+' ↗',exact:true})
       await observe.waitFor();await observe.click()
@@ -164,7 +164,7 @@ try{
       assert.equal(await enter.count(),0)
     }
     assert.deepEqual(errors,[])
-    console.log('PASS all five WebGL two-step entries and return',viewport)
+    console.log('PASS all four WebGL two-step entries and return',viewport)
     await context.close()
   }
 }finally{await browser.close()}

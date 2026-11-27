@@ -56,16 +56,16 @@ describe('gallery release regressions',()=>{
   })
   it('keeps exactly five ceiling lights within the valid fixture range',()=>{
     expect(ceilingIndices(7)).toEqual([0,1,2,3,4])
-    expect(ceilingIndices(-52)).toEqual([16,17,18,19,20])
-    for(const z of [20,0,-14,-35,-80]){const indices=ceilingIndices(z);expect(indices.length).toBe(5);expect(indices.every(i=>i>=0&&i<21)).toBe(true)}
+    expect(ceilingIndices(-44)).toEqual([13,14,15,16,17])
+    for(const z of [20,0,-14,-35,-80]){const indices=ceilingIndices(z);expect(indices.length).toBe(5);expect(indices.every(i=>i>=0&&i<18)).toBe(true)}
   })
   it('handles positive, negative and zero revenue in the cost simulation',()=>{
     expect(projectCosts(24,35,220,1800)).toEqual({cost:1060,profit:740,margin:41})
     expect(projectCosts(10,50,100,300)).toEqual({cost:600,profit:-300,margin:-100})
     expect(projectCosts(10,50,100,0).margin).toBeNull()
   })
-  it('has a unique showcase and documented assets for all five projects',()=>{
-    expect(projects.length).toBe(5)
+  it('has a unique showcase and documented assets for all four projects',()=>{
+    expect(projects.map(p=>p.id)).toEqual(['ashesfire','matchup','my-journey','portfolio-narrativo'])
     expect(new Set(projects.map(p=>p.id)).size).toBe(projects.length)
     for(const p of projects){
       const layers=PROJECT_LAYERS[p.id]
