@@ -521,7 +521,7 @@ function Scene({
   coarse,
 }: Omit<Props, 'active'>) {
   const { gl, size, pointer } = useThree()
-  const quality = coarse ? 0.55 : 1
+  const quality = coarse ? 0.45 : 0.75
   const graph = useMemo(() => buildGraph(stages, quality), [stages, quality])
   const shared = useMemo(
     () => makeShared(Math.min(gl.getPixelRatio(), coarse ? 1.5 : 2)),
@@ -594,7 +594,7 @@ export default function Constellation(props: Props) {
   return (
     <Canvas
       frameloop={active ? 'always' : 'never'}
-      dpr={[1, coarse ? 1.5 : 2]}
+      dpr={[0.8, coarse ? 1.2 : 1.5]}
       camera={{ position: [1.2, 2.2, 12.5], fov: 45, near: 0.1, far: 80 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       style={{ touchAction: coarse ? 'pan-y' : 'none' }}

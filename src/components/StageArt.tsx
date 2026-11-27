@@ -146,7 +146,7 @@ const network = (f: Frame, nodes: Node[]) => {
     if (n.x < 0 || n.x > W) n.vx *= -1
     if (n.y < 0 || n.y > H) n.vy *= -1
     const d = Math.hypot(n.x - mx, n.y - my)
-    if (over > 0.1 && d < 110) {
+    if (over > 0.1 && d > .001 && d < 110) {
       n.x += ((n.x - mx) / d) * 0.9 * over
       n.y += ((n.y - my) / d) * 0.9 * over
     }
@@ -260,7 +260,7 @@ export function StageArt({
       // offsetWidth/Height ignoran las transformaciones 3D de las tarjetas.
       W = el.offsetWidth || r.width
       H = el.offsetHeight || r.height
-      dpr = Math.min(window.devicePixelRatio || 1, 2)
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5)
       canvas.width = Math.round(W * dpr)
       canvas.height = Math.round(H * dpr)
       if (v === 4 && nodes.length === 0) {
@@ -305,7 +305,7 @@ export function StageArt({
     const draw = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
-      if ((visible && liveRef.current) || reduced) {
+      if (!document.hidden && ((visible && liveRef.current) || reduced)) {
         if (!reduced) t += dt
         ptr.x += (ptr.tx - ptr.x) * 0.1
         ptr.y += (ptr.ty - ptr.y) * 0.1

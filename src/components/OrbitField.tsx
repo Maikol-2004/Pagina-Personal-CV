@@ -95,7 +95,7 @@ export function OrbitField() {
     resize()
 
     let visible = true
-    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting))
+    const io = new IntersectionObserver(([e]) => {visible=e.isIntersecting;sync()})
     io.observe(cb)
 
     let last = performance.now()
@@ -116,7 +116,9 @@ export function OrbitField() {
       }
     }
 
+    let raf=0
     const frame = (now: number) => {
+      raf=0
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
       if (visible || reduced) {
@@ -192,10 +194,16 @@ export function OrbitField() {
           }
         }
       }
-      if (!reduced) raf = requestAnimationFrame(frame)
+      if (!reduced&&visible&&!document.hidden) raf = requestAnimationFrame(frame)
     }
-    let raf = requestAnimationFrame(frame)
+    function sync(){
+      if(!visible||document.hidden){cancelAnimationFrame(raf);raf=0;return}
+      if(!raf){last=performance.now();lastY=window.scrollY;raf=requestAnimationFrame(frame)}
+    }
+    document.addEventListener('visibilitychange',sync)
+    sync()
     return () => {
+      document.removeEventListener('visibilitychange',sync)
       cancelAnimationFrame(raf)
       ro.disconnect()
       io.disconnect()

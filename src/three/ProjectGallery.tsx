@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html, MeshReflectorMaterial, useTexture, Environment, Lightformer } from '@react-three/drei'
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, memo, type PointerEvent as ReactPointerEvent } from 'react'
 import { Vector3, Color, Matrix4, Mesh, InstancedMesh, Group, PointLight, SpotLight, Object3D, Quaternion, PerspectiveCamera, LinearMipmapLinearFilter, LinearFilter, SRGBColorSpace, CanvasTexture, RepeatWrapping, MeshStandardMaterial } from 'three'
 import { projects } from '../data/profile'
 import type { Project } from '../data/types'
@@ -35,19 +35,19 @@ const url = (name: string) => import.meta.env.BASE_URL + 'projects/' + name + '.
 
 const ceilingPositions:[number,number,number][]=Array.from({length:CEILING_COUNT},(_,i)=>[0,4.29,10-i*3.3])
 /** Batch identical static geometry so the main and reflected views use fewer draw calls. */
-function BoxBatch({positions,size,color,metal=0,roughness=.7,material,glow}:{positions:[number,number,number][];size:[number,number,number];color?:string;metal?:number;roughness?:number;material?:MeshStandardMaterial;glow?:Color}){
+const BoxBatch=memo(function BoxBatch({positions,size,color,metal=0,roughness=.7,material,glow,depths}:{positions:[number,number,number][];size:[number,number,number];color?:string;metal?:number;roughness?:number;material?:MeshStandardMaterial;glow?:Color;depths?:number[]}){
   const ref=useRef<InstancedMesh>(null)
   useLayoutEffect(()=>{
     const mesh=ref.current;if(!mesh)return
     const matrix=new Matrix4()
-    positions.forEach((p,i)=>mesh.setMatrixAt(i,matrix.makeTranslation(...p)))
+    positions.forEach((p,i)=>{matrix.makeScale(1,1,depths?.[i]??1);matrix.setPosition(...p);mesh.setMatrixAt(i,matrix)})
     mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere()
-  },[positions])
+  },[positions,depths])
   return <instancedMesh ref={ref} args={[undefined,undefined,positions.length]} material={material} receiveShadow>
     <boxGeometry args={size}/>
     {!material&&(glow?<meshBasicMaterial color={glow} toneMapped={false}/>:<meshStandardMaterial color={color} metalness={metal} roughness={roughness}/>)}
   </instancedMesh>
-}
+})
 /** All fixtures remain visible; only five nearby lights are evaluated by the GPU. */
 function CeilingLights(){
   const group=useRef<Group>(null)
@@ -67,9 +67,11 @@ function ExhibitionLights({selected,phase}:{selected:number|null;phase:Phase}){
   const group=useRef<Group>(null)
   useFrame(({camera},dt)=>{
     if(!group.current)return
-    const nearest=projects.map((_,i)=>i).sort((a,b)=>Math.abs(camera.position.z-projectZ(a))-Math.abs(camera.position.z-projectZ(b))).slice(0,2)
-    if(selected!==null&&phase!=='walking'&&!nearest.includes(selected))nearest[1]=selected
-    nearest.forEach((i,slot)=>{
+    // Find the two closest exhibitions without sorting/allocating an array each frame.
+    let first=0,second=1,da=Infinity,db=Infinity
+    for(let i=0;i<projects.length;i++){const d=Math.abs(camera.position.z-projectZ(i));if(d<da){second=first;db=da;first=i;da=d}else if(d<db){second=i;db=d}}
+    if(selected!==null&&phase!=='walking'&&selected!==first)second=selected
+    for(let slot=0;slot<2;slot++){const i=slot===0?first:second
       const light=group.current!.children[slot] as PointLight
       const p=projects[i],side=i%2?1:-1
       light.position.set(side*(exhibitX-.7),3.6,projectZ(i))
@@ -77,7 +79,7 @@ function ExhibitionLights({selected,phase}:{selected:number|null;phase:Phase}){
       const proximity=Math.max(0,1-Math.abs(camera.position.z-projectZ(i))/9)
       const target=2+5*proximity+(selected===i&&phase==='focused'?3:0)
       light.intensity+=(target-light.intensity)*(1-Math.exp(-dt*4))
-    })
+    }
   })
   return <group ref={group}>{[0,1].map(i=><pointLight key={i} intensity={2} distance={5}/>)}</group>
 }
@@ -95,6 +97,7 @@ function useArchitecturalMaterials(){
     const fract=(x:number)=>x-Math.floor(x)
     const hash=(x:number,y:number)=>fract(Math.sin(x*127.1+y*311.7)*43758.5453123)
     const grids=new Map([5,17,67].map(period=>[period,Float32Array.from({length:period*period},(_,i)=>hash(i%period,Math.floor(i/period)))]))
+    const brushColumns=Float32Array.from({length:n},(_,x)=>(hash(x,0)-.5)*23)
     const noise=(x:number,y:number,period:number)=>{
       const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy
       const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy)
@@ -113,7 +116,7 @@ function useArchitecturalMaterials(){
       rgb.data[i]=80+k;rgb.data[i+1]=77+k;rgb.data[i+2]=72+k;rgb.data[i+3]=255
       const reliefValue=55+h*145-vein*15
       relief.data[i]=relief.data[i+1]=relief.data[i+2]=reliefValue;relief.data[i+3]=255
-      const brushing=(hash(x,0)-.5)*23+(hash(x,y)-.5)*5
+      const brushing=brushColumns[x]+(grit-.5)*5
       brushed.data[i]=157+brushing;brushed.data[i+1]=136+brushing;brushed.data[i+2]=111+brushing;brushed.data[i+3]=255
     }
     cc.putImageData(rgb,0,0);hc.putImageData(relief,0,0);mc.putImageData(brushed,0,0)
@@ -153,24 +156,24 @@ function Reception({progress}:{progress:React.RefObject<number>}){
   </group>
 }
 /** The artwork is a single near-square printed digital exhibition, without props or extra frames. */
-function Artwork({project,index,onSelect}:{project:Project;index:number;onSelect:()=>void}){
+const Artwork=memo(function Artwork({project,index,onSelect}:{project:Project;index:number;onSelect:(i:number)=>void}){
   const side=index%2?1:-1,z=projectZ(index)
   const texture=useTexture(posterUrl(project.id))
   const gl=useThree(s=>s.gl)
   useEffect(()=>{
     texture.colorSpace=SRGBColorSpace
-    texture.anisotropy=gl.capabilities.getMaxAnisotropy()
+    texture.anisotropy=Math.min(8,gl.capabilities.getMaxAnisotropy())
     texture.generateMipmaps=true
     texture.minFilter=LinearMipmapLinearFilter;texture.magFilter=LinearFilter
     texture.needsUpdate=true
   },[texture,gl])
   return <group position={[side*3.30,2.20,z]} rotation={[0,-side*Math.PI/2,0]}>
-    <mesh name={'transition-screen-'+project.id} position={[0,0,.025]} onClick={e=>{e.stopPropagation();onSelect()}}>
+    <mesh name={'transition-screen-'+project.id} position={[0,0,.025]} onClick={e=>{e.stopPropagation();onSelect(index)}}>
       <planeGeometry args={[4.8,3.84]}/>
       <meshBasicMaterial map={texture} toneMapped={false}/>
     </mesh>
   </group>
-}
+})
 /** Project the artwork plane into browser coordinates for a seamless handoff. */
 function screenRect(mesh:Mesh,camera:PerspectiveCamera,canvas:HTMLCanvasElement){
   mesh.geometry.computeBoundingBox()
@@ -275,7 +278,7 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
       if(alcoves(side).some(a=>Math.abs(a-z)<3.05))continue
       for(let j=0;j<5;j++)flutes.push([side*2.82,2.28,z+(j-2)*.12])
     }
-    return {panels,flutes,
+    return {panelPositions:panels.map((p,i):[number,number,number]=>[p.side*(i%2?3.32:3.36),2.24,p.z]),panelDepths:panels.map(p=>p.length),flutes,
       pillars:positions((s,z)=>[s*3.14,2.25,z]),
       pillarInset:positions((s,z)=>[s*2.94,2.25,z]),
       pillarEdges:positions((s,z)=>[s*2.83,2.25,z+.35]),
@@ -310,7 +313,7 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
       <mesh position={[side*3.23,4.11,ROOM_CENTER]}><boxGeometry args={[.035,.035,ROOM_LENGTH-1]}/><meshBasicMaterial color={accentGlow} toneMapped={false}/></mesh>
     </group>)}
     {/* Real stone slabs, slightly stepped relative to one another. Nothing overlaps the four posters. */}
-    {architecture.panels.map((p,i)=><mesh key={i} position={[p.side*(i%2?3.32:3.36),2.24,p.z]} material={materials.wall} receiveShadow><boxGeometry args={[.12,3.85,p.length]}/></mesh>)}
+    <BoxBatch positions={architecture.panelPositions} depths={architecture.panelDepths} size={[.12,3.85,1]} material={materials.wall}/>
     <BoxBatch positions={architecture.pillars} size={[.49,4.38,.76]} material={materials.wall}/>
     <BoxBatch positions={architecture.pillarInset} size={[.18,3.98,.66]} color="#292b2d" metal={.25}/>
     <BoxBatch positions={architecture.flutes} size={[.13,3.72,.058]} material={materials.trim}/>
@@ -332,7 +335,7 @@ function Room({progress,selected,phase,quality,adaptiveDpr,yaw,onSelect,onArrive
     <ContactStrips/>
     {quality==='ultra'&&!mobile&&<ExhibitShadow enabled/>}
     <Reception progress={progress}/>
-    {projects.map((p,i)=><Suspense key={p.id} fallback={null}><Artwork project={p} index={i} onSelect={()=>onSelect(i)}/></Suspense>)}
+    {projects.map((p,i)=><Suspense key={p.id} fallback={null}><Artwork project={p} index={i} onSelect={onSelect}/></Suspense>)}
     <Camera progress={progress} selected={selected} phase={phase} yaw={yaw} onArrive={onArrive}/>
   </>
 }
@@ -367,12 +370,12 @@ function AmbientSound(){
   return <button className="gallery-audio" aria-pressed={enabled} onClick={()=>void toggle()}>{enabled?'Sonido: sí':'Sonido: no'}</button>
 }
 function AdaptiveQuality({enabled,onChange}:{enabled:boolean;onChange:(n:number)=>void}){
-  const sample=useRef({time:0,frames:0,level:1,good:0})
+  const sample=useRef({time:0,frames:0,level:.875,good:0})
   useFrame((_,dt)=>{
     if(!enabled||dt>1){sample.current.time=0;sample.current.frames=0;sample.current.good=0;return}
     const s=sample.current;s.time+=dt;s.frames++
-    if(s.time>=1.5){const fps=s.frames/s.time;s.good=fps>57?s.good+1:0
-      const next=fps<45||s.good>=4?qualityStep(fps,s.level,window.innerWidth<700):s.level
+    if(s.time>=2){const fps=s.frames/s.time;s.good=fps>57?s.good+1:0
+      const next=fps<45||s.good>=6?qualityStep(fps,s.level,window.innerWidth<700):s.level
       if(next!==s.level){s.level=next;s.good=0;onChange(next)}s.time=0;s.frames=0}
   })
   return null
@@ -384,7 +387,7 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
   const yaw=useRef(0)
   const drag=useRef<{x:number;y:number;start:number;moved:boolean}|null>(null)
   const ignoreClick=useRef(0)
-  const [adaptiveDpr,setAdaptiveDpr]=useState(1)
+  const [adaptiveDpr,setAdaptiveDpr]=useState(.875)
   const [screen,setScreen]=useState(()=>({width:window.innerWidth,height:window.innerHeight,native:window.devicePixelRatio||1}))
   useEffect(()=>{const update=()=>setScreen({width:window.innerWidth,height:window.innerHeight,native:window.devicePixelRatio||1});window.addEventListener('resize',update);return()=>window.removeEventListener('resize',update)},[])
   const [visible,setVisible]=useState(false)
@@ -406,15 +409,18 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!gl)setFallback(true)
     gl?.getExtension('WEBGL_lose_context')?.loseContext()
     const update=()=>{setMobile(window.innerWidth<700);const el=section.current;if(!el)return;const r=el.getBoundingClientRect();const value=scrollProgress(r.top,r.height,viewport.current?.clientHeight??window.innerHeight);if(Math.abs(progress.current-value)>.0005)yaw.current=0;progress.current=value;viewport.current?.style.setProperty('--gallery-entry-fade',String(Math.max(0,1-value/.09)));setAtEnd(value>.975);setNearestProject(nearestIndex(CAMERA_START_Z-value*length))}
-    update();window.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update)
-    return()=>{window.removeEventListener('scroll',update);window.removeEventListener('resize',update)}
+    let frame=0
+    const schedule=()=>{if(frame)return;frame=requestAnimationFrame(()=>{frame=0;update()})}
+    update();window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule)
+    return()=>{cancelAnimationFrame(frame);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule)}
   },[])
   useEffect(()=>{
     const el=viewport.current
     if(!el)return
-    const observer=new IntersectionObserver(([entry])=>{setVisible(entry.isIntersecting);if(entry.isIntersecting)setLoaded(true)},{rootMargin:'220px'})
-    observer.observe(el)
-    return()=>observer.disconnect()
+    const warm=new IntersectionObserver(([entry])=>{if(entry.isIntersecting){setLoaded(true);warm.disconnect()}},{rootMargin:'700px'})
+    const observer=new IntersectionObserver(([entry])=>setVisible(entry.isIntersecting),{rootMargin:'0px'})
+    warm.observe(el);observer.observe(el)
+    return()=>{warm.disconnect();observer.disconnect()}
   },[fallback])
   useEffect(()=>{
     if(phase==='inside'&&selected!==null&&activeProjectId!==projects[selected].id){
@@ -463,13 +469,14 @@ export default function ProjectGallery({onOpen,activeProjectId,paused=false}:Pro
   function pointerEnd(){if(drag.current?.moved)ignoreClick.current=performance.now()+350;drag.current=null}
   const walkingDpr=renderDpr(quality,adaptiveDpr,screen.width,screen.height,screen.native)
   // Keep the frontal artwork crisp, without raising the full walking render budget.
-  const dpr=phase==='focused'||phase==='entering'||phase==='inside'?Math.max(walkingDpr,Math.min(screen.native,1.5,Math.sqrt(2400000/Math.max(1,screen.width*screen.height)))):walkingDpr
+  // Avoid reallocating the framebuffer in the middle of the camera transition.
+  const dpr=walkingDpr
   const directory=atEnd&&phase==='walking'
   const effects=visible&&tabActive&&!paused&&!directory&&phase==='walking'&&quality==='ultra'&&!mobile
 
   return <div className="gallery-shell" id="galeria-inmersiva">
     {!fallback&&<div ref={section} className="gallery-scroll"><div ref={viewport} className="gallery-viewport" data-atmosphere="architecture" data-directory={directory} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUpCapture={pointerEnd} onPointerCancel={pointerEnd} onPointerLeave={pointerEnd}>
-      {loaded&&<Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&tabActive&&!paused&&!activeProjectId&&phase!=='inside'?'always':'never'} shadows={quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:115}} fallback={<p>WebGL no disponible.</p>}>
+      {loaded&&<Canvas onCreated={({gl})=>{setReady(true);gl.domElement.addEventListener('webglcontextlost',()=>setFallback(true),{once:true})}} frameloop={visible&&tabActive&&!paused&&!activeProjectId&&phase!=='inside'?'always':'demand'} shadows={quality==='ultra'&&!mobile} dpr={dpr} gl={{antialias:true,alpha:false,powerPreference:"high-performance"}} camera={{position:[0,1.75,CAMERA_START_Z],fov:mobile?78:65,near:.1,far:115}} fallback={<p>WebGL no disponible.</p>}>
         <Suspense fallback={null}><Room progress={progress} selected={selected} phase={phase} quality={quality} adaptiveDpr={adaptiveDpr} yaw={yaw} onSelect={select} onArrive={arrive}/><AdaptiveQuality enabled={quality==='auto'&&phase==='walking'} onChange={setAdaptiveDpr}/>{effects&&<GalleryEffects/>}</Suspense>
       </Canvas>}
       <div className="gallery-entry-fade" aria-hidden="true"/>

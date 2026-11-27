@@ -61,6 +61,8 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
   const near = useVisibility(sticky, '700px')
   const onScreen = useVisibility(sticky, '0px')
   const [loaded, setLoaded] = useState(false)
+  const [tabActive,setTabActive]=useState(!document.hidden)
+  useEffect(()=>{const update=()=>setTabActive(!document.hidden);document.addEventListener('visibilitychange',update);return()=>document.removeEventListener('visibilitychange',update)},[])
   const [focus, setFocus] = useState<Focus>(NO_FOCUS)
   const [zoom, setZoom] = useState(1)
   const webgl = useMemo(() => hasWebGL(), [])
@@ -170,7 +172,7 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
                     focus={focus}
                     onFocus={setFocus}
                     zoom={zoom}
-                    active={onScreen && mode === '3d' && !paused}
+                    active={onScreen && tabActive && mode === '3d' && !paused}
                     coarse={coarse}
                     reduced={reduced}
                   />

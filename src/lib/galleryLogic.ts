@@ -37,14 +37,15 @@ export type GalleryQuality='auto'|'medium'|'high'|'ultra'
 export function renderDpr(quality:GalleryQuality,adaptive:number,width:number,height:number,native:number){
   const mobile=width<700
   const cap=quality==='medium'?1:quality==='high'?1.5:quality==='ultra'?2:adaptive
-  const budget=quality==='medium'?1200000:quality==='high'?2100000:quality==='ultra'?3200000:1600000
+  const budget=quality==='medium'?1000000:quality==='high'?1900000:quality==='ultra'?3200000:1250000
   return clamp(Math.min(cap,native,Math.sqrt(budget/Math.max(1,width*height)),mobile?1.75:2),.65,2)
 }
-export function reflectionSize(quality:GalleryQuality,adaptive:number,mobile:boolean){
+export function reflectionSize(quality:GalleryQuality,_adaptive:number,mobile:boolean){
   if(quality==='ultra')return mobile?512:1024
   if(quality==='high')return mobile?384:768
   if(quality==='medium')return 384
-  return adaptive<1?256:mobile?384:512
+  // Fixed buffer per preset: adaptive DPR must not repeatedly rebuild the mirror.
+  return mobile?256:384
 }
 /** Assign a stable pool of lamps to the nearest ceiling fixtures. */
 export function ceilingIndices(cameraZ:number,count=5){
