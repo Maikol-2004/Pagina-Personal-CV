@@ -6,6 +6,7 @@ import './styles/timeline.css'
 import './styles/constellation.css'
 import './styles/sections.css'
 import './styles/dialog.css'
+import './styles/professional.css'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(

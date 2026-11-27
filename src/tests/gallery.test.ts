@@ -1,7 +1,7 @@
 import { PROJECT_OVERVIEW } from '../data/projectOverview'
 import { transitionShot, transitionStyles, cameraEase, fitScreenDistance, validScreenRect } from '../lib/projectTransition'
 import { describe, expect, it } from 'vitest'
-import { CAMERA_START_Z, CAMERA_END_Z, projectZ, nearestProject, scrollProgress, nextSelection, focusFov, qualityStep, renderDpr, reflectionSize, ceilingIndices, projectCosts } from '../lib/galleryLogic'
+import { CAMERA_START_Z, CAMERA_END_Z, CEILING_COUNT, projectZ, nearestProject, scrollProgress, nextSelection, focusFov, qualityStep, renderDpr, reflectionSize, ceilingIndices, projectCosts } from '../lib/galleryLogic'
 import { PROJECT_LAYERS } from '../data/projectShots'
 import { projects } from '../data/profile'
 
@@ -56,18 +56,19 @@ describe('gallery release regressions',()=>{
   })
   it('keeps exactly five ceiling lights within the valid fixture range',()=>{
     expect(ceilingIndices(7)).toEqual([0,1,2,3,4])
-    expect(ceilingIndices(-44)).toEqual([13,14,15,16,17])
-    for(const z of [20,0,-14,-35,-80]){const indices=ceilingIndices(z);expect(indices.length).toBe(5);expect(indices.every(i=>i>=0&&i<18)).toBe(true)}
+    expect(ceilingIndices(CAMERA_END_Z)).toEqual(Array.from({length:5},(_,i)=>CEILING_COUNT-5+i))
+    for(const z of [20,0,-14,-35,-80]){const indices=ceilingIndices(z);expect(indices.length).toBe(5);expect(indices.every(i=>i>=0&&i<CEILING_COUNT)).toBe(true)}
   })
   it('handles positive, negative and zero revenue in the cost simulation',()=>{
     expect(projectCosts(24,35,220,1800)).toEqual({cost:1060,profit:740,margin:41})
     expect(projectCosts(10,50,100,300)).toEqual({cost:600,profit:-300,margin:-100})
     expect(projectCosts(10,50,100,0).margin).toBeNull()
   })
-  it('has a unique showcase and documented assets for all four projects',()=>{
-    expect(projects.map(p=>p.id)).toEqual(['ashesfire','matchup','my-journey','portfolio-narrativo'])
+  it('has a unique showcase and documented assets for the four original interactive projects',()=>{
+    expect(projects.map(p=>p.id)).toEqual(['ashesfire','matchup','my-journey','portfolio-narrativo','lingo','fitness','eurogrip'])
+    expect(projects.find(p=>p.id==='lingo')?.detailMode).toBe('announcement')
     expect(new Set(projects.map(p=>p.id)).size).toBe(projects.length)
-    for(const p of projects){
+    for(const p of projects.filter(p=>!p.detailMode)){
       const layers=PROJECT_LAYERS[p.id]
       expect(layers.length).toBeGreaterThanOrEqual(3)
       expect(layers.filter(l=>!l.gallery).length).toBeGreaterThanOrEqual(3)
@@ -80,9 +81,9 @@ describe('gallery release regressions',()=>{
 
 describe('cinematic handoff',()=>{
   it('has a distinct transition and an existing exhibition screenshot for every project',()=>{
-    const motions=projects.map(p=>transitionStyles[p.id]?.motion)
-    expect(new Set(motions).size).toBe(projects.length)
-    for(const project of projects){
+    const motions=projects.filter(p=>!p.detailMode).map(p=>transitionStyles[p.id]?.motion)
+    expect(new Set(motions).size).toBe(projects.filter(p=>!p.detailMode).length)
+    for(const project of projects.filter(p=>!p.detailMode)){
       const shot=transitionShot(project.id)
       expect(shot).toBeDefined()
       expect(PROJECT_LAYERS[project.id].some(s=>s.src===shot?.src&&!s.gallery)).toBe(true)
@@ -110,8 +111,8 @@ describe('cinematic handoff',()=>{
 
 describe('project atlas',()=>{
   it('covers every documented project with a compact identity and matching feature labels',()=>{
-    expect(Object.keys(PROJECT_OVERVIEW).sort()).toEqual(projects.map(p=>p.id).sort())
-    for(const p of projects){
+    expect(Object.keys(PROJECT_OVERVIEW).sort()).toEqual(projects.filter(p=>!p.detailMode).map(p=>p.id).sort())
+    for(const p of projects.filter(p=>!p.detailMode)){
       const overview=PROJECT_OVERVIEW[p.id]
       expect(overview.features.length).toBe(p.features.length)
       expect(overview.screenLabels.length).toBe(PROJECT_LAYERS[p.id].length)

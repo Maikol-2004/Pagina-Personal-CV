@@ -5,6 +5,8 @@ export const transitionStyles:Record<string,{duration:number;title:string;motion
   ashesfire:{duration:.86,title:'ASHESFIRE',motion:'scan'},
   'my-journey':{duration:.94,title:'MY JOURNEY',motion:'orbit'},
   'portfolio-narrativo':{duration:.9,title:'PORTFOLIO NARRATIVO',motion:'chapter'},
+  fitness:{duration:.86,title:'FITNESS APP',motion:'orbit'},
+  eurogrip:{duration:.86,title:'EUROGRIP',motion:'scan'},
 }
 export function transitionShot(id:string){
   const shots=PROJECT_LAYERS[id]?.filter(s=>!s.gallery)??[]

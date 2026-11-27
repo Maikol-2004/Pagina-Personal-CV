@@ -6,6 +6,7 @@ await mkdir('artifacts/gallery',{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']})
 const base='http://127.0.0.1:4173/'
 const names=['AshesFire','MatchUp','My Journey','Portfolio narrativo']
+const allNames=[...names,'LINGO','Fitness App','Eurogrip']
 const chapters=['screens','features','stack','demo']
 const sizes=[{width:390,height:844},{width:1440,height:900}]
 async function ready(page){
@@ -37,7 +38,10 @@ try{
       const access=page.locator('.gallery-access')
       await access.waitFor()
       const entries=access.getByRole('button')
-      assert.equal(await entries.count(),names.length)
+      assert.equal(await entries.count(),allNames.length)
+      assert.equal(await entries.nth(4).getAttribute('aria-disabled'),'true')
+      await entries.nth(4).evaluate(el=>el.click())
+      assert.equal(await page.getByRole('dialog').count(),0)
       const modes=new Set()
       for(let i=0;i<names.length;i++){
         await entries.nth(i).click()
@@ -92,6 +96,13 @@ try{
         }
         await close(page)
       }
+      for(const i of [5,6]){
+        await entries.nth(i).click();await page.getByRole('dialog').waitFor();await ready(page)
+        assert.match(await page.locator('.case-study h2').innerText(),new RegExp(allNames[i]))
+        assert.equal(await page.locator('.case-evidence img').count(),3)
+        await page.locator('.case-evidence img').evaluateAll(imgs=>Promise.all(imgs.map(img=>img.decode())))
+        await close(page)
+      }
       assert.equal(modes.size,names.length)
       await entries.first().click()
       await close(page)
@@ -111,7 +122,7 @@ try{
     async function walk(i){
       await gallery.evaluate((el,index)=>{
         const view=el.querySelector('.gallery-viewport')
-        window.scrollTo(0,window.scrollY+el.getBoundingClientRect().top+(el.clientHeight-view.clientHeight)*(21+8*index)/51)
+        window.scrollTo(0,window.scrollY+el.getBoundingClientRect().top+(el.clientHeight-view.clientHeight)*(21+8*index)/75)
       },i)
     }
     for(const id of ['ashesfire','matchup','my-journey','portfolio-narrativo']){
@@ -123,6 +134,7 @@ try{
       assert.ok(!poster.includes('images.unsplash.com'))
       assert.match(poster,/data-cover="approved-art"/,'Expected the approved campaign image for '+id)
     }
+    for(const id of ['lingo','fitness','eurogrip']){const r=await page.request.get(base+'gallery-posters/editorial/'+id+'.svg');assert.ok(r.ok());assert.match(await r.text(),/data-cover="project-editorial"/)}
     await walk(0)
     await page.locator('.gallery-viewport canvas').waitFor()
     assert.equal(await page.getByLabel('Ambiente de la galería').count(),0)
@@ -145,10 +157,11 @@ try{
     }
     await quality.selectOption('medium')
     await page.screenshot({path:'artifacts/gallery/'+viewport.width+'-museum.png'})
-    for(let i=0;i<names.length;i++){
+    for(let i=0;i<allNames.length;i++){
       await walk(i)
-      const observe=page.getByRole('button',{name:'Observar '+names[i]+' ↗',exact:true})
+      const observe=page.getByRole('button',{name:'Observar '+allNames[i]+' ↗',exact:true})
       await observe.waitFor();await observe.click()
+      if(i===4){await page.locator('.gallery-coming').waitFor();assert.equal(await page.getByRole('button',{name:/Entrar al proyecto/}).count(),0);await page.getByRole('button',{name:/Continuar recorrido/}).click();continue}
       const enter=page.getByRole('button',{name:/Entrar al proyecto/})
       await enter.waitFor()
       assert.equal(await page.getByRole('dialog').count(),0)
@@ -156,7 +169,7 @@ try{
       await enter.click()
       await page.getByRole('dialog').waitFor()
       await ready(page)
-      assert.ok((await page.locator('.px-overview h2').textContent()).includes(names[i]))
+      assert.ok((await page.locator(i>4?'.case-study h2':'.px-overview h2').textContent()).includes(allNames[i]))
       await close(page)
       await enter.waitFor()
       assert.ok(Math.abs((await page.evaluate(()=>window.scrollY))-scrollBefore)<65)

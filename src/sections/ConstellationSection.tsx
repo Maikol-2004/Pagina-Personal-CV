@@ -64,11 +64,13 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
   const [focus, setFocus] = useState<Focus>(NO_FOCUS)
   const [zoom, setZoom] = useState(1)
   const webgl = useMemo(() => hasWebGL(), [])
-  const [mode, setMode] = useState<'3d' | 'list'>(webgl ? '3d' : 'list')
+  const [mode, setMode] = useState<'3d' | 'list'>(webgl&&!reduced ? '3d' : 'list')
+  const [filter,setFilter]=useState<Stage['kind']|'all'>('all')
+  const visibleStages=stages.filter(s=>filter==='all'||s.kind===filter)
 
   useEffect(() => {
-    if (near) setLoaded(true)
-  }, [near])
+    if (near&&mode==='3d') setLoaded(true)
+  }, [near,mode])
 
   // Progreso vinculado al scroll (sin pin: el scroll nunca se bloquea y la animación es reversible).
   useLayoutEffect(() => {
@@ -118,13 +120,13 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
     setFocus({ stage: s.id, category: `${s.id}/${c.id}`, item: `${s.id}/${c.id}/${i.id}` })
 
   useEffect(() => {
-    if (!sticky.current?.querySelector('.cn-ficha')) return
+    if (reduced||!sticky.current?.querySelector('.cn-ficha')) return
     gsap.fromTo(
       '.cn-ficha',
       { x: 24, opacity: 0 },
       { x: 0, opacity: 1, duration: 0.6, ease: 'expo.out' },
     )
-  }, [focus.stage, focus.category, focus.item])
+  }, [focus.stage, focus.category, focus.item,reduced])
 
   return (
     <section
@@ -161,7 +163,7 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
               {loaded && (
                 <Suspense fallback={<p className="cn__loading muted">Cargando escena…</p>}>
                   <Constellation
-                    stages={stages}
+                    stages={visibleStages}
                     progressRef={progressRef}
                     focus={focus}
                     onFocus={setFocus}
@@ -178,11 +180,12 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
 
         {mode === 'list' && (
           <div className="cn__list">
-            <Tree onOpenStage={onOpenStage} />
+            <Tree onOpenStage={onOpenStage} entries={visibleStages} />
           </div>
         )}
 
         <div className="cn__controls">
+          <label className="cn-filter"><span>Explorar</span><select aria-label="Filtrar experiencias" value={filter} onChange={e=>{setFilter(e.target.value as Stage['kind']|'all');setFocus(NO_FOCUS)}}><option value="all">Todo</option><option value="work">Experiencia</option><option value="education">Formación</option><option value="project">Proyectos</option><option value="volunteer">Voluntariado</option></select></label>
           {webgl && (
             <button className="pill" onClick={() => setMode(mode === '3d' ? 'list' : '3d')}>
               {mode === '3d' ? 'Ver como lista' : 'Ver en 3D'}
@@ -218,7 +221,7 @@ export function ConstellationSection({ onOpenStage, paused=false }: Props) {
 
         {mode === '3d' && (
           <nav className="cn__chips" aria-label="Elegir experiencia">
-            {stages.map((s) => (
+            {visibleStages.map((s) => (
               <button
                 key={s.id}
                 className="pill cn__chip"
@@ -355,10 +358,10 @@ const Chevron = () => (
 )
 
 /** Modo alternativo accesible: la misma jerarquía en tarjetas desplegables, navegable con teclado y lector de pantalla. */
-function Tree({ onOpenStage }: { onOpenStage: (s: Stage, rect: DOMRect | null) => void }) {
+function Tree({ onOpenStage,entries }: { onOpenStage: (s: Stage, rect: DOMRect | null) => void; entries:Stage[] }) {
   return (
     <ul className="tree" aria-label="Jerarquía profesional">
-      {stages.map((s) => (
+      {entries.map((s) => (
         <li key={s.id}>
           <details className="tree__stage">
             <summary>

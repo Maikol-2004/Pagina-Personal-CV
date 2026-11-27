@@ -1,5 +1,7 @@
 import { Component, lazy, Suspense, useState, useEffect, type ReactNode } from 'react'
 import { projects } from '../data/profile'
+import { posterUrl } from '../lib/projectTransition'
+import { CaseStudy } from '../components/CaseStudy'
 import { ProjectExperience } from '../components/ProjectExperience'
 import type { Project } from '../data/types'
 import { ScrollTrigger } from '../lib/gsap'
@@ -40,12 +42,12 @@ export function Projects({ onOpen, activeProjectId, paused=false }: Props) {
       <SectionLabel n="04" left="Proyectos" right="Lo que construyo" />
       <div className="section-heading" data-reveal>
         <h2 id="pr-title">Proyectos<br/><em>destacados.</em></h2>
-        <div className="projects-intro-copy"><p>Cuatro proyectos reales, una exposición interactiva. Descubre sus soluciones, tecnologías y demostraciones.</p><button className="projects-intro-link" onClick={openGallery}>Entrar en la exposición <span aria-hidden="true">↓</span></button></div>
+        <div className="projects-intro-copy"><p>Siete proyectos, una exposición interactiva. Descubre sus soluciones, tecnologías y demostraciones.</p><button className="projects-intro-link" onClick={openGallery}>Entrar en la exposición <span aria-hidden="true">↓</span></button></div>
       </div>
-      <div className="reception-heading"><span className="eyebrow">01—04 / CATÁLOGO DE LA EXPOSICIÓN</span><span className="muted">Elige una obra o recorre el museo.</span></div>
-      <div className="gallery-access reception-grid" aria-label="Acceso directo a proyectos">{projects.map((p,i)=><button id={'ficha-'+p.id} key={p.id} className="reception-project" onClick={e=>onOpen(p,e.currentTarget.querySelector('img')?.getBoundingClientRect()??e.currentTarget.getBoundingClientRect())}>
-        <span className="reception-art"><img src={import.meta.env.BASE_URL+'gallery-posters/approved/'+p.id+'.webp'} alt="" loading="lazy" decoding="async"/><span className="reception-index">{String(i+1).padStart(2,'0')}</span><span className="reception-arrow" aria-hidden="true">↗</span></span>
-        <span className="reception-meta"><span className="eyebrow muted">{p.status}</span><strong>{p.title}</strong><span>{p.accent.replace(/\.$/,'')}</span></span>
+      <div className="reception-heading"><span className="eyebrow">01—07 / CATÁLOGO DE LA EXPOSICIÓN</span><span className="muted">Elige una obra o recorre el museo.</span></div>
+      <div className="gallery-access reception-grid" aria-label="Acceso directo a proyectos">{projects.map((p,i)=><button id={'ficha-'+p.id} key={p.id} className="reception-project" aria-disabled={p.detailMode==='announcement'} onClick={e=>{if(p.detailMode!=='announcement')onOpen(p,e.currentTarget.querySelector('img')?.getBoundingClientRect()??e.currentTarget.getBoundingClientRect())}}>
+        <span className="reception-art"><img src={posterUrl(p.id)} alt="" loading="lazy" decoding="async"/><span className="reception-index">{String(i+1).padStart(2,'0')}</span><span className="reception-arrow" aria-hidden="true">{p.detailMode==='announcement'?'·':'↗'}</span></span>
+        <span className="reception-meta"><span className="eyebrow muted">{p.status}</span><strong>{p.title}</strong><span>{p.detailMode==='announcement'?'Próximamente · '+p.accent:p.accent.replace(/\.$/,'')}</span></span>
       </button>)}</div>
       <div className="reception-controls"><button className="pill pill--solid" onClick={openGallery}>Recorrer museo 3D ↓</button><button className="pill" aria-pressed={!immersive} onClick={()=>setImmersive(v=>!v)}>{immersive?'Ocultar recorrido 3D':'Mostrar recorrido 3D'}</button><a className="text-link" href="#habilidades">Ir a competencias →</a></div>
     </div>
@@ -59,7 +61,7 @@ export function Projects({ onOpen, activeProjectId, paused=false }: Props) {
 export function ProjectDetail({ project }: { project: Project }) {
   return (
     <div className="pd">
-      <ProjectExperience key={project.id} project={project}/>
+      {project.detailMode==='case-study'?<CaseStudy project={project}/>:<ProjectExperience key={project.id} project={project}/> }
       <div className="pd__links">
         {project.links.map((l) => (
           <a
