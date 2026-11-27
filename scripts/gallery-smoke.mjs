@@ -121,7 +121,7 @@ try{
       assert.match(poster,/viewBox="0 0 1400 1120"/)
       assert.match(poster,/data:image\/webp;base64,/)
       assert.ok(!poster.includes('images.unsplash.com'))
-      assert.match(poster,/data-cover="(?:photograph|approved-art)"/,'Expected a local cover for '+id)
+      assert.match(poster,/data-cover="approved-art"/,'Expected the approved campaign image for '+id)
     }
     await walk(0)
     await page.locator('.gallery-viewport canvas').waitFor()
